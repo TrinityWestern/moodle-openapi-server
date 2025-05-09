@@ -33,8 +33,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: set lower case owner name
+        run: |
+          echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
+        env:
+          OWNER: "${{ github.repository_owner }}"
+
       - name: Build Docker image
-        run: docker build -t ghcr.io/trinity-western/moodle-mcp-server:${{ github.ref_name }} .
+        run: docker build -t ghcr.io/${OWNER_LC}/moodle-mcp-server:${{ github.ref_name }} .
 
       - name: Push Docker image
-        run: docker push ghcr.io/trinity-western/moodle-mcp-server:${{ github.ref_name }}
+        run: docker push ghcr.io/${OWNER_LC}/moodle-mcp-server:${{ github.ref_name }}

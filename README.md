@@ -1,10 +1,25 @@
 # Moodle MCP Server and API server 
 
+![moodle-mcp-server](https://app1.sharemyimage.com/2025/05/10/image.jpg)
+
 An MCP (Model Context Protocol) server that enables LLMs to interact with the Moodle platform to manage courses, students, assignments, and quizzes.
 
 This server also provide a REST API that coheres with the openapi spec. 
 
 The openapi spec is available at `localhost:3000/doc` while the MCP server is available at `localhost:6277/sse`.
+
+## Techstack 
+
+This project uses latest tech and steps on the shoulders of giants:
+
+- [hono](https://hono.dev/) for the rest api
+- [bun](https://bun.sh/) for javascript runtime
+- [docker](https://www.docker.com/) for the container
+- [typescript](https://www.typescriptlang.org/) for the programming language
+- [fastmcp](https://github.com/punkpeye/fastmcp) for the mcp protocol
+- [zod](https://zod.dev/) for the schema validation
+- [tsx](https://tsx.dev/) for the script runner
+- [vitest](https://vitest.dev/) for the testing
 
 ## Development 
 

@@ -22,8 +22,13 @@ describe("MoodleMcpServer", () => {
 
   it.only("getStudents should accept courseid parameter", async () => {
     const result = await server.getStudents({ courseid: "2" });
-    expect(Array.isArray(result)).toBe(true);
+    expect(Array.isArray(result.data)).toBe(true);
     // assert id is a number
-    expect(typeof result[0].id).toBe("number");
+    if (!Array.isArray(result.data)) {
+      throw new Error("[Test error]result.data is not an array");
+    }
+
+    expect(typeof result.data[0].id).toBe("number");
+    console.log(result);
   });
 });

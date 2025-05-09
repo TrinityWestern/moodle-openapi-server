@@ -2,7 +2,7 @@ import { moodleSchema } from "./schema";
 import qs from "qs";
 import ky from "ky";
 import type { z } from "zod";
-import type { OpenAPIV3_1 } from "openapi-types";
+import path from "path";
 
 export class MoodleServer {
   private wstoken: string;
@@ -10,7 +10,12 @@ export class MoodleServer {
 
   constructor(baseURL: string, wstoken: string) {
     this.wstoken = wstoken;
-    this.baseURL = baseURL;
+    // if baseURL does not end with /webservice/rest/server.php, append it
+    if (!baseURL.endsWith("/webservice/rest/server.php")) {
+      this.baseURL = path.join(baseURL, "webservice/rest/server.php");
+    } else {
+      this.baseURL = baseURL;
+    }
   }
 
   public getUrl<F extends keyof typeof moodleSchema>(
@@ -31,17 +36,28 @@ export class MoodleServer {
   public async request<F extends keyof typeof moodleSchema>(
     wsfunction: F,
     query: z.output<(typeof moodleSchema)[F]["query"]>
-  ): Promise<z.output<(typeof moodleSchema)[F]["output"]>> {
+  ): Promise<
+    z.SafeParseReturnType<
+      z.output<(typeof moodleSchema)[F]["output"]>,
+      z.output<(typeof moodleSchema)[F]["output"]>
+    > & {
+      url: string;
+      raw?: unknown;
+    }
+  > {
     const url = this.getUrl(wsfunction, query);
 
-    console.log(`Request sent to:`, url);
+    // logger.info({ url, query }, "Request sent to Moodle API");
 
-    const data = await ky
-      .post(url)
-      .json()
-      .then(moodleSchema[wsfunction].output.parse);
+    const raw = await ky.post(url).json();
+    const data = moodleSchema[wsfunction].output.safeParse(raw);
 
-    return data;
+    // logger.info({ url, data }, "Response received from Moodle API");
+    return {
+      url,
+      ...data,
+      raw: data.success ? undefined : raw,
+    };
   }
 
   public async getStudents(

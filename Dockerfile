@@ -1,12 +1,20 @@
 FROM oven/bun:alpine
 
+# install pnpm 
+RUN bun install -g pnpm
+
 WORKDIR /app
 
-# Copy only the JS files from dist directory
-COPY dist/*.js ./
+# Copy package.json and pnpm-lock.yaml and install only production dependencies
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --prod
 
-# Expose the port the app runs on
-EXPOSE 3000
+# Copy only the JS files  from dist directory
+COPY dist/src/*.js ./dist/src/
+COPY dist/package.json ./dist/package.json
 
-# Start the server
-CMD ["bun", "server.js"] 
+# Expose the both port 3000 and 6277 the app runs on
+EXPOSE 3000 6277
+
+# Start the server by 
+CMD ["bun", "start"] 

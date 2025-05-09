@@ -199,10 +199,13 @@ export const QuizGradeResponseSchema = z
 export const moodleSchema = {
   core_enrol_get_enrolled_users: {
     query: z.object({
-      courseid: z.string().openapi({
-        example: "2",
-        description: "Course ID",
-      }),
+      courseid: z
+        .string()
+        .openapi({
+          example: "2",
+          description: "Course ID",
+        })
+        .describe("The course ID to get enrolled users for"),
       options: z
         .array(
           z.discriminatedUnion("name", [

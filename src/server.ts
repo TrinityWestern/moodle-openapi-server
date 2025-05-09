@@ -1,8 +1,11 @@
 import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { MoodleServer } from "./moodle";
-import { HTTPException } from "hono/http-exception";
 import { moodleSchema } from "./schema";
 import { Scalar } from "@scalar/hono-api-reference";
+import packageJson from "../package.json" assert { type: "json" };
+import dotenvx from "@dotenvx/dotenvx";
+
+dotenvx.config();
 
 type Variables = {
   moodleServer: MoodleServer;
@@ -10,23 +13,13 @@ type Variables = {
 
 const app = new OpenAPIHono<{ Variables: Variables }>();
 
+const baseURL = process.env.MOODLE_BASE_URL;
+const wstoken = process.env.MOODLE_WSTOKEN;
+if (!baseURL) throw new Error("MOODLE_BASE_URL is not set");
+if (!wstoken) throw new Error("MOODLE_WSTOKEN is not set");
+
 // Middleware to check for required headers and create MoodleServer instance
 const moodleAuth = async (c: any, next: any) => {
-  const wstoken = c.req.header("x-moodle-wstoken");
-  const baseURL = c.req.header("x-moodle-ws-endpoint");
-
-  if (!wstoken) {
-    throw new HTTPException(401, {
-      message: "x-moodle-wstoken header is required",
-    });
-  }
-
-  if (!baseURL) {
-    throw new HTTPException(401, {
-      message: "x-moodle-ws-endpoint header is required",
-    });
-  }
-
   const moodleServer = new MoodleServer(baseURL, wstoken);
   c.set("moodleServer", moodleServer);
   await next();
@@ -307,15 +300,9 @@ app.doc("/openapi.json", {
   openapi: "3.0.0",
   info: {
     title: "Moodle MCP API",
-    version: "1.0.0",
+    version: packageJson.version as `${number}.${number}.${number}`,
     description: "API for interacting with Moodle through MCP",
   },
-  //   servers: [
-  //     {
-  //       url: "http://localhost:3000",
-  //       description: "Local development server",
-  //     },
-  //   ],
 });
 
 app.get("/doc", Scalar({ url: "/openapi.json" }));

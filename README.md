@@ -8,6 +8,8 @@ This server also provide a REST API that coheres with the openapi spec.
 
 The openapi spec is available at `localhost:3000/doc` while the MCP server is available at `localhost:6277/sse`.
 
+[![](https://share.cleanshot.com/xmqhBX0D+)](https://share.cleanshot.com/dFLVz77G)
+
 ## Techstack 
 
 This project uses latest tech and steps on the shoulders of giants:

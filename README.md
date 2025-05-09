@@ -66,3 +66,9 @@ docker run \
 MCP is single tenant for now. we cannot connect to multiple moodle instances from the mcp server. 
 
 https://github.com/modelcontextprotocol/modelcontextprotocol/discussions/193 
+
+## License 
+
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+This project is created and maintained by Yeung Man Lung Ken (manlung.yeung@twu.ca). It would be nice if you can give me a shoutout and star the repo if you like it. 

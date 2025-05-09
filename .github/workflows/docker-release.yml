@@ -17,6 +17,14 @@ jobs:
         with:
           node-version: "20"
 
+      - name: check if package.json version is updated by comparing with the previous commit
+        run: |
+          git diff --name-only HEAD~1 HEAD | grep -q "package.json"
+          if [ $? -ne 0 ]; then
+            echo "Error: package.json version is not updated"
+            exit 1
+          fi
+
       - name: Install pnpm
         run: npm install -g pnpm
 

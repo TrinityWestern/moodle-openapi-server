@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { FastMCP } from "fastmcp";
-import { z } from "zod";
-import { MoodleMcpServer } from "./moodle";
+import { MoodleServer } from "./moodle";
+import { moodleSchema } from "./schema";
 
 const server = new FastMCP({
   name: "Moodle MCP Server",
@@ -10,7 +10,7 @@ const server = new FastMCP({
     "This server provides access to Moodle's Web Services API for managing courses, assignments, quizzes, and student submissions.",
 });
 
-const moodleServer = new MoodleMcpServer(
+const moodleServer = new MoodleServer(
   "https://localhost:8443/webservice/rest/server.php",
   "9a5d4e484222f954001075602ec7819f"
 );
@@ -29,9 +29,7 @@ const toMcpResponse = (data: object) => {
 server.addTool({
   name: "get_students",
   description: "Gets the list of students enrolled in the given course",
-  parameters: z.object({
-    courseid: z.string().describe("Course ID"),
-  }),
+  parameters: moodleSchema.core_enrol_get_enrolled_users.query,
   execute: async (args) => {
     const students = await moodleServer.getStudents(args);
     return toMcpResponse(students);
@@ -41,86 +39,48 @@ server.addTool({
 server.addTool({
   name: "get_assignments",
   description: "Gets the list of assignments assigned in the given course",
-  parameters: z.object({
-    courseid: z.string().describe("Course ID"),
-  }),
-  execute: async (args) => {
-    const assignments = await moodleServer.getAssignments(args);
-    return toMcpResponse(assignments);
-  },
+  parameters: moodleSchema.mod_assign_get_assignments.query,
+  execute: async (args) =>
+    moodleServer.getAssignments(args).then(toMcpResponse),
 });
 
 server.addTool({
   name: "get_quizzes",
   description: "Gets the list of quizzes in the given course",
-  parameters: z.object({
-    courseid: z.string().describe("Course ID"),
-  }),
-  execute: async (args) => {
-    const quizzes = await moodleServer.getQuizzes(args);
-    return toMcpResponse(quizzes);
-  },
+  parameters: moodleSchema.mod_quiz_get_quizzes_by_courses.query,
+  execute: async (args) => moodleServer.getQuizzes(args).then(toMcpResponse),
 });
 
 server.addTool({
   name: "get_submissions",
   description: "Gets the submissions of assignments in the configured course",
-  parameters: z.object({
-    studentId: z
-      .number()
-      .optional()
-      .describe(
-        "Optional student ID. If not provided, submissions from all students will be returned"
-      ),
-    assignmentId: z
-      .number()
-      .optional()
-      .describe(
-        "Optional assignment ID. If not provided, all assignments submissions will be returned"
-      ),
-  }),
-  execute: async (args) => {
-    return toMcpResponse(await moodleServer.getSubmissions(args));
-  },
+  parameters: moodleSchema.mod_assign_get_submissions.query,
+  execute: async (args) =>
+    moodleServer.getSubmissions(args).then(toMcpResponse),
 });
 
 server.addTool({
   name: "provide_feedback",
   description: "Provides feedback on an assignment submitted by a student",
-  parameters: z.object({
-    studentId: z.number().describe("Student ID"),
-    assignmentId: z.number().describe("Assignment ID"),
-    grade: z.number().describe("Numeric grade to assign"),
-    feedback: z.string().describe("Feedback text to provide"),
-  }),
-  execute: async (args) => {
-    return toMcpResponse(await moodleServer.provideFeedback(args));
-  },
+  parameters: moodleSchema.mod_assign_save_grade.query,
+  execute: async (args) =>
+    moodleServer.provideFeedback(args).then(toMcpResponse),
 });
 
 server.addTool({
   name: "get_submission_content",
   description:
     "Gets the detailed content of a specific submission, including text and attachments",
-  parameters: z.object({
-    studentId: z.number().describe("Student ID"),
-    assignmentId: z.number().describe("Assignment ID"),
-  }),
-  execute: async (args) => {
-    return toMcpResponse(await moodleServer.getSubmissionContent(args));
-  },
+  parameters: moodleSchema.mod_assign_get_submission_status.query,
+  execute: async (args) =>
+    moodleServer.getSubmissionContent(args).then(toMcpResponse),
 });
 
 server.addTool({
   name: "get_quiz_grade",
   description: "Gets the grade of a student in a specific quiz",
-  parameters: z.object({
-    studentId: z.number().describe("Student ID"),
-    quizId: z.number().describe("Quiz ID"),
-  }),
-  execute: async (args) => {
-    return toMcpResponse(await moodleServer.getQuizGrade(args));
-  },
+  parameters: moodleSchema.mod_quiz_get_user_best_grade.query,
+  execute: async (args) => moodleServer.getQuizGrade(args).then(toMcpResponse),
 });
 
 // server.on("connect", (event) => {

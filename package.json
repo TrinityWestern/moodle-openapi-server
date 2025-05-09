@@ -12,20 +12,31 @@
   ],
   "scripts": {
     "build": "tsc && ts-add-js-extension --dir=dist",
+    "build:binary": "bun build src/server.ts --compile --outfile=dist/server",
+    "build:docker": "docker build -t moodle-mcp-server .",
+    "typecheck": "tsc --noEmit",
     "prepare": "npm run build",
-    "dev": "fastmcp dev src/index.ts",
+    "dev:mcp": "fastmcp dev src/index.ts",
+    "dev": "bun --watch src/server.ts",
+    "run:docker": "docker run -p 3000:3000 moodle-mcp-server",
     "inspect": "fastmcp inspect src/index.ts",
     "test": "vitest"
   },
   "dependencies": {
-    "@better-fetch/fetch": "^1.1.18",
-    "@better-fetch/logger": "^1.1.18",
+    "@hono/node-server": "^1.14.1",
+    "@hono/zod-openapi": "^0.19.6",
+    "@scalar/hono-api-reference": "^0.8.8",
+    "@types/qs": "^6.9.18",
     "fastmcp": "^1.27.4",
+    "hono": "^4.7.9",
+    "ky": "^1.8.1",
+    "qs": "^6.14.0",
     "tsx": "^4.19.4",
-    "zod": "^3.24.4"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^20.11.24",
+    "openapi-types": "^12.1.3",
     "ts-add-js-extension": "^1.6.5",
     "typescript": "^5.3.3",
     "vitest": "^3.1.3"

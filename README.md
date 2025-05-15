@@ -38,9 +38,6 @@ pnpm run dev:all
 pnpm run build 
 # start the hono server and the mcp server 
 pnpm run start
-# build the hono as binary using bun
-# this will only build the binary according to the current architecture, if you want to build for other architectures, you need to modify the command
-pnpm run build:binary
 # build the docker image 
 pnpm run build:docker
 # run the docker image 
@@ -56,7 +53,7 @@ for example
 
 ```
 docker run \
-  -e MOODLE_BASE_URL=https://moodle-27.localcan.dev \
+  -e MOODLE_BASE_URL=https://learn.twu.ca \
   -e MOODLE_WSTOKEN=0aa2a744e8ccb6c0a9453f432d3659dc \
   -p 3000:3000 \
   -p 6277:6277 \

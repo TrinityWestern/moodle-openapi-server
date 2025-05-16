@@ -5,9 +5,15 @@ RUN bun install -g pnpm
 
 WORKDIR /app
 
-# Copy package.json and pnpm-lock.yaml and install only production dependencies
+# Copy package.json and pnpm-lock.yaml
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --prod
+
+# Create .npmrc with build arg
+ARG GITHUB_TOKEN
+RUN echo "@toptiertools:registry=https://npm.pkg.github.com" > .npmrc && \
+    echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" >> .npmrc && \
+    pnpm install --prod && \
+    rm .npmrc
 
 # Copy only the JS files  from dist directory
 COPY dist/src/*.js ./dist/src/

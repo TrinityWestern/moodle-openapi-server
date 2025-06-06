@@ -17,22 +17,25 @@ jobs:
         with:
           node-version: "20"
 
-      - name: write .npmrc
-        run: |
-          echo "@toptiertools:registry=https://npm.pkg.github.com" > .npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
+      # - name: write .npmrc
+      #   run: |
+      #     echo "@toptiertools:registry=https://npm.pkg.github.com" > .npmrc
+      #     echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
 
-      - name: Install pnpm
-        run: npm install -g pnpm
+      # - name: Install pnpm
+      #   run: npm install -g pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install bun
+        run: curl -fsSL https://bun.sh/install | bash
 
-      - name: Build project
-        run: pnpm run build
+      # - name: Install dependencies
+      #   run: pnpm install --frozen-lockfile
 
-      - name: Bundle
-        run: pnpm run bundle
+      # - name: Build project
+      #   run: pnpm run build
+
+      # - name: Bundle
+      #   run: pnpm run bundle
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3

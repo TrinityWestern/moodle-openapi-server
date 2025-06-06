@@ -1,0 +1,24 @@
+pnpm typecheck
+pnpm test
+
+##############################################
+# Check if package.json is staged for commit #
+##############################################
+if git diff --cached --quiet --exit-code package.json; then
+    echo "❌ Error: package.json is not staged for commit. Aborting."
+    exit 1
+fi
+
+#############################################################################################
+# Extract the current version in package.json, HEAD refers to the master branch because    #
+# we already make sure that we are on the master branch                                    #
+#############################################################################################
+CURRENT_VERSION=$(git cat-file -p HEAD:package.json | grep '"version"' | sed -E 's/.*"([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')
+# Extract the staged version in package.json, we are using git show rather simply reading the file because we want to make sure that we are comparing the staged version
+STAGED_VERSION=$(git show :package.json | grep '"version"' | sed -E 's/.*"([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')
+
+# Check if the version has changed
+if [ "$CURRENT_VERSION" = "$STAGED_VERSION" ]; then
+    echo "Error: Version number in package.json has not been changed. The current version is $CURRENT_VERSION. The staged version is $STAGED_VERSION. Aborting."
+    exit 1
+fi

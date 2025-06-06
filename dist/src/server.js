@@ -6,6 +6,7 @@ import { HTTPException } from "hono/http-exception";
 import { basicAuth } from "hono/basic-auth";
 import { parseUsers } from "./parse-users.js";
 import { html } from "hono/html";
+import { getDomainUrl } from "./get-domain-url.js";
 const baseURL = process.env.MOODLE_BASE_URL;
 if (!baseURL) {
     throw new Error("MOODLE_BASE_URL is not set");
@@ -40,6 +41,13 @@ const moodleAuth = async (c, next) => {
 const app = new Hono();
 app.use(cors());
 app.use(logger());
+app.use(async (c, next) => {
+    const domainUrl = getDomainUrl(c.req.raw, {
+        defaultHost: "localhost:3000",
+    });
+    c.set("domainUrl", domainUrl);
+    await next();
+});
 // Apply middleware to all /api routes
 app.use("/api/*", moodleAuth);
 app.post("/api/usecases/:function", async (c) => {
@@ -127,15 +135,19 @@ app.get("/meta", async (c) => {
 // swagger 2.0 docs
 app.get("/docs/swagger/:id", (c) => {
     const id = c.req.param("id");
+    const domainUrl = c.get("domainUrl");
     const swaggerDocs = swagger2.filter(Boolean);
     const doc = swaggerDocs[Number(id)];
     if (!doc) {
         return c.json({ error: true, message: "Invalid id" }, { status: 400 });
     }
+    // we need to update the basePath in the swagger doc
+    doc.host = domainUrl;
     return c.json(doc, { status: 200 });
 });
 app.get("/docs/openapi_3_1/:id{.+\\.json}", (c) => {
     const id = c.req.param("id");
+    const domainUrl = c.get("domainUrl");
     // remove the .json from the id
     const idWithoutJson = id.replace(".json", "");
     const openapi31Docs = [openapi31, usecaseOpenapi].filter(Boolean);
@@ -143,6 +155,13 @@ app.get("/docs/openapi_3_1/:id{.+\\.json}", (c) => {
     if (!doc) {
         return c.json({ error: true, message: "Invalid id" }, { status: 400 });
     }
+    // we need to update the servers in the openapi doc
+    doc.servers = [
+        {
+            url: `${domainUrl}/api`,
+            description: "Moodle webservice API",
+        },
+    ];
     return c.json(doc, { status: 200 });
 });
 app.get("/docs/openapi_3_1/:id", (c) => {

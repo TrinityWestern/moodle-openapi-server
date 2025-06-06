@@ -5,7 +5,7 @@ import {
 	type moodleWebservices,
 	moodleSchema,
 } from "@toptiertools/moodle-client";
-import packageJson from "../package.json" assert { type: "json" };
+import packageJson from "../package.json";
 import { z } from "zod";
 // import dotenvx from "@dotenvx/dotenvx";
 
@@ -94,7 +94,7 @@ server.addTool({
 	}),
 	execute: async (args) => {
 		return moodleServer.usecases
-			.unenrolSuspendedUsers(args.courseid)
+			.unenrolSuspendedUsers({ courseid: args.courseid })
 			.then(toMcpResponse);
 	},
 });

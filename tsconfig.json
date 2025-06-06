@@ -8,8 +8,16 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
   },
-  "include": ["src/**/*"],
+  "include": [
+    "src/**/*",
+    "types/**/*",
+    "cli/**/*",
+    "types/**/*",
+    "scripts/**/*",
+    "worker-configuration.d.ts"
+  ],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "src/gen"]
 }

@@ -1,0 +1,6 @@
+{
+  "javascript.preferences.importModuleSpecifierEnding": "js",
+  "typescript.preferences.importModuleSpecifierEnding": "js",
+  "typescript.experimental.useTsgo": false,
+  "liveServer.settings.port": 3000
+}

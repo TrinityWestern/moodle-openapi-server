@@ -1,6 +1,6 @@
 # Moodle MCP Server and API server 
 
-![moodle-mcp-server](https://app1.sharemyimage.com/2025/05/10/image.jpg)
+![moodle-openapi-server](https://app1.sharemyimage.com/2025/05/10/image.jpg)
 
 An MCP (Model Context Protocol) server that enables LLMs to interact with the Moodle platform to manage courses, students, assignments, and quizzes.
 
@@ -23,6 +23,21 @@ This project uses latest tech and steps on the shoulders of giants:
 - [tsx](https://tsx.dev/) for the script runner
 - [vitest](https://vitest.dev/) for the testing
 
+## Environment Variables
+
+The following environment variables are required to run the server:
+
+```
+MOODLE_BASE_URL=https://your.moodle.url
+MOODLE_WSTOKEN=yourtoken
+# Example: USERS=user1:password1,user2:password2
+USERS=admin:admin,teacher:teacher
+```
+
+- `MOODLE_BASE_URL`: The base URL of your Moodle instance (e.g., https://learn.twu.ca)
+- `MOODLE_WSTOKEN`: The web service token for your Moodle user
+- `USERS`: Comma-separated list of username:password pairs for basic authentication (e.g., admin:admin,teacher:teacher)
+
 ## Development 
 
 you should start your local moodle server before running the test. 
@@ -44,9 +59,9 @@ pnpm run build:docker
 docker run \
   -e MOODLE_BASE_URL=https://your.moodle.url \
   -e MOODLE_WSTOKEN=yourtoken \
+  -e USERS=admin:admin,teacher:teacher \
   -p 3000:3000 \
-  -p 6277:6277 \
-  moodle-mcp-server
+  moodle-openapi-server
 ```
 
 for example
@@ -55,9 +70,10 @@ for example
 docker run \
   -e MOODLE_BASE_URL=https://learn.twu.ca \
   -e MOODLE_WSTOKEN=0aa2a744e8ccb6c0a9453f432d3659dc \
+  -e USERS=admin:admin,teacher:teacher \
   -p 3000:3000 \
   -p 6277:6277 \
-  moodle-mcp-server
+  moodle-openapi-server
 ```
 
 ## limitation 

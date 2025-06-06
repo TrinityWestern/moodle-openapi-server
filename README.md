@@ -42,7 +42,11 @@ USERS=admin:admin,teacher:teacher
 
 you should start your local moodle server before running the test. 
 
-you can also connect to a remote moodle server by setting the `MOODLE_BASE_URL` and `MOODLE_WSTOKEN` environment variables. 
+you can also connect to a remote moodle server by setting the `MOODLE_BASE_URL` environment variables. 
+
+> [!NOTE]
+> you need to create a ws token for the external service. see [CREATE_WS_TOKEN.md](./CREATE_WS_TOKEN.md) for more details.
+> However, you don't need to set the `MOODLE_WSTOKEN` environment variable to run the docker image.
 
 ```bash 
 git pull
@@ -58,7 +62,6 @@ pnpm run build:docker
 # run the docker image 
 docker run \
   -e MOODLE_BASE_URL=https://your.moodle.url \
-  -e MOODLE_WSTOKEN=yourtoken \
   -e USERS=admin:admin,teacher:teacher \
   -p 3000:3000 \
   moodle-openapi-server
@@ -66,13 +69,12 @@ docker run \
 
 for example
 
+
 ```
 docker run \
   -e MOODLE_BASE_URL=https://learn.twu.ca \
-  -e MOODLE_WSTOKEN=0aa2a744e8ccb6c0a9453f432d3659dc \
   -e USERS=admin:admin,teacher:teacher \
   -p 3000:3000 \
-  -p 6277:6277 \
   moodle-openapi-server
 ```
 

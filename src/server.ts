@@ -216,9 +216,10 @@ app.get("/docs/swagger/:id", (c) => {
 	if (!doc) {
 		return c.json({ error: true, message: "Invalid id" }, { status: 400 });
 	}
-	console.log(domainUrl);
 	// we need to update the basePath in the swagger doc
-	doc.host = domainUrl;
+	// remove the protocol and the domain from the domainUrl
+	const host = new URL(domainUrl).host;
+	doc.host = host;
 
 	return c.json(doc, { status: 200 });
 });

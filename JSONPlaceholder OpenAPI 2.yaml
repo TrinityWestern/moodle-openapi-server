@@ -1,0 +1,524 @@
+swagger: '2.0'
+info:
+  title: JSONPlaceholder API
+  description: A free online REST API for testing and prototyping, providing fake JSON data for resources such as posts, comments, albums, photos, todos, and users. Powered by JSON Server + LowDB.
+  version: 1.0.0
+host: jsonplaceholder.typicode.com
+basePath: /
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /posts:
+    get:
+      summary: Retrieve a list of posts
+      description: Fetches a list of all posts (up to 100) from the JSONPlaceholder API.
+      operationId: getPosts
+      responses:
+        '200':
+          description: A list of posts
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Post'
+        '500':
+          description: Server error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create a new post
+      description: Creates a new post on the JSONPlaceholder API. Note that the resource is not permanently stored but is faked as if created.
+      operationId: createPost
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/PostInput'
+      responses:
+        '201':
+          description: Post created successfully
+          schema:
+            $ref: '#/definitions/Post'
+        '400':
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/Error'
+  /posts/{id}:
+    get:
+      summary: Retrieve a post by ID
+      description: Fetches a single post by its ID from the JSONPlaceholder API.
+      operationId: getPostById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          description: A single post
+          schema:
+            $ref: '#/definitions/Post'
+        '404':
+          description: Post not found
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update a post by ID
+      description: Updates an existing post by its ID. Note that the resource is not permanently updated but is faked as if updated.
+      operationId: updatePost
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+          minimum: 1
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/PostInput'
+      responses:
+        '200':
+          description: Post updated successfully
+          schema:
+            $ref: '#/definitions/Post'
+        '400':
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/Error'
+        '404':
+          description: Post not found
+          schema:
+            $ref: '#/definitions/Error'
+    patch:
+      summary: Partially update a post by ID
+      description: Partially updates an existing post by its ID. Note that the resource is not permanently updated but is faked as if updated.
+      operationId: patchPost
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+          minimum: 1
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/PostInput'
+      responses:
+        '200':
+          description: Post partially updated successfully
+          schema:
+            $ref: '#/definitions/Post'
+        '400':
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/Error'
+        '404':
+          description: Post not found
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete a post by ID
+      description: Deletes a post by its ID. Note that the resource is not permanently deleted but is faked as if deleted.
+      operationId: deletePost
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          description: Post deleted successfully
+          schema:
+            type: object
+            properties: {}
+        '404':
+          description: Post not found
+          schema:
+            $ref: '#/definitions/Error'
+  /posts/{id}/comments:
+    get:
+      summary: Retrieve comments for a specific post
+      description: Fetches all comments associated with a specific post by its ID.
+      operationId: getCommentsByPostId
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          description: A list of comments for the specified post
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Comment'
+        '404':
+          description: Post not found
+          schema:
+            $ref: '#/definitions/Error'
+  /comments:
+    get:
+      summary: Retrieve comments with optional filtering by postId
+      description: Fetches a list of comments, optionally filtered by postId using a query parameter.
+      operationId: getComments
+      parameters:
+        - name: postId
+          in: query
+          required: false
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          description: A list of comments
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Comment'
+        '400':
+          description: Invalid query parameter
+          schema:
+            $ref: '#/definitions/Error'
+  /albums:
+    get:
+      summary: Retrieve a list of albums
+      description: Fetches a list of all albums (up to 100) from the JSONPlaceholder API.
+      operationId: getAlbums
+      responses:
+        '200':
+          description: A list of albums
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Album'
+        '500':
+          description: Server error
+          schema:
+            $ref: '#/definitions/Error'
+  /albums/{id}:
+    get:
+      summary: Retrieve an album by ID
+      description: Fetches a single album by its ID from the JSONPlaceholder API.
+      operationId: getAlbumById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          description: A single album
+          schema:
+            $ref: '#/definitions/Album'
+        '404':
+          description: Album not found
+          schema:
+            $ref: '#/definitions/Error'
+  /photos:
+    get:
+      summary: Retrieve a list of photos
+      description: Fetches a list of all photos (up to 5000) from the JSONPlaceholder API.
+      operationId: getPhotos
+      responses:
+        '200':
+          description: A list of photos
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Photo'
+        '500':
+          description: Server error
+          schema:
+            $ref: '#/definitions/Error'
+  /photos/{id}:
+    get:
+      summary: Retrieve a photo by ID
+      description: Fetches a single photo by its ID from the JSONPlaceholder API.
+      operationId: getPhotoById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          description: A single photo
+          schema:
+            $ref: '#/definitions/Photo'
+        '404':
+          description: Photo not found
+          schema:
+            $ref: '#/definitions/Error'
+  /todos:
+    get:
+      summary: Retrieve a list of todos
+      description: Fetches a list of all todos (up to 200) from the JSONPlaceholder API.
+      operationId: getTodos
+      responses:
+        '200':
+          description: A list of todos
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Todo'
+        '500':
+          description: Server error
+          schema:
+            $ref: '#/definitions/Error'
+  /todos/{id}:
+    get:
+      summary: Retrieve a todo by ID
+      description: Fetches a single todo by its ID from the JSONPlaceholder API.
+      operationId: getTodoById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          description: A single todo
+          schema:
+            $ref: '#/definitions/Todo'
+        '404':
+          description: Todo not found
+          schema:
+            $ref: '#/definitions/Error'
+  /users:
+    get:
+      summary: Retrieve a list of users
+      description: Fetches a list of all users (up to 10) from the JSONPlaceholder API.
+      operationId: getUsers
+      responses:
+        '200':
+          description: A list of users
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/User'
+        '500':
+          description: Server error
+          schema:
+            $ref: '#/definitions/Error'
+  /users/{id}:
+    get:
+      summary: Retrieve a user by ID
+      description: Fetches a single user by its ID from the JSONPlaceholder API.
+      operationId: getUserById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          description: A single user
+          schema:
+            $ref: '#/definitions/User'
+        '404':
+          description: User not found
+          schema:
+            $ref: '#/definitions/Error'
+definitions:
+  Post:
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 1
+      userId:
+        type: integer
+        example: 1
+      title:
+        type: string
+        example: sunt aut facere repellat provident occaecati excepturi optio reprehenderit
+      body:
+        type: string
+        example: quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto
+    required:
+      - id
+      - userId
+      - title
+      - body
+  PostInput:
+    type: object
+    properties:
+      userId:
+        type: integer
+        example: 1
+      title:
+        type: string
+        example: foo
+      body:
+        type: string
+        example: bar
+    required:
+      - userId
+      - title
+      - body
+  Comment:
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 1
+      postId:
+        type: integer
+        example: 1
+      name:
+        type: string
+        example: id labore ex et quam laborum
+      email:
+        type: string
+        example: Eliseo@gardner.biz
+      body:
+        type: string
+        example: laudantium enim quasi est quidem magnam voluptate ipsam eos\ntempora quo necessitatibus\ndolor quam autem quasi\nreiciendis et nam sapiente accusantium
+    required:
+      - id
+      - postId
+      - name
+      - email
+      - body
+  Album:
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 1
+      userId:
+        type: integer
+        example: 1
+      title:
+        type: string
+        example: quam nostrum impedit mollitia quod et dolor
+    required:
+      - id
+      - userId
+      - title
+  Photo:
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 1
+      albumId:
+        type: integer
+        example: 1
+      title:
+        type: string
+        example: accusamus beatae ad facilis cum similique qui sunt
+      url:
+        type: string
+        example: https://via.placeholder.com/600/92c952
+      thumbnailUrl:
+        type: string
+        example: https://via.placeholder.com/150/92c952
+    required:
+      - id
+      - albumId
+      - title
+      - url
+      - thumbnailUrl
+  Todo:
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 1
+      userId:
+        type: integer
+        example: 1
+      title:
+        type: string
+        example: delectus aut autem
+      completed:
+        type: boolean
+        example: false
+    required:
+      - id
+      - userId
+      - title
+      - completed
+  User:
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 1
+      name:
+        type: string
+        example: Leanne Graham
+      username:
+        type: string
+        example: Bret
+      email:
+        type: string
+        example: Sincere@april.biz
+      address:
+        type: object
+        properties:
+          street:
+            type: string
+            example: Kulas Light
+          suite:
+            type: string
+            example: Apt. 556
+          city:
+            type: string
+            example: Gwenborough
+          zipcode:
+            type: string
+            example: 92998-3874
+          geo:
+            type: object
+            properties:
+              lat:
+                type: string
+                example: -37.3159
+              lng:
+                type: string
+                example: 81.1496
+      phone:
+        type: string
+        example: 1-770-736-8031 x56442
+      website:
+        type: string
+        example: hildegard.org
+      company:
+        type: object
+        properties:
+          name:
+            type: string
+            example: Romaguera-Crona
+          catchPhrase:
+            type: string
+            example: Multi-layered client-server neural-net
+          bs:
+            type: string
+            example: harness real-time e-markets
+    required:
+      - id
+      - name
+      - username
+      - email
+  Error:
+    type: object
+    properties:
+      message:
+        type: string
+        example: An error occurred
+    required:
+      - message

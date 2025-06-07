@@ -13,7 +13,7 @@ importers:
         version: 1.44.1
       '@toptiertools/moodle-client':
         specifier: ^1.0.8
-        version: 1.0.9(@typescript/native-preview@7.0.0-dev.20250606.1)(typescript@5.8.3)(zod@3.25.56)
+        version: 1.0.10(@typescript/native-preview@7.0.0-dev.20250606.1)(typescript@5.8.3)(zod@3.25.56)
       '@total-typescript/ts-reset':
         specifier: ^0.6.1
         version: 0.6.1
@@ -21,8 +21,8 @@ importers:
         specifier: ^8.2.2
         version: 8.2.2
       es-toolkit:
-        specifier: ^1.39.1
-        version: 1.39.1
+        specifier: ^1.39.3
+        version: 1.39.3
       fastmcp:
         specifier: ^1.27.7
         version: 1.27.7
@@ -90,8 +90,8 @@ importers:
 
 packages:
 
-  '@apidevtools/json-schema-ref-parser@13.0.2':
-    resolution: {integrity: sha512-ThpknSFmb1zJXU16ba8cFbDRL3WRs6WETW323gOhj7Gwdj9GUqNpA5JFhdAINxINyAz03gqgF5Y4UydAjE3Pdg==}
+  '@apidevtools/json-schema-ref-parser@13.0.3':
+    resolution: {integrity: sha512-64q/U0/NVl4rlJ2Dt+g4hUf4f9VrhCC+AgzbJmuHwRdo277/luj3I+iv72xeNu5xU9LCVj6TqZNMZR2QmnYRnQ==}
     engines: {node: '>= 16'}
 
   '@apiture/openapi-down-convert@0.14.1':
@@ -334,8 +334,8 @@ packages:
   '@exodus/schemasafe@1.3.0':
     resolution: {integrity: sha512-5Aap/GaRupgNx/feGBwLLTVv8OQFfv3pq2lPRzPg9R+IOBnDgghTGW7l7EuVXOvg5cc/xSAlRW8rBrjIC3Nvqw==}
 
-  '@hono/node-server@1.14.3':
-    resolution: {integrity: sha512-KuDMwwghtFYSmIpr4WrKs1VpelTrptvJ+6x6mbUcZnFcc213cumTF5BdqfHyW93B19TNI4Vaev14vOI2a0Ie3w==}
+  '@hono/node-server@1.14.4':
+    resolution: {integrity: sha512-DnxpshhYewr2q9ZN8ez/M5mmc3sucr8CT1sIgIy1bkeUXut9XWDkqHoFHRhWIQgkYnKpVRxunyhK7WzpJeJ6qQ==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
@@ -516,8 +516,8 @@ packages:
   '@tokenizer/token@0.3.0':
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
 
-  '@toptiertools/moodle-client@1.0.9':
-    resolution: {integrity: sha512-KcCIGNM+wqVJRWNuYJhPHVoCDLVrQVUIgooNY2VJtOuAVvi9Lp3HApQgsW2hVqRMUW3Gw2HtTrY3YtMYZbnvYQ==, tarball: https://npm.pkg.github.com/download/@toptiertools/moodle-client/1.0.9/e6e886d67ff6eecbdfa4d544b1bb94e9c6dd4e19}
+  '@toptiertools/moodle-client@1.0.10':
+    resolution: {integrity: sha512-eqAEG0/9sTlrMU1Hn8l3XxBAqlZHRtjqUSM485lja3labKv3uE/MsQopEyyuTpFnXMTsngK4O4FiMZNbDsgaHw==, tarball: https://npm.pkg.github.com/download/@toptiertools/moodle-client/1.0.10/58c7cfe439aafb6046cb89fd1e17c237f330e09f}
     peerDependencies:
       '@typescript/native-preview': 7.0.0-dev.20250606.1
       typescript: ^5.8.3
@@ -1054,8 +1054,8 @@ packages:
     resolution: {integrity: sha512-w+5mJ3GuFL+NjVtJlvydShqE1eN3h3PbI7/5LAsYJP/2qtuMXjfL2LpHSRqo4b4eSF5K/DH1JXKUAHSB2UW50g==}
     engines: {node: '>= 0.4'}
 
-  es-toolkit@1.39.1:
-    resolution: {integrity: sha512-cJNIXXx861Brn2GaXourDn5h3WRjYVc5hHKBLve8r0vP9TFeyPCiNgJFLn30HiJyCK4lUyjDhBELBwZG1tgZ0A==}
+  es-toolkit@1.39.3:
+    resolution: {integrity: sha512-Qb/TCFCldgOy8lZ5uC7nLGdqJwSabkQiYQShmw4jyiPk1pZzaYWTwaYKYP7EgLccWYgZocMrtItrwh683voaww==}
 
   es5-ext@0.10.64:
     resolution: {integrity: sha512-p2snDhiLaXe6dahss1LddxqEm+SkuDvV8dnIQG0MWjyHpcMNfXKPE+/Cc0y+PhxJX3A4xGNeFCj5oc0BUh6deg==}
@@ -3067,7 +3067,7 @@ packages:
 
 snapshots:
 
-  '@apidevtools/json-schema-ref-parser@13.0.2':
+  '@apidevtools/json-schema-ref-parser@13.0.3':
     dependencies:
       '@types/json-schema': 7.0.15
       js-yaml: 4.1.0
@@ -3224,7 +3224,7 @@ snapshots:
 
   '@exodus/schemasafe@1.3.0': {}
 
-  '@hono/node-server@1.14.3(hono@4.7.11)':
+  '@hono/node-server@1.14.4(hono@4.7.11)':
     dependencies:
       hono: 4.7.11
 
@@ -3377,7 +3377,7 @@ snapshots:
 
   '@kubb/ui@3.10.12':
     dependencies:
-      '@hono/node-server': 1.14.3(hono@4.7.11)
+      '@hono/node-server': 1.14.4(hono@4.7.11)
       '@hono/zod-openapi': 0.19.2(hono@4.7.11)(zod@3.25.56)
       hono: 4.7.11
       zod: 3.25.56
@@ -3436,7 +3436,7 @@ snapshots:
 
   '@readme/openapi-parser@4.1.0(openapi-types@12.1.3)':
     dependencies:
-      '@apidevtools/json-schema-ref-parser': 13.0.2
+      '@apidevtools/json-schema-ref-parser': 13.0.3
       '@readme/better-ajv-errors': 2.3.2(ajv@8.17.1)
       '@readme/openapi-schemas': 3.1.0
       '@types/json-schema': 7.0.15
@@ -3510,7 +3510,7 @@ snapshots:
 
   '@tokenizer/token@0.3.0': {}
 
-  '@toptiertools/moodle-client@1.0.9(@typescript/native-preview@7.0.0-dev.20250606.1)(typescript@5.8.3)(zod@3.25.56)':
+  '@toptiertools/moodle-client@1.0.10(@typescript/native-preview@7.0.0-dev.20250606.1)(typescript@5.8.3)(zod@3.25.56)':
     dependencies:
       '@total-typescript/ts-reset': 0.6.1
       '@typescript/native-preview': 7.0.0-dev.20250606.1
@@ -4138,7 +4138,7 @@ snapshots:
       is-date-object: 1.1.0
       is-symbol: 1.1.1
 
-  es-toolkit@1.39.1: {}
+  es-toolkit@1.39.3: {}
 
   es5-ext@0.10.64:
     dependencies:
@@ -4207,7 +4207,7 @@ snapshots:
       esprima: 1.0.4
       estraverse: 0.0.4
     optionalDependencies:
-      source-map: 0.6.1
+      source-map: 0.6.0
     optional: true
 
   escodegen@0.0.28:
@@ -4215,7 +4215,7 @@ snapshots:
       esprima: 1.0.4
       estraverse: 1.3.2
     optionalDependencies:
-      source-map: 0.6.1
+      source-map: 0.6.0
     optional: true
 
   escodegen@1.14.3:

@@ -221,6 +221,26 @@ app.get("/docs/swagger/:id", (c) => {
 	const host = new URL(domainUrl).host;
 	doc.host = host;
 
+	// Patch all paths/methods to ensure summary, description, operationId
+	if (doc.paths) {
+		for (const [path, methods] of Object.entries(doc.paths)) {
+			for (const [method, op] of Object.entries(methods)) {
+				if (typeof op !== "object" || op == null) continue;
+
+				// @ts-ignore
+				if (!op.summary)
+					// @ts-ignore
+					op.summary = `Endpoint for ${method.toUpperCase()} ${path}`;
+				// @ts-ignore
+				if (!op.description) op.description = op.summary;
+				// @ts-ignore
+				if (!op.operationId)
+					// @ts-ignore
+					op.operationId = `${method}${path.replace(/\W+/g, "_")}`;
+			}
+		}
+	}
+
 	return c.json(doc, { status: 200 });
 });
 

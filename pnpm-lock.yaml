@@ -12,7 +12,7 @@ importers:
         specifier: ^1.44.1
         version: 1.44.1
       '@toptiertools/moodle-client':
-        specifier: ^1.0.8
+        specifier: ^1.0.10
         version: 1.0.10(@typescript/native-preview@7.0.0-dev.20250606.1)(typescript@5.8.3)(zod@3.25.56)
       '@total-typescript/ts-reset':
         specifier: ^0.6.1
@@ -30,7 +30,7 @@ importers:
         specifier: ^4.7.11
         version: 4.7.11
       zod:
-        specifier: ^3.24.4
+        specifier: ^3.25.56
         version: 3.25.56
     devDependencies:
       '@apiture/openapi-down-convert':

@@ -1,5 +1,8 @@
+pnpm build
+pnpm bundle
 pnpm typecheck
 pnpm test
+git add .
 
 ##############################################
 # Check if package.json is staged for commit #

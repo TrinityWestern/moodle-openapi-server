@@ -1,6 +1,6 @@
 {
 	"name": "moodle-openapi-server",
-	"version": "1.0.8",
+	"version": "1.0.9",
 	"description": "Moddle OpenAPI server",
 	"private": true,
 	"type": "module",
@@ -23,17 +23,15 @@
 		"inspect": "fastmcp inspect src/index.ts",
 		"prepare": "husky"
 	},
-	"peerDependencies": {
-		"@toptiertools/moodle-client": "^1.0.8",
-		"zod": "^3.24.4"
-	},
 	"dependencies": {
 		"@dotenvx/dotenvx": "^1.44.1",
+		"@toptiertools/moodle-client": "^1.0.10",
 		"@total-typescript/ts-reset": "^0.6.1",
 		"concurrently": "^8.2.2",
 		"es-toolkit": "^1.39.3",
 		"fastmcp": "^1.27.7",
-		"hono": "^4.7.11"
+		"hono": "^4.7.11",
+		"zod": "^3.25.56"
 	},
 	"devDependencies": {
 		"@apiture/openapi-down-convert": "^0.14.1",

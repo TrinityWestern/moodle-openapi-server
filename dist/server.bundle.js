@@ -2218,14 +2218,16 @@ var require_lib = __commonJS((exports, module) => {
 var require_package = __commonJS((exports, module) => {
   module.exports = {
     name: "moodle-openapi-server",
-    version: "1.0.11",
+    version: "1.0.12",
     description: "Moddle OpenAPI server",
     private: true,
     type: "module",
     bin: {
       "moodle-openapi-server": "./dist/index.js"
     },
-    files: ["dist"],
+    files: [
+      "dist"
+    ],
     scripts: {
       build: "tsgo && ts-add-js-extension --dir=dist && cp package.json dist/package.json",
       bundle: "bun build src/server.ts --outfile=dist/server.bundle.js",
@@ -2242,39 +2244,34 @@ var require_package = __commonJS((exports, module) => {
       prepare: "husky"
     },
     dependencies: {
-      "@dotenvx/dotenvx": "^1.44.1",
+      "@dotenvx/dotenvx": "^1.48.3",
       "@microsoft/microsoft-graph-client": "^3.0.7",
-      "@toptiertools/moodle-client": "^1.0.12",
+      "@toptiertools/moodle-client": "^1.0.13",
       "@total-typescript/ts-reset": "^0.6.1",
       concurrently: "^8.2.2",
-      "es-toolkit": "^1.39.3",
+      "es-toolkit": "^1.39.7",
       fastmcp: "^1.27.7",
-      hono: "^4.7.11",
-      zod: "^3.25.56"
+      hono: "^4.8.5",
+      zod: "^3.25.76"
     },
     devDependencies: {
-      "@apiture/openapi-down-convert": "^0.14.1",
       "@biomejs/biome": "^1.9.4",
-      "@kubb/cli": "^3.10.15",
-      "@kubb/core": "^3.10.15",
-      "@kubb/plugin-oas": "^3.10.15",
-      "@kubb/plugin-zod": "^3.10.15",
-      "@types/bun": "^1.2.15",
-      "@types/node": "^20.19.0",
+      "@types/bun": "^1.2.19",
+      "@types/node": "^20.19.9",
       "@typescript/native-preview": "7.0.0-dev.20250606.1",
-      esbuild: "^0.25.5",
+      esbuild: "^0.25.8",
       husky: "^9.1.7",
       "openapi-types": "^12.1.3",
       "ts-add-js-extension": "^1.6.6",
-      tsx: "^4.19.4",
+      tsx: "^4.20.3",
       typescript: "^5.8.3",
       yaml: "^2.8.0",
-      zx: "^8.5.5"
+      zx: "^8.7.1"
     }
   };
 });
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/compose.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/compose.js
 var compose = (middleware, onError, onNotFound) => {
   return (context, next) => {
     let index = -1;
@@ -2318,7 +2315,10 @@ var compose = (middleware, onError, onNotFound) => {
   };
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/utils/body.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/request/constants.js
+var GET_MATCH_RESULT = Symbol();
+
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/utils/body.js
 var parseBody = async (request, options = /* @__PURE__ */ Object.create(null)) => {
   const { all = false, dot = false } = options;
   const headers = request instanceof HonoRequest ? request.raw.headers : request.headers;
@@ -2364,7 +2364,11 @@ var handleParsingAllValues = (form, key, value) => {
       form[key] = [form[key], value];
     }
   } else {
-    form[key] = value;
+    if (!key.endsWith("[]")) {
+      form[key] = value;
+    } else {
+      form[key] = [value];
+    }
   }
 };
 var handleParsingNestedValues = (form, key, value) => {
@@ -2382,7 +2386,7 @@ var handleParsingNestedValues = (form, key, value) => {
   });
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/utils/url.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/utils/url.js
 var splitPath = (path) => {
   const paths = path.split("/");
   if (paths[0] === "") {
@@ -2451,7 +2455,7 @@ var tryDecode = (str, decoder) => {
 var tryDecodeURI = (str) => tryDecode(str, decodeURI);
 var getPath = (request) => {
   const url = request.url;
-  const start = url.indexOf("/", 8);
+  const start = url.indexOf("/", url.charCodeAt(9) === 58 ? 13 : 8);
   let i = start;
   for (;i < url.length; i++) {
     const charCode = url.charCodeAt(i);
@@ -2509,7 +2513,7 @@ var _decodeURI = (value) => {
   if (value.indexOf("+") !== -1) {
     value = value.replace(/\+/g, " ");
   }
-  return value.indexOf("%") !== -1 ? decodeURIComponent_(value) : value;
+  return value.indexOf("%") !== -1 ? tryDecode(value, decodeURIComponent_) : value;
 };
 var _getQueryParam = (url, key, multiple) => {
   let encoded;
@@ -2577,7 +2581,7 @@ var getQueryParams = (url, key) => {
 };
 var decodeURIComponent_ = decodeURIComponent;
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/request.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/request.js
 var tryDecodeURIComponent = (str) => tryDecode(str, decodeURIComponent_);
 var HonoRequest = class {
   raw;
@@ -2651,7 +2655,7 @@ var HonoRequest = class {
     return bodyCache[key] = raw[key]();
   };
   json() {
-    return this.#cachedBody("json");
+    return this.#cachedBody("text").then((text) => JSON.parse(text));
   }
   text() {
     return this.#cachedBody("text");
@@ -2677,6 +2681,9 @@ var HonoRequest = class {
   get method() {
     return this.raw.method;
   }
+  get [GET_MATCH_RESULT]() {
+    return this.#matchResult;
+  }
   get matchedRoutes() {
     return this.#matchResult[0].map(([[, route]]) => route);
   }
@@ -2685,7 +2692,7 @@ var HonoRequest = class {
   }
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/utils/html.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/utils/html.js
 var HtmlEscapedCallbackPhase = {
   Stringify: 1,
   BeforeStream: 2,
@@ -2797,13 +2804,13 @@ var resolveCallback = async (str, phase, preserveCallbacks, context, buffer) => 
   }
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/context.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/context.js
 var TEXT_PLAIN = "text/plain; charset=UTF-8";
-var setHeaders = (headers, map = {}) => {
-  for (const key of Object.keys(map)) {
-    headers.set(key, map[key]);
-  }
-  return headers;
+var setDefaultContentType = (contentType, headers) => {
+  return {
+    "Content-Type": contentType,
+    ...headers
+  };
 };
 var Context = class {
   #rawRequest;
@@ -2812,15 +2819,13 @@ var Context = class {
   #var;
   finalized = false;
   error;
-  #status = 200;
+  #status;
   #executionCtx;
-  #headers;
-  #preparedHeaders;
   #res;
-  #isFresh = true;
   #layout;
   #renderer;
   #notFoundHandler;
+  #preparedHeaders;
   #matchResult;
   #path;
   constructor(req, options) {
@@ -2852,11 +2857,11 @@ var Context = class {
     }
   }
   get res() {
-    this.#isFresh = false;
-    return this.#res ||= new Response("404 Not Found", { status: 404 });
+    return this.#res ||= new Response(null, {
+      headers: this.#preparedHeaders ??= new Headers
+    });
   }
   set res(_res) {
-    this.#isFresh = false;
     if (this.#res && _res) {
       _res = new Response(_res.body, _res);
       for (const [k, v] of this.#res.headers.entries()) {
@@ -2890,42 +2895,16 @@ var Context = class {
     if (this.finalized) {
       this.#res = new Response(this.#res.body, this.#res);
     }
+    const headers = this.#res ? this.#res.headers : this.#preparedHeaders ??= new Headers;
     if (value === undefined) {
-      if (this.#headers) {
-        this.#headers.delete(name);
-      } else if (this.#preparedHeaders) {
-        delete this.#preparedHeaders[name.toLocaleLowerCase()];
-      }
-      if (this.finalized) {
-        this.res.headers.delete(name);
-      }
-      return;
-    }
-    if (options?.append) {
-      if (!this.#headers) {
-        this.#isFresh = false;
-        this.#headers = new Headers(this.#preparedHeaders);
-        this.#preparedHeaders = {};
-      }
-      this.#headers.append(name, value);
+      headers.delete(name);
+    } else if (options?.append) {
+      headers.append(name, value);
     } else {
-      if (this.#headers) {
-        this.#headers.set(name, value);
-      } else {
-        this.#preparedHeaders ??= {};
-        this.#preparedHeaders[name.toLowerCase()] = value;
-      }
-    }
-    if (this.finalized) {
-      if (options?.append) {
-        this.res.headers.append(name, value);
-      } else {
-        this.res.headers.set(name, value);
-      }
+      headers.set(name, value);
     }
   };
   status = (status) => {
-    this.#isFresh = false;
     this.#status = status;
   };
   set = (key, value) => {
@@ -2942,94 +2921,46 @@ var Context = class {
     return Object.fromEntries(this.#var);
   }
   #newResponse(data, arg, headers) {
-    if (this.#isFresh && !headers && !arg && this.#status === 200) {
-      return new Response(data, {
-        headers: this.#preparedHeaders
-      });
-    }
-    if (arg && typeof arg !== "number") {
-      const header = new Headers(arg.headers);
-      if (this.#headers) {
-        this.#headers.forEach((v, k) => {
-          if (k === "set-cookie") {
-            header.append(k, v);
-          } else {
-            header.set(k, v);
-          }
-        });
-      }
-      const headers2 = setHeaders(header, this.#preparedHeaders);
-      return new Response(data, {
-        headers: headers2,
-        status: arg.status ?? this.#status
-      });
-    }
-    const status = typeof arg === "number" ? arg : this.#status;
-    this.#preparedHeaders ??= {};
-    this.#headers ??= new Headers;
-    setHeaders(this.#headers, this.#preparedHeaders);
-    if (this.#res) {
-      this.#res.headers.forEach((v, k) => {
-        if (k === "set-cookie") {
-          this.#headers?.append(k, v);
+    const responseHeaders = this.#res ? new Headers(this.#res.headers) : this.#preparedHeaders ?? new Headers;
+    if (typeof arg === "object" && "headers" in arg) {
+      const argHeaders = arg.headers instanceof Headers ? arg.headers : new Headers(arg.headers);
+      for (const [key, value] of argHeaders) {
+        if (key.toLowerCase() === "set-cookie") {
+          responseHeaders.append(key, value);
         } else {
-          this.#headers?.set(k, v);
-        }
-      });
-      setHeaders(this.#headers, this.#preparedHeaders);
-    }
-    headers ??= {};
-    for (const [k, v] of Object.entries(headers)) {
-      if (typeof v === "string") {
-        this.#headers.set(k, v);
-      } else {
-        this.#headers.delete(k);
-        for (const v2 of v) {
-          this.#headers.append(k, v2);
+          responseHeaders.set(key, value);
         }
       }
     }
-    return new Response(data, {
-      status,
-      headers: this.#headers
-    });
+    if (headers) {
+      for (const [k, v] of Object.entries(headers)) {
+        if (typeof v === "string") {
+          responseHeaders.set(k, v);
+        } else {
+          responseHeaders.delete(k);
+          for (const v2 of v) {
+            responseHeaders.append(k, v2);
+          }
+        }
+      }
+    }
+    const status = typeof arg === "number" ? arg : arg?.status ?? this.#status;
+    return new Response(data, { status, headers: responseHeaders });
   }
   newResponse = (...args) => this.#newResponse(...args);
-  body = (data, arg, headers) => {
-    return typeof arg === "number" ? this.#newResponse(data, arg, headers) : this.#newResponse(data, arg);
-  };
+  body = (data, arg, headers) => this.#newResponse(data, arg, headers);
   text = (text, arg, headers) => {
-    if (!this.#preparedHeaders) {
-      if (this.#isFresh && !headers && !arg) {
-        return new Response(text);
-      }
-      this.#preparedHeaders = {};
-    }
-    this.#preparedHeaders["content-type"] = TEXT_PLAIN;
-    if (typeof arg === "number") {
-      return this.#newResponse(text, arg, headers);
-    }
-    return this.#newResponse(text, arg);
+    return !this.#preparedHeaders && !this.#status && !arg && !headers && !this.finalized ? new Response(text) : this.#newResponse(text, arg, setDefaultContentType(TEXT_PLAIN, headers));
   };
   json = (object, arg, headers) => {
-    const body = JSON.stringify(object);
-    this.#preparedHeaders ??= {};
-    this.#preparedHeaders["content-type"] = "application/json";
-    return typeof arg === "number" ? this.#newResponse(body, arg, headers) : this.#newResponse(body, arg);
+    return this.#newResponse(JSON.stringify(object), arg, setDefaultContentType("application/json", headers));
   };
   html = (html, arg, headers) => {
-    this.#preparedHeaders ??= {};
-    this.#preparedHeaders["content-type"] = "text/html; charset=UTF-8";
-    if (typeof html === "object") {
-      return resolveCallback(html, HtmlEscapedCallbackPhase.Stringify, false, {}).then((html2) => {
-        return typeof arg === "number" ? this.#newResponse(html2, arg, headers) : this.#newResponse(html2, arg);
-      });
-    }
-    return typeof arg === "number" ? this.#newResponse(html, arg, headers) : this.#newResponse(html, arg);
+    const res = (html2) => this.#newResponse(html2, arg, setDefaultContentType("text/html; charset=UTF-8", headers));
+    return typeof html === "object" ? resolveCallback(html, HtmlEscapedCallbackPhase.Stringify, false, {}).then(res) : res(html);
   };
   redirect = (location, status) => {
-    this.#headers ??= new Headers;
-    this.#headers.set("Location", String(location));
+    this.header("Location", String(location));
     return this.newResponse(null, status ?? 302);
   };
   notFound = () => {
@@ -3038,7 +2969,7 @@ var Context = class {
   };
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/router.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/router.js
 var METHOD_NAME_ALL = "ALL";
 var METHOD_NAME_ALL_LOWERCASE = "all";
 var METHODS = ["get", "post", "put", "delete", "options", "patch"];
@@ -3046,10 +2977,10 @@ var MESSAGE_MATCHER_IS_ALREADY_BUILT = "Can not add a route since the matcher is
 var UnsupportedPathError = class extends Error {
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/utils/constants.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/utils/constants.js
 var COMPOSED_HANDLER = "__COMPOSED_HANDLER";
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/hono-base.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/hono-base.js
 var notFoundHandler = (c) => {
   return c.text("404 Not Found", 404);
 };
@@ -3205,7 +3136,7 @@ var Hono = class {
   #addRoute(method, path, handler) {
     method = method.toUpperCase();
     path = mergePath(this._basePath, path);
-    const r = { path, method, handler };
+    const r = { basePath: this._basePath, path, method, handler };
     this.router.add(method, path, [handler, r]);
     this.routes.push(r);
   }
@@ -3269,7 +3200,7 @@ var Hono = class {
   };
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/router/reg-exp-router/node.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/router/reg-exp-router/node.js
 var LABEL_REG_EXP_STR = "[^/]+";
 var ONLY_WILDCARD_REG_EXP_STR = ".*";
 var TAIL_WILDCARD_REG_EXP_STR = "(?:|/.*)";
@@ -3370,7 +3301,7 @@ var Node = class {
   }
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/router/reg-exp-router/trie.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/router/reg-exp-router/trie.js
 var Trie = class {
   #context = { varIndex: 0 };
   #root = new Node;
@@ -3426,7 +3357,7 @@ var Trie = class {
   }
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/router/reg-exp-router/router.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/router/reg-exp-router/router.js
 var emptyParam = [];
 var nullMatcher = [/^$/, [], /* @__PURE__ */ Object.create(null)];
 var wildcardRegExpCache = /* @__PURE__ */ Object.create(null);
@@ -3608,7 +3539,7 @@ var RegExpRouter = class {
   }
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/router/smart-router/router.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/router/smart-router/router.js
 var SmartRouter = class {
   name = "SmartRouter";
   #routers = [];
@@ -3663,7 +3594,7 @@ var SmartRouter = class {
   }
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/router/trie-router/node.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/router/trie-router/node.js
 var emptyParams = /* @__PURE__ */ Object.create(null);
 var Node2 = class {
   #methods;
@@ -3691,11 +3622,10 @@ var Node2 = class {
       const nextP = parts[i + 1];
       const pattern = getPattern(p, nextP);
       const key = Array.isArray(pattern) ? pattern[0] : p;
-      if (Object.keys(curNode.#children).includes(key)) {
+      if (key in curNode.#children) {
         curNode = curNode.#children[key];
-        const pattern2 = getPattern(p, nextP);
-        if (pattern2) {
-          possibleKeys.push(pattern2[1]);
+        if (pattern) {
+          possibleKeys.push(pattern[1]);
         }
         continue;
       }
@@ -3706,14 +3636,13 @@ var Node2 = class {
       }
       curNode = curNode.#children[key];
     }
-    const m = /* @__PURE__ */ Object.create(null);
-    const handlerSet = {
-      handler,
-      possibleKeys: possibleKeys.filter((v, i, a) => a.indexOf(v) === i),
-      score: this.#order
-    };
-    m[method] = handlerSet;
-    curNode.#methods.push(m);
+    curNode.#methods.push({
+      [method]: {
+        handler,
+        possibleKeys: possibleKeys.filter((v, i, a) => a.indexOf(v) === i),
+        score: this.#order
+      }
+    });
     return curNode;
   }
   #getHandlerSets(node, method, nodeParams, params) {
@@ -3774,7 +3703,7 @@ var Node2 = class {
             }
             continue;
           }
-          if (part === "") {
+          if (!part) {
             continue;
           }
           const [key, name, matcher] = pattern;
@@ -3819,7 +3748,7 @@ var Node2 = class {
   }
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/router/trie-router/router.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/router/trie-router/router.js
 var TrieRouter = class {
   name = "TrieRouter";
   #node;
@@ -3841,7 +3770,7 @@ var TrieRouter = class {
   }
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/hono.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/hono.js
 var Hono2 = class extends Hono {
   constructor(options = {}) {
     super(options);
@@ -3851,14 +3780,26 @@ var Hono2 = class extends Hono {
   }
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/utils/color.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/utils/color.js
 function getColorEnabled() {
   const { process: process2, Deno } = globalThis;
   const isNoColor = typeof Deno?.noColor === "boolean" ? Deno.noColor : process2 !== undefined ? "NO_COLOR" in process2?.env : false;
   return !isNoColor;
 }
+async function getColorEnabledAsync() {
+  const { navigator } = globalThis;
+  const cfWorkers = "cloudflare:workers";
+  const isNoColor = navigator !== undefined && navigator.userAgent === "Cloudflare-Workers" ? await (async () => {
+    try {
+      return "NO_COLOR" in ((await import(cfWorkers)).env ?? {});
+    } catch {
+      return false;
+    }
+  })() : !getColorEnabled();
+  return !isNoColor;
+}
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/middleware/logger/index.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/middleware/logger/index.js
 var humanize = (times) => {
   const [delimiter, separator] = [",", "."];
   const orderTimes = times.map((v) => v.replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1" + delimiter));
@@ -3868,8 +3809,8 @@ var time = (start) => {
   const delta = Date.now() - start;
   return humanize([delta < 1000 ? delta + "ms" : Math.round(delta / 1000) + "s"]);
 };
-var colorStatus = (status) => {
-  const colorEnabled = getColorEnabled();
+var colorStatus = async (status) => {
+  const colorEnabled = await getColorEnabledAsync();
   if (colorEnabled) {
     switch (status / 100 | 0) {
       case 5:
@@ -3884,22 +3825,22 @@ var colorStatus = (status) => {
   }
   return `${status}`;
 };
-function log(fn, prefix, method, path, status = 0, elapsed) {
-  const out = prefix === "<--" ? `${prefix} ${method} ${path}` : `${prefix} ${method} ${path} ${colorStatus(status)} ${elapsed}`;
+async function log(fn, prefix, method, path, status = 0, elapsed) {
+  const out = prefix === "<--" ? `${prefix} ${method} ${path}` : `${prefix} ${method} ${path} ${await colorStatus(status)} ${elapsed}`;
   fn(out);
 }
 var logger = (fn = console.log) => {
   return async function logger2(c, next) {
     const { method, url } = c.req;
     const path = url.slice(url.indexOf("/", 8));
-    log(fn, "<--", method, path);
+    await log(fn, "<--", method, path);
     const start = Date.now();
     await next();
-    log(fn, "-->", method, path, c.res.status, time(start));
+    await log(fn, "-->", method, path, c.res.status, time(start));
   };
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/middleware/cors/index.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/middleware/cors/index.js
 var cors = (options) => {
   const defaults = {
     origin: "*",
@@ -3924,6 +3865,15 @@ var cors = (options) => {
       return (origin) => optsOrigin.includes(origin) ? origin : null;
     }
   })(opts.origin);
+  const findAllowMethods = ((optsAllowMethods) => {
+    if (typeof optsAllowMethods === "function") {
+      return optsAllowMethods;
+    } else if (Array.isArray(optsAllowMethods)) {
+      return () => optsAllowMethods;
+    } else {
+      return () => [];
+    }
+  })(opts.allowMethods);
   return async function cors2(c, next) {
     function set(key, value) {
       c.res.headers.set(key, value);
@@ -3950,8 +3900,9 @@ var cors = (options) => {
       if (opts.maxAge != null) {
         set("Access-Control-Max-Age", opts.maxAge.toString());
       }
-      if (opts.allowMethods?.length) {
-        set("Access-Control-Allow-Methods", opts.allowMethods.join(","));
+      const allowMethods = findAllowMethods(c.req.header("origin") || "", c);
+      if (allowMethods.length) {
+        set("Access-Control-Allow-Methods", allowMethods.join(","));
       }
       let headers = opts.allowHeaders;
       if (!headers?.length) {
@@ -3976,7 +3927,7 @@ var cors = (options) => {
   };
 };
 
-// node_modules/.pnpm/zod@3.25.56/node_modules/zod/dist/esm/v3/external.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/external.js
 var exports_external = {};
 __export(exports_external, {
   void: () => voidType,
@@ -4088,7 +4039,7 @@ __export(exports_external, {
   BRAND: () => BRAND
 });
 
-// node_modules/.pnpm/zod@3.25.56/node_modules/zod/dist/esm/v3/helpers/util.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/util.js
 var util;
 (function(util2) {
   util2.assertEqual = (_) => {
@@ -4221,7 +4172,7 @@ var getParsedType = (data) => {
   }
 };
 
-// node_modules/.pnpm/zod@3.25.56/node_modules/zod/dist/esm/v3/ZodError.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/ZodError.js
 var ZodIssueCode = util.arrayToEnum([
   "invalid_type",
   "invalid_literal",
@@ -4322,8 +4273,9 @@ class ZodError extends Error {
     const formErrors = [];
     for (const sub of this.issues) {
       if (sub.path.length > 0) {
-        fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
-        fieldErrors[sub.path[0]].push(mapper(sub));
+        const firstEl = sub.path[0];
+        fieldErrors[firstEl] = fieldErrors[firstEl] || [];
+        fieldErrors[firstEl].push(mapper(sub));
       } else {
         formErrors.push(mapper(sub));
       }
@@ -4339,7 +4291,7 @@ ZodError.create = (issues) => {
   return error;
 };
 
-// node_modules/.pnpm/zod@3.25.56/node_modules/zod/dist/esm/v3/locales/en.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/locales/en.js
 var errorMap = (issue, _ctx) => {
   let message;
   switch (issue.code) {
@@ -4401,6 +4353,8 @@ var errorMap = (issue, _ctx) => {
         message = `String must contain ${issue.exact ? "exactly" : issue.inclusive ? `at least` : `over`} ${issue.minimum} character(s)`;
       else if (issue.type === "number")
         message = `Number must be ${issue.exact ? `exactly equal to ` : issue.inclusive ? `greater than or equal to ` : `greater than `}${issue.minimum}`;
+      else if (issue.type === "bigint")
+        message = `Number must be ${issue.exact ? `exactly equal to ` : issue.inclusive ? `greater than or equal to ` : `greater than `}${issue.minimum}`;
       else if (issue.type === "date")
         message = `Date must be ${issue.exact ? `exactly equal to ` : issue.inclusive ? `greater than or equal to ` : `greater than `}${new Date(Number(issue.minimum))}`;
       else
@@ -4440,7 +4394,7 @@ var errorMap = (issue, _ctx) => {
 };
 var en_default = errorMap;
 
-// node_modules/.pnpm/zod@3.25.56/node_modules/zod/dist/esm/v3/errors.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/errors.js
 var overrideErrorMap = en_default;
 function setErrorMap(map) {
   overrideErrorMap = map;
@@ -4448,7 +4402,7 @@ function setErrorMap(map) {
 function getErrorMap() {
   return overrideErrorMap;
 }
-// node_modules/.pnpm/zod@3.25.56/node_modules/zod/dist/esm/v3/helpers/parseUtil.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
   const { data, path, errorMaps, issueData } = params;
   const fullPath = [...path, ...issueData.path || []];
@@ -4554,14 +4508,14 @@ var isAborted = (x) => x.status === "aborted";
 var isDirty = (x) => x.status === "dirty";
 var isValid = (x) => x.status === "valid";
 var isAsync = (x) => typeof Promise !== "undefined" && x instanceof Promise;
-// node_modules/.pnpm/zod@3.25.56/node_modules/zod/dist/esm/v3/helpers/errorUtil.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/helpers/errorUtil.js
 var errorUtil;
 (function(errorUtil2) {
   errorUtil2.errToObj = (message) => typeof message === "string" ? { message } : message || {};
   errorUtil2.toString = (message) => typeof message === "string" ? message : message?.message;
 })(errorUtil || (errorUtil = {}));
 
-// node_modules/.pnpm/zod@3.25.56/node_modules/zod/dist/esm/v3/types.js
+// node_modules/.pnpm/zod@3.25.76/node_modules/zod/v3/types.js
 class ParseInputLazyPath {
   constructor(parent, value, path, key) {
     this._cachedPath = [];
@@ -4961,6 +4915,8 @@ function isValidJWT(jwt, alg) {
     return false;
   try {
     const [header] = jwt.split(".");
+    if (!header)
+      return false;
     const base64 = header.replace(/-/g, "+").replace(/_/g, "/").padEnd(header.length + (4 - header.length % 4) % 4, "=");
     const decoded = JSON.parse(atob(base64));
     if (typeof decoded !== "object" || decoded === null)
@@ -7947,10 +7903,10 @@ var coerce = {
   date: (arg) => ZodDate.create({ ...arg, coerce: true })
 };
 var NEVER = INVALID;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/moodle-webservices.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/moodle-webservices.js
 var moodleWebservices = ["aiplacement_courseassist_summarise_text", "aiplacement_editor_generate_image", "aiplacement_editor_generate_text", "auth_email_get_signup_settings", "auth_email_signup_user", "block_accessreview_get_module_data", "block_accessreview_get_section_data", "block_recentlyaccesseditems_get_recent_items", "block_starredcourses_get_starred_courses", "core_admin_set_block_protection", "core_admin_set_plugin_order", "core_admin_set_plugin_state", "core_ai_get_policy_status", "core_ai_set_action", "core_ai_set_policy_status", "core_auth_confirm_user", "core_auth_is_age_digital_consent_verification_enabled", "core_auth_is_minor", "core_auth_request_password_reset", "core_auth_resend_confirmation_email", "core_backup_get_async_backup_links_backup", "core_backup_get_async_backup_links_restore", "core_backup_get_async_backup_progress", "core_backup_get_copy_progress", "core_backup_submit_copy_form", "core_badges_disable_badges", "core_badges_enable_badges", "core_badges_get_badge", "core_badges_get_user_badge_by_hash", "core_badges_get_user_badges", "core_block_fetch_addable_blocks", "core_block_get_course_blocks", "core_block_get_dashboard_blocks", "core_blog_add_entry", "core_blog_delete_entry", "core_blog_get_access_information", "core_blog_get_entries", "core_blog_prepare_entry_for_edition", "core_blog_update_entry", "core_blog_view_entries", "core_calendar_create_calendar_events", "core_calendar_delete_calendar_events", "core_calendar_delete_subscription", "core_calendar_get_action_events_by_course", "core_calendar_get_action_events_by_courses", "core_calendar_get_action_events_by_timesort", "core_calendar_get_allowed_event_types", "core_calendar_get_calendar_access_information", "core_calendar_get_calendar_day_view", "core_calendar_get_calendar_event_by_id", "core_calendar_get_calendar_events", "core_calendar_get_calendar_export_token", "core_calendar_get_calendar_monthly_view", "core_calendar_get_calendar_upcoming_view", "core_calendar_get_timestamps", "core_calendar_submit_create_update_form", "core_calendar_update_event_start_day", "core_change_editmode", "core_check_get_result_admintree", "core_cohort_add_cohort_members", "core_cohort_create_cohorts", "core_cohort_delete_cohort_members", "core_cohort_delete_cohorts", "core_cohort_get_cohort_members", "core_cohort_get_cohorts", "core_cohort_search_cohorts", "core_cohort_update_cohorts", "core_comment_add_comments", "core_comment_delete_comments", "core_comment_get_comments", "core_competency_add_competency_to_course", "core_competency_add_competency_to_plan", "core_competency_add_competency_to_template", "core_competency_add_related_competency", "core_competency_approve_plan", "core_competency_competency_framework_viewed", "core_competency_competency_viewed", "core_competency_complete_plan", "core_competency_count_competencies", "core_competency_count_competencies_in_course", "core_competency_count_competencies_in_template", "core_competency_count_competency_frameworks", "core_competency_count_course_module_competencies", "core_competency_count_courses_using_competency", "core_competency_count_templates", "core_competency_count_templates_using_competency", "core_competency_create_competency", "core_competency_create_competency_framework", "core_competency_create_plan", "core_competency_create_template", "core_competency_create_user_evidence_competency", "core_competency_delete_competency", "core_competency_delete_competency_framework", "core_competency_delete_evidence", "core_competency_delete_plan", "core_competency_delete_template", "core_competency_delete_user_evidence", "core_competency_delete_user_evidence_competency", "core_competency_duplicate_competency_framework", "core_competency_duplicate_template", "core_competency_get_scale_values", "core_competency_grade_competency", "core_competency_grade_competency_in_course", "core_competency_grade_competency_in_plan", "core_competency_list_competencies", "core_competency_list_competencies_in_template", "core_competency_list_competency_frameworks", "core_competency_list_course_competencies", "core_competency_list_course_module_competencies", "core_competency_list_plan_competencies", "core_competency_list_templates", "core_competency_list_templates_using_competency", "core_competency_list_user_plans", "core_competency_move_down_competency", "core_competency_move_up_competency", "core_competency_plan_cancel_review_request", "core_competency_plan_request_review", "core_competency_plan_start_review", "core_competency_plan_stop_review", "core_competency_read_competency", "core_competency_read_competency_framework", "core_competency_read_plan", "core_competency_read_template", "core_competency_read_user_evidence", "core_competency_remove_competency_from_course", "core_competency_remove_competency_from_plan", "core_competency_remove_competency_from_template", "core_competency_remove_related_competency", "core_competency_reopen_plan", "core_competency_reorder_course_competency", "core_competency_reorder_plan_competency", "core_competency_reorder_template_competency", "core_competency_request_review_of_user_evidence_linked_competencies", "core_competency_search_competencies", "core_competency_set_course_competency_ruleoutcome", "core_competency_set_parent_competency", "core_competency_template_has_related_data", "core_competency_template_viewed", "core_competency_unapprove_plan", "core_competency_unlink_plan_from_template", "core_competency_update_competency", "core_competency_update_competency_framework", "core_competency_update_course_competency_settings", "core_competency_update_plan", "core_competency_update_template", "core_competency_user_competency_cancel_review_request", "core_competency_user_competency_plan_viewed", "core_competency_user_competency_request_review", "core_competency_user_competency_start_review", "core_competency_user_competency_stop_review", "core_competency_user_competency_viewed", "core_competency_user_competency_viewed_in_course", "core_competency_user_competency_viewed_in_plan", "core_completion_get_activities_completion_status", "core_completion_get_course_completion_status", "core_completion_mark_course_self_completed", "core_completion_override_activity_completion_status", "core_completion_update_activity_completion_status_manually", "core_contentbank_copy_content", "core_contentbank_delete_content", "core_contentbank_rename_content", "core_contentbank_set_content_visibility", "core_course_add_content_item_to_user_favourites", "core_course_check_updates", "core_course_create_categories", "core_course_create_courses", "core_course_delete_categories", "core_course_delete_courses", "core_course_delete_modules", "core_course_duplicate_course", "core_course_edit_module", "core_course_edit_section", "core_course_get_activity_chooser_footer", "core_course_get_categories", "core_course_get_contents", "core_course_get_course_content_items", "core_course_get_course_module", "core_course_get_course_module_by_instance", "core_course_get_courses", "core_course_get_courses_by_field", "core_course_get_enrolled_courses_by_timeline_classification", "core_course_get_enrolled_courses_with_action_events_by_timeline_classification", "core_course_get_enrolled_users_by_cmid", "core_course_get_module", "core_course_get_recent_courses", "core_course_get_updates_since", "core_course_get_user_administration_options", "core_course_get_user_navigation_options", "core_course_import_course", "core_course_remove_content_item_from_user_favourites", "core_course_search_courses", "core_course_set_favourite_courses", "core_course_toggle_activity_recommendation", "core_course_update_categories", "core_course_update_courses", "core_course_view_course", "core_courseformat_create_module", "core_courseformat_file_handlers", "core_courseformat_get_state", "core_courseformat_update_course", "core_create_userfeedback_action_record", "core_customfield_create_category", "core_customfield_delete_category", "core_customfield_delete_field", "core_customfield_move_category", "core_customfield_move_field", "core_customfield_reload_template", "core_dynamic_tabs_get_content", "core_enrol_get_course_enrolment_methods", "core_enrol_get_enrolled_users", "core_enrol_get_enrolled_users_with_capability", "core_enrol_get_potential_users", "core_enrol_get_users_courses", "core_enrol_search_users", "core_enrol_submit_user_enrolment_form", "core_enrol_unenrol_user_enrolment", "core_fetch_notifications", "core_files_delete_draft_files", "core_files_get_files", "core_files_get_unused_draft_itemid", "core_files_upload", "core_filters_get_all_states", "core_filters_get_available_in_context", "core_form_dynamic_form", "core_form_get_filetypes_browser_data", "core_get_component_strings", "core_get_fragment", "core_get_string", "core_get_strings", "core_get_user_dates", "core_grades_create_gradecategories", "core_grades_get_enrolled_users_for_search_widget", "core_grades_get_enrolled_users_for_selector", "core_grades_get_feedback", "core_grades_get_gradable_users", "core_grades_get_grade_tree", "core_grades_get_gradeitems", "core_grades_get_groups_for_search_widget", "core_grades_get_groups_for_selector", "core_grades_grader_gradingpanel_point_fetch", "core_grades_grader_gradingpanel_point_store", "core_grades_grader_gradingpanel_scale_fetch", "core_grades_grader_gradingpanel_scale_store", "core_grades_update_grades", "core_grading_get_definitions", "core_grading_get_gradingform_instances", "core_grading_save_definitions", "core_group_add_group_members", "core_group_assign_grouping", "core_group_create_groupings", "core_group_create_groups", "core_group_delete_group_members", "core_group_delete_groupings", "core_group_delete_groups", "core_group_get_activity_allowed_groups", "core_group_get_activity_groupmode", "core_group_get_course_groupings", "core_group_get_course_groups", "core_group_get_course_user_groups", "core_group_get_group_members", "core_group_get_groupings", "core_group_get_groups", "core_group_get_groups_for_selector", "core_group_unassign_grouping", "core_group_update_groupings", "core_group_update_groups", "core_h5p_get_trusted_h5p_file", "core_message_block_user", "core_message_confirm_contact_request", "core_message_create_contact_request", "core_message_data_for_messagearea_search_messages", "core_message_decline_contact_request", "core_message_delete_contacts", "core_message_delete_conversations_by_id", "core_message_delete_message", "core_message_delete_message_for_all_users", "core_message_get_blocked_users", "core_message_get_contact_requests", "core_message_get_conversation", "core_message_get_conversation_between_users", "core_message_get_conversation_counts", "core_message_get_conversation_members", "core_message_get_conversation_messages", "core_message_get_conversations", "core_message_get_member_info", "core_message_get_message_processor", "core_message_get_messages", "core_message_get_received_contact_requests_count", "core_message_get_self_conversation", "core_message_get_unread_conversation_counts", "core_message_get_unread_conversations_count", "core_message_get_unread_notification_count", "core_message_get_user_contacts", "core_message_get_user_message_preferences", "core_message_get_user_notification_preferences", "core_message_mark_all_conversation_messages_as_read", "core_message_mark_all_notifications_as_read", "core_message_mark_message_read", "core_message_mark_notification_read", "core_message_message_processor_config_form", "core_message_message_search_users", "core_message_mute_conversations", "core_message_search_contacts", "core_message_send_instant_messages", "core_message_send_messages_to_conversation", "core_message_set_favourite_conversations", "core_message_unblock_user", "core_message_unmute_conversations", "core_message_unset_favourite_conversations", "core_moodlenet_auth_check", "core_moodlenet_get_share_info_activity", "core_moodlenet_get_shared_course_info", "core_moodlenet_send_activity", "core_moodlenet_send_course", "core_my_view_page", "core_notes_create_notes", "core_notes_delete_notes", "core_notes_get_course_notes", "core_notes_get_notes", "core_notes_update_notes", "core_notes_view_notes", "core_output_load_fontawesome_icon_map", "core_output_load_fontawesome_icon_system_map", "core_output_load_template", "core_output_load_template_with_dependencies", "core_output_poll_stored_progress", "core_payment_get_available_gateways", "core_question_get_random_question_summaries", "core_question_update_flag", "core_rating_add_rating", "core_rating_get_item_ratings", "core_reportbuilder_audiences_delete", "core_reportbuilder_can_view_system_report", "core_reportbuilder_columns_add", "core_reportbuilder_columns_delete", "core_reportbuilder_columns_reorder", "core_reportbuilder_columns_sort_get", "core_reportbuilder_columns_sort_reorder", "core_reportbuilder_columns_sort_toggle", "core_reportbuilder_conditions_add", "core_reportbuilder_conditions_delete", "core_reportbuilder_conditions_reorder", "core_reportbuilder_conditions_reset", "core_reportbuilder_filters_add", "core_reportbuilder_filters_delete", "core_reportbuilder_filters_reorder", "core_reportbuilder_filters_reset", "core_reportbuilder_list_reports", "core_reportbuilder_reports_delete", "core_reportbuilder_reports_get", "core_reportbuilder_retrieve_report", "core_reportbuilder_retrieve_system_report", "core_reportbuilder_schedules_delete", "core_reportbuilder_schedules_send", "core_reportbuilder_schedules_toggle", "core_reportbuilder_set_filters", "core_reportbuilder_view_report", "core_role_assign_roles", "core_role_unassign_roles", "core_search_get_relevant_users", "core_search_get_results", "core_search_get_search_areas_list", "core_search_get_top_results", "core_search_view_results", "core_session_time_remaining", "core_session_touch", "core_sms_set_gateway_status", "core_table_get_dynamic_table_content", "core_tag_get_tag_areas", "core_tag_get_tag_cloud", "core_tag_get_tag_collections", "core_tag_get_tagindex", "core_tag_get_tagindex_per_area", "core_tag_get_tags", "core_tag_update_tags", "core_update_inplace_editable", "core_user_add_user_device", "core_user_add_user_private_files", "core_user_agree_site_policy", "core_user_create_users", "core_user_delete_users", "core_user_get_course_user_profiles", "core_user_get_private_files_info", "core_user_get_user_preferences", "core_user_get_users", "core_user_get_users_by_field", "core_user_prepare_private_files_for_edition", "core_user_remove_user_device", "core_user_search_identity", "core_user_set_user_preferences", "core_user_update_picture", "core_user_update_private_files", "core_user_update_user_device_public_key", "core_user_update_user_preferences", "core_user_update_users", "core_user_view_user_list", "core_user_view_user_profile", "core_webservice_get_site_info", "core_xapi_delete_state", "core_xapi_delete_states", "core_xapi_get_state", "core_xapi_get_states", "core_xapi_post_state", "core_xapi_statement_post", "customfield_number_recalculate_value", "enrol_guest_get_instance_info", "enrol_guest_validate_password", "enrol_manual_enrol_users", "enrol_manual_unenrol_users", "enrol_meta_add_instances", "enrol_meta_delete_instances", "enrol_self_enrol_user", "enrol_self_get_instance_info", "gradereport_grader_get_users_in_report", "gradereport_overview_get_course_grades", "gradereport_overview_view_grade_report", "gradereport_singleview_get_grade_items_for_search_widget", "gradereport_user_get_access_information", "gradereport_user_get_grade_items", "gradereport_user_get_grades_table", "gradereport_user_view_grade_report", "gradingform_guide_grader_gradingpanel_fetch", "gradingform_guide_grader_gradingpanel_store", "gradingform_rubric_grader_gradingpanel_fetch", "gradingform_rubric_grader_gradingpanel_store", "media_videojs_get_language", "message_airnotifier_are_notification_preferences_configured", "message_airnotifier_enable_device", "message_airnotifier_get_user_devices", "message_airnotifier_is_system_configured", "message_popup_get_popup_notifications", "message_popup_get_unread_popup_notification_count", "mod_assign_copy_previous_attempt", "mod_assign_get_assignments", "mod_assign_get_grades", "mod_assign_get_participant", "mod_assign_get_submission_status", "mod_assign_get_submissions", "mod_assign_get_user_flags", "mod_assign_get_user_mappings", "mod_assign_list_participants", "mod_assign_lock_submissions", "mod_assign_remove_submission", "mod_assign_reveal_identities", "mod_assign_revert_submissions_to_draft", "mod_assign_save_grade", "mod_assign_save_grades", "mod_assign_save_submission", "mod_assign_save_user_extensions", "mod_assign_set_user_flags", "mod_assign_start_submission", "mod_assign_submit_for_grading", "mod_assign_submit_grading_form", "mod_assign_unlock_submissions", "mod_assign_view_assign", "mod_assign_view_grading_table", "mod_assign_view_submission_status", "mod_bigbluebuttonbn_can_join", "mod_bigbluebuttonbn_completion_validate", "mod_bigbluebuttonbn_end_meeting", "mod_bigbluebuttonbn_get_bigbluebuttonbns_by_courses", "mod_bigbluebuttonbn_get_join_url", "mod_bigbluebuttonbn_get_recordings", "mod_bigbluebuttonbn_get_recordings_to_import", "mod_bigbluebuttonbn_meeting_info", "mod_bigbluebuttonbn_update_recording", "mod_bigbluebuttonbn_view_bigbluebuttonbn", "mod_book_get_books_by_courses", "mod_book_view_book", "mod_chat_get_chat_latest_messages", "mod_chat_get_chat_users", "mod_chat_get_chats_by_courses", "mod_chat_get_session_messages", "mod_chat_get_sessions", "mod_chat_login_user", "mod_chat_send_chat_message", "mod_chat_view_chat", "mod_chat_view_sessions", "mod_choice_delete_choice_responses", "mod_choice_get_choice_options", "mod_choice_get_choice_results", "mod_choice_get_choices_by_courses", "mod_choice_submit_choice_response", "mod_choice_view_choice", "mod_data_add_entry", "mod_data_approve_entry", "mod_data_delete_entry", "mod_data_delete_saved_preset", "mod_data_get_data_access_information", "mod_data_get_databases_by_courses", "mod_data_get_entries", "mod_data_get_entry", "mod_data_get_fields", "mod_data_get_mapping_information", "mod_data_search_entries", "mod_data_update_entry", "mod_data_view_database", "mod_feedback_get_analysis", "mod_feedback_get_current_completed_tmp", "mod_feedback_get_feedback_access_information", "mod_feedback_get_feedbacks_by_courses", "mod_feedback_get_finished_responses", "mod_feedback_get_items", "mod_feedback_get_last_completed", "mod_feedback_get_non_respondents", "mod_feedback_get_page_items", "mod_feedback_get_responses_analysis", "mod_feedback_get_unfinished_responses", "mod_feedback_launch_feedback", "mod_feedback_process_page", "mod_feedback_view_feedback", "mod_folder_get_folders_by_courses", "mod_folder_view_folder", "mod_forum_add_discussion", "mod_forum_add_discussion_post", "mod_forum_can_add_discussion", "mod_forum_delete_post", "mod_forum_get_discussion_post", "mod_forum_get_discussion_posts", "mod_forum_get_discussion_posts_by_userid", "mod_forum_get_forum_access_information", "mod_forum_get_forum_discussions", "mod_forum_get_forums_by_courses", "mod_forum_prepare_draft_area_for_post", "mod_forum_set_lock_state", "mod_forum_set_pin_state", "mod_forum_set_subscription_state", "mod_forum_toggle_favourite_state", "mod_forum_update_discussion_post", "mod_forum_view_forum", "mod_forum_view_forum_discussion", "mod_glossary_add_entry", "mod_glossary_delete_entry", "mod_glossary_get_authors", "mod_glossary_get_categories", "mod_glossary_get_entries_by_author", "mod_glossary_get_entries_by_author_id", "mod_glossary_get_entries_by_category", "mod_glossary_get_entries_by_date", "mod_glossary_get_entries_by_letter", "mod_glossary_get_entries_by_search", "mod_glossary_get_entries_by_term", "mod_glossary_get_entries_to_approve", "mod_glossary_get_entry_by_id", "mod_glossary_get_glossaries_by_courses", "mod_glossary_prepare_entry_for_edition", "mod_glossary_update_entry", "mod_glossary_view_entry", "mod_glossary_view_glossary", "mod_h5pactivity_get_attempts", "mod_h5pactivity_get_h5pactivities_by_courses", "mod_h5pactivity_get_h5pactivity_access_information", "mod_h5pactivity_get_results", "mod_h5pactivity_get_user_attempts", "mod_h5pactivity_log_report_viewed", "mod_h5pactivity_view_h5pactivity", "mod_imscp_get_imscps_by_courses", "mod_imscp_view_imscp", "mod_label_get_labels_by_courses", "mod_lesson_finish_attempt", "mod_lesson_get_attempts_overview", "mod_lesson_get_content_pages_viewed", "mod_lesson_get_lesson", "mod_lesson_get_lesson_access_information", "mod_lesson_get_lessons_by_courses", "mod_lesson_get_page_data", "mod_lesson_get_pages", "mod_lesson_get_pages_possible_jumps", "mod_lesson_get_questions_attempts", "mod_lesson_get_user_attempt", "mod_lesson_get_user_attempt_grade", "mod_lesson_get_user_grade", "mod_lesson_get_user_timers", "mod_lesson_launch_attempt", "mod_lesson_process_page", "mod_lesson_view_lesson", "mod_lti_create_tool_proxy", "mod_lti_create_tool_type", "mod_lti_delete_course_tool_type", "mod_lti_delete_tool_proxy", "mod_lti_delete_tool_type", "mod_lti_get_ltis_by_courses", "mod_lti_get_tool_launch_data", "mod_lti_get_tool_proxies", "mod_lti_get_tool_proxy_registration_request", "mod_lti_get_tool_types", "mod_lti_get_tool_types_and_proxies", "mod_lti_get_tool_types_and_proxies_count", "mod_lti_is_cartridge", "mod_lti_toggle_showinactivitychooser", "mod_lti_update_tool_type", "mod_lti_view_lti", "mod_page_get_pages_by_courses", "mod_page_view_page", "mod_quiz_add_random_questions", "mod_quiz_create_grade_item_per_section", "mod_quiz_create_grade_items", "mod_quiz_delete_grade_items", "mod_quiz_delete_overrides", "mod_quiz_get_attempt_access_information", "mod_quiz_get_attempt_data", "mod_quiz_get_attempt_review", "mod_quiz_get_attempt_summary", "mod_quiz_get_combined_review_options", "mod_quiz_get_edit_grading_page_data", "mod_quiz_get_overrides", "mod_quiz_get_quiz_access_information", "mod_quiz_get_quiz_feedback_for_grade", "mod_quiz_get_quiz_required_qtypes", "mod_quiz_get_quizzes_by_courses", "mod_quiz_get_reopen_attempt_confirmation", "mod_quiz_get_user_attempts", "mod_quiz_get_user_best_grade", "mod_quiz_process_attempt", "mod_quiz_reopen_attempt", "mod_quiz_save_attempt", "mod_quiz_save_overrides", "mod_quiz_set_question_version", "mod_quiz_start_attempt", "mod_quiz_update_filter_condition", "mod_quiz_update_grade_items", "mod_quiz_update_slots", "mod_quiz_view_attempt", "mod_quiz_view_attempt_review", "mod_quiz_view_attempt_summary", "mod_quiz_view_quiz", "mod_resource_get_resources_by_courses", "mod_resource_view_resource", "mod_scorm_get_scorm_access_information", "mod_scorm_get_scorm_attempt_count", "mod_scorm_get_scorm_sco_tracks", "mod_scorm_get_scorm_scoes", "mod_scorm_get_scorm_user_data", "mod_scorm_get_scorms_by_courses", "mod_scorm_insert_scorm_tracks", "mod_scorm_launch_sco", "mod_scorm_view_scorm", "mod_survey_get_questions", "mod_survey_get_surveys_by_courses", "mod_survey_submit_answers", "mod_survey_view_survey", "mod_url_get_urls_by_courses", "mod_url_view_url", "mod_wiki_edit_page", "mod_wiki_get_page_contents", "mod_wiki_get_page_for_editing", "mod_wiki_get_subwiki_files", "mod_wiki_get_subwiki_pages", "mod_wiki_get_subwikis", "mod_wiki_get_wikis_by_courses", "mod_wiki_new_page", "mod_wiki_view_page", "mod_wiki_view_wiki", "mod_workshop_add_submission", "mod_workshop_delete_submission", "mod_workshop_evaluate_assessment", "mod_workshop_evaluate_submission", "mod_workshop_get_assessment", "mod_workshop_get_assessment_form_definition", "mod_workshop_get_grades", "mod_workshop_get_grades_report", "mod_workshop_get_reviewer_assessments", "mod_workshop_get_submission", "mod_workshop_get_submission_assessments", "mod_workshop_get_submissions", "mod_workshop_get_user_plan", "mod_workshop_get_workshop_access_information", "mod_workshop_get_workshops_by_courses", "mod_workshop_update_assessment", "mod_workshop_update_submission", "mod_workshop_view_submission", "mod_workshop_view_workshop", "paygw_paypal_create_transaction_complete", "paygw_paypal_get_config_for_js", "qbank_columnsortorder_set_column_size", "qbank_columnsortorder_set_columnbank_order", "qbank_columnsortorder_set_hidden_columns", "qbank_editquestion_set_status", "qbank_managecategories_move_category", "qbank_tagquestion_submit_tags_form", "qbank_viewquestiontext_set_question_text_format", "quizaccess_seb_validate_quiz_keys", "report_competency_data_for_report", "report_insights_action_executed", "report_insights_set_fixed_prediction", "report_insights_set_notuseful_prediction", "tiny_autosave_reset_session", "tiny_autosave_resume_session", "tiny_autosave_update_session", "tiny_equation_filter", "tiny_premium_get_api_key", "tool_admin_presets_delete_preset", "tool_analytics_potential_contexts", "tool_behat_get_entity_generator", "tool_dataprivacy_approve_data_request", "tool_dataprivacy_bulk_approve_data_requests", "tool_dataprivacy_bulk_deny_data_requests", "tool_dataprivacy_cancel_data_request", "tool_dataprivacy_confirm_contexts_for_deletion", "tool_dataprivacy_contact_dpo", "tool_dataprivacy_create_category_form", "tool_dataprivacy_create_data_request", "tool_dataprivacy_create_purpose_form", "tool_dataprivacy_delete_category", "tool_dataprivacy_delete_purpose", "tool_dataprivacy_deny_data_request", "tool_dataprivacy_get_access_information", "tool_dataprivacy_get_activity_options", "tool_dataprivacy_get_category_options", "tool_dataprivacy_get_data_request", "tool_dataprivacy_get_data_requests", "tool_dataprivacy_get_purpose_options", "tool_dataprivacy_get_users", "tool_dataprivacy_mark_complete", "tool_dataprivacy_set_context_defaults", "tool_dataprivacy_set_context_form", "tool_dataprivacy_set_contextlevel_form", "tool_dataprivacy_submit_selected_courses_form", "tool_dataprivacy_tree_extra_branches", "tool_lp_data_for_competencies_manage_page", "tool_lp_data_for_competency_frameworks_manage_page", "tool_lp_data_for_competency_summary", "tool_lp_data_for_course_competencies_page", "tool_lp_data_for_plan_page", "tool_lp_data_for_plans_page", "tool_lp_data_for_related_competencies_section", "tool_lp_data_for_template_competencies_page", "tool_lp_data_for_templates_manage_page", "tool_lp_data_for_user_competency_summary", "tool_lp_data_for_user_competency_summary_in_course", "tool_lp_data_for_user_competency_summary_in_plan", "tool_lp_data_for_user_evidence_list_page", "tool_lp_data_for_user_evidence_page", "tool_lp_list_courses_using_competency", "tool_lp_search_cohorts", "tool_lp_search_users", "tool_mobile_call_external_functions", "tool_mobile_get_autologin_key", "tool_mobile_get_config", "tool_mobile_get_content", "tool_mobile_get_plugins_supporting_mobile", "tool_mobile_get_public_config", "tool_mobile_get_tokens_for_qr_login", "tool_mobile_validate_subscription_key", "tool_moodlenet_search_courses", "tool_moodlenet_verify_webfinger", "tool_policy_get_policy_version", "tool_policy_get_user_acceptances", "tool_policy_set_acceptances_status", "tool_policy_submit_accept_on_behalf", "tool_templatelibrary_list_templates", "tool_templatelibrary_load_canonical_template", "tool_usertours_complete_tour", "tool_usertours_fetch_and_start_tour", "tool_usertours_reset_tour", "tool_usertours_step_shown", "tool_xmldb_invoke_move_action"];
 
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/index.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/index.js
 var exports_gen = {};
 __export(exports_gen, {
   toolXmldbInvokeMoveActionMutationResponseSchema: () => toolXmldbInvokeMoveActionMutationResponseSchema,
@@ -11041,7 +10997,7 @@ __export(exports_gen, {
   aiplacementCourseassistSummariseText200Schema: () => aiplacementCourseassistSummariseText200Schema
 });
 
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/types/CoreBlogAddEntry.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/types/CoreBlogAddEntry.js
 var optionsNameEnum = {
   inlineattachmentsid: "inlineattachmentsid"
 };
@@ -11060,7 +11016,7 @@ var optionsNameEnum5 = {
 var optionsNameEnum6 = {
   tags: "tags"
 };
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/types/CoreBlogUpdateEntry.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/types/CoreBlogUpdateEntry.js
 var optionsNameEnum7 = {
   inlineattachmentsid: "inlineattachmentsid"
 };
@@ -11079,7 +11035,7 @@ var optionsNameEnum11 = {
 var optionsNameEnum12 = {
   tags: "tags"
 };
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/types/CoreCourseDuplicateCourse.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/types/CoreCourseDuplicateCourse.js
 var optionsNameEnum13 = {
   activities: "activities"
 };
@@ -11110,7 +11066,7 @@ var optionsNameEnum21 = {
 var optionsNameEnum22 = {
   grade_histories: "grade_histories"
 };
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/types/CoreCourseGetCategories.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/types/CoreCourseGetCategories.js
 var criteriaNameEnum = {
   id: "id"
 };
@@ -11132,7 +11088,7 @@ var criteriaNameEnum6 = {
 var criteriaNameEnum7 = {
   theme: "theme"
 };
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/types/CoreCourseGetContents.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/types/CoreCourseGetContents.js
 var optionsNameEnum23 = {
   excludemodules: "excludemodules"
 };
@@ -11157,7 +11113,7 @@ var optionsNameEnum29 = {
 var optionsNameEnum30 = {
   modid: "modid"
 };
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/types/CoreCourseImportCourse.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/types/CoreCourseImportCourse.js
 var optionsNameEnum31 = {
   activities: "activities"
 };
@@ -11167,7 +11123,7 @@ var optionsNameEnum32 = {
 var optionsNameEnum33 = {
   filters: "filters"
 };
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/types/CoreUserGetUsers.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/types/CoreUserGetUsers.js
 var criteriaNameEnum8 = {
   id: "id"
 };
@@ -11189,7 +11145,7 @@ var criteriaNameEnum13 = {
 var criteriaNameEnum14 = {
   auth: "auth"
 };
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/types/ModForumAddDiscussion.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/types/ModForumAddDiscussion.js
 var optionsNameEnum34 = {
   discussionsubscribe: "discussionsubscribe"
 };
@@ -11202,7 +11158,7 @@ var optionsNameEnum36 = {
 var optionsNameEnum37 = {
   attachmentsid: "attachmentsid"
 };
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/types/ModForumAddDiscussionPost.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/types/ModForumAddDiscussionPost.js
 var optionsNameEnum38 = {
   discussionsubscribe: "discussionsubscribe"
 };
@@ -11218,7 +11174,7 @@ var optionsNameEnum41 = {
 var optionsNameEnum42 = {
   topreferredformat: "topreferredformat"
 };
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/types/ModForumUpdateDiscussionPost.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/types/ModForumUpdateDiscussionPost.js
 var optionsNameEnum43 = {
   pinned: "pinned"
 };
@@ -11231,7 +11187,7 @@ var optionsNameEnum45 = {
 var optionsNameEnum46 = {
   attachmentsid: "attachmentsid"
 };
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/types/ModGlossaryAddEntry.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/types/ModGlossaryAddEntry.js
 var optionsNameEnum47 = {
   inlineattachmentsid: "inlineattachmentsid"
 };
@@ -11253,7 +11209,7 @@ var optionsNameEnum52 = {
 var optionsNameEnum53 = {
   fullmatch: "fullmatch"
 };
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/types/ModGlossaryUpdateEntry.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/types/ModGlossaryUpdateEntry.js
 var optionsNameEnum54 = {
   inlineattachmentsid: "inlineattachmentsid"
 };
@@ -11275,7 +11231,7 @@ var optionsNameEnum59 = {
 var optionsNameEnum60 = {
   fullmatch: "fullmatch"
 };
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/errorResponseSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/errorResponseSchema.js
 var errorResponseSchema = exports_external.object({
   debuginfo: exports_external.coerce.string().describe("Debug information").optional(),
   errorcode: exports_external.coerce.string().describe("Error code").optional(),
@@ -11283,7 +11239,7 @@ var errorResponseSchema = exports_external.object({
   message: exports_external.coerce.string().describe("Error message").optional()
 });
 
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/aiplacementCourseassistSummariseTextSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/aiplacementCourseassistSummariseTextSchema.js
 var aiplacementCourseassistSummariseText200Schema = exports_external.object({
   success: exports_external.boolean().describe("Was the request successful"),
   timecreated: exports_external.coerce.number().int().describe("The time the request was created"),
@@ -11299,7 +11255,7 @@ var aiplacementCourseassistSummariseTextMutationRequestSchema = exports_external
   prompttext: exports_external.coerce.string().describe("The prompt text for the AI service")
 });
 var aiplacementCourseassistSummariseTextMutationResponseSchema = aiplacementCourseassistSummariseText200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/aiplacementEditorGenerateImageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/aiplacementEditorGenerateImageSchema.js
 var aiplacementEditorGenerateImage200Schema = exports_external.object({
   success: exports_external.boolean().describe("Was the request successful"),
   revisedprompt: exports_external.coerce.string().default("").describe("Revised prompt generated by the AI").nullable().nullish(),
@@ -11317,7 +11273,7 @@ var aiplacementEditorGenerateImageMutationRequestSchema = exports_external.objec
   style: exports_external.coerce.string().default("natural").describe("The style of the image").nullable().nullish()
 });
 var aiplacementEditorGenerateImageMutationResponseSchema = aiplacementEditorGenerateImage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/aiplacementEditorGenerateTextSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/aiplacementEditorGenerateTextSchema.js
 var aiplacementEditorGenerateText200Schema = exports_external.object({
   success: exports_external.boolean().describe("Was the request successful"),
   timecreated: exports_external.coerce.number().int().describe("The time the request was created"),
@@ -11333,7 +11289,7 @@ var aiplacementEditorGenerateTextMutationRequestSchema = exports_external.object
   prompttext: exports_external.coerce.string().describe("The prompt text for the AI service")
 });
 var aiplacementEditorGenerateTextMutationResponseSchema = aiplacementEditorGenerateText200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/authEmailGetSignupSettingsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/authEmailGetSignupSettingsSchema.js
 var authEmailGetSignupSettings200Schema = exports_external.object({
   namefields: exports_external.array(exports_external.coerce.string().describe("The order of the name fields")),
   passwordpolicy: exports_external.coerce.string().describe("Password policy").nullable().nullish(),
@@ -11378,7 +11334,7 @@ var authEmailGetSignupSettings200Schema = exports_external.object({
 });
 var authEmailGetSignupSettings400Schema = errorResponseSchema;
 var authEmailGetSignupSettingsMutationResponseSchema = authEmailGetSignupSettings200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/authEmailSignupUserSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/authEmailSignupUserSchema.js
 var authEmailSignupUser200Schema = exports_external.object({
   success: exports_external.boolean().describe("True if the user was created false otherwise"),
   warnings: exports_external.array(exports_external.object({
@@ -11407,7 +11363,7 @@ var authEmailSignupUserMutationRequestSchema = exports_external.object({
   redirect: exports_external.coerce.string().default("").describe("Redirect the user to this site url after confirmation.").nullable().nullish()
 });
 var authEmailSignupUserMutationResponseSchema = authEmailSignupUser200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/blockAccessreviewGetModuleDataSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/blockAccessreviewGetModuleDataSchema.js
 var blockAccessreviewGetModuleData200Schema = exports_external.array(exports_external.object({
   cmid: exports_external.coerce.number().int().describe("ID"),
   numerrors: exports_external.coerce.number().int().describe("Number of errors."),
@@ -11418,7 +11374,7 @@ var blockAccessreviewGetModuleDataMutationRequestSchema = exports_external.objec
   courseid: exports_external.coerce.number().int().describe("The course id to obtain results for.")
 });
 var blockAccessreviewGetModuleDataMutationResponseSchema = blockAccessreviewGetModuleData200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/blockAccessreviewGetSectionDataSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/blockAccessreviewGetSectionDataSchema.js
 var blockAccessreviewGetSectionData200Schema = exports_external.array(exports_external.object({
   section: exports_external.coerce.number().int().describe("ID"),
   numerrors: exports_external.coerce.number().int().describe("Number of errors."),
@@ -11429,7 +11385,7 @@ var blockAccessreviewGetSectionDataMutationRequestSchema = exports_external.obje
   courseid: exports_external.coerce.number().int().describe("The course id to obtain results for.")
 });
 var blockAccessreviewGetSectionDataMutationResponseSchema = blockAccessreviewGetSectionData200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/blockRecentlyaccesseditemsGetRecentItemsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/blockRecentlyaccesseditemsGetRecentItemsSchema.js
 var blockRecentlyaccesseditemsGetRecentItems200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("id"),
   courseid: exports_external.coerce.number().int().describe("courseid"),
@@ -11450,7 +11406,7 @@ var blockRecentlyaccesseditemsGetRecentItemsMutationRequestSchema = exports_exte
   limit: exports_external.coerce.number().int().default(0).describe("result set limit").nullable().nullish()
 });
 var blockRecentlyaccesseditemsGetRecentItemsMutationResponseSchema = blockRecentlyaccesseditemsGetRecentItems200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/blockStarredcoursesGetStarredCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/blockStarredcoursesGetStarredCoursesSchema.js
 var blockStarredcoursesGetStarredCourses200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("id"),
   fullname: exports_external.coerce.string().describe("fullname"),
@@ -11481,7 +11437,7 @@ var blockStarredcoursesGetStarredCoursesMutationRequestSchema = exports_external
   offset: exports_external.coerce.number().int().default(0).describe("Offset").nullable().nullish()
 });
 var blockStarredcoursesGetStarredCoursesMutationResponseSchema = blockStarredcoursesGetStarredCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAdminSetBlockProtectionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAdminSetBlockProtectionSchema.js
 var coreAdminSetBlockProtection200Schema = exports_external.object({});
 var coreAdminSetBlockProtection400Schema = errorResponseSchema;
 var coreAdminSetBlockProtectionMutationRequestSchema = exports_external.object({
@@ -11489,7 +11445,7 @@ var coreAdminSetBlockProtectionMutationRequestSchema = exports_external.object({
   state: exports_external.coerce.number().int().describe("The target state")
 });
 var coreAdminSetBlockProtectionMutationResponseSchema = coreAdminSetBlockProtection200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAdminSetPluginOrderSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAdminSetPluginOrderSchema.js
 var coreAdminSetPluginOrder200Schema = exports_external.object({});
 var coreAdminSetPluginOrder400Schema = errorResponseSchema;
 var coreAdminSetPluginOrderMutationRequestSchema = exports_external.object({
@@ -11497,7 +11453,7 @@ var coreAdminSetPluginOrderMutationRequestSchema = exports_external.object({
   direction: exports_external.coerce.number().int().describe("The direction to move")
 });
 var coreAdminSetPluginOrderMutationResponseSchema = coreAdminSetPluginOrder200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAdminSetPluginStateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAdminSetPluginStateSchema.js
 var coreAdminSetPluginState200Schema = exports_external.object({});
 var coreAdminSetPluginState400Schema = errorResponseSchema;
 var coreAdminSetPluginStateMutationRequestSchema = exports_external.object({
@@ -11505,7 +11461,7 @@ var coreAdminSetPluginStateMutationRequestSchema = exports_external.object({
   state: exports_external.coerce.number().int().describe("The target state")
 });
 var coreAdminSetPluginStateMutationResponseSchema = coreAdminSetPluginState200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAiGetPolicyStatusSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAiGetPolicyStatusSchema.js
 var coreAiGetPolicyStatus200Schema = exports_external.object({
   status: exports_external.boolean().describe("True if the policy was accepted, false otherwise.")
 });
@@ -11514,7 +11470,7 @@ var coreAiGetPolicyStatusMutationRequestSchema = exports_external.object({
   userid: exports_external.coerce.number().int().describe("The user ID")
 });
 var coreAiGetPolicyStatusMutationResponseSchema = coreAiGetPolicyStatus200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAiSetActionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAiSetActionSchema.js
 var coreAiSetAction200Schema = exports_external.object({});
 var coreAiSetAction400Schema = errorResponseSchema;
 var coreAiSetActionMutationRequestSchema = exports_external.object({
@@ -11522,7 +11478,7 @@ var coreAiSetActionMutationRequestSchema = exports_external.object({
   state: exports_external.coerce.number().int().describe("The target state")
 });
 var coreAiSetActionMutationResponseSchema = coreAiSetAction200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAiSetPolicyStatusSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAiSetPolicyStatusSchema.js
 var coreAiSetPolicyStatus200Schema = exports_external.object({
   success: exports_external.boolean().describe("Was the request successful")
 });
@@ -11531,7 +11487,7 @@ var coreAiSetPolicyStatusMutationRequestSchema = exports_external.object({
   contextid: exports_external.coerce.number().int().describe("The context ID")
 });
 var coreAiSetPolicyStatusMutationResponseSchema = coreAiSetPolicyStatus200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAuthConfirmUserSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAuthConfirmUserSchema.js
 var coreAuthConfirmUser200Schema = exports_external.object({
   success: exports_external.boolean().describe("True if the user was confirmed, false if he was already confirmed"),
   warnings: exports_external.array(exports_external.object({
@@ -11547,14 +11503,14 @@ var coreAuthConfirmUserMutationRequestSchema = exports_external.object({
   secret: exports_external.coerce.string().describe("Confirmation secret")
 });
 var coreAuthConfirmUserMutationResponseSchema = coreAuthConfirmUser200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAuthIsAgeDigitalConsentVerificationEnabledSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAuthIsAgeDigitalConsentVerificationEnabledSchema.js
 var coreAuthIsAgeDigitalConsentVerificationEnabled200Schema = exports_external.object({
   status: exports_external.boolean().describe(`True if digital consent verification is enabled,
                     false otherwise.`)
 });
 var coreAuthIsAgeDigitalConsentVerificationEnabled400Schema = errorResponseSchema;
 var coreAuthIsAgeDigitalConsentVerificationEnabledMutationResponseSchema = coreAuthIsAgeDigitalConsentVerificationEnabled200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAuthIsMinorSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAuthIsMinorSchema.js
 var coreAuthIsMinor200Schema = exports_external.object({
   status: exports_external.boolean().describe(`True if the user is considered to be a digital minor,
                     false if not`)
@@ -11565,7 +11521,7 @@ var coreAuthIsMinorMutationRequestSchema = exports_external.object({
   country: exports_external.coerce.string().describe("Country of residence")
 });
 var coreAuthIsMinorMutationResponseSchema = coreAuthIsMinor200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAuthRequestPasswordResetSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAuthRequestPasswordResetSchema.js
 var coreAuthRequestPasswordReset200Schema = exports_external.object({
   status: exports_external.coerce.string().describe(`The returned status of the process:
                     dataerror: Error in the sent data (username or email). More information in warnings field.
@@ -11590,7 +11546,7 @@ var coreAuthRequestPasswordResetMutationRequestSchema = exports_external.object(
   email: exports_external.coerce.string().default("").describe("User email").nullable().nullish()
 });
 var coreAuthRequestPasswordResetMutationResponseSchema = coreAuthRequestPasswordReset200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAuthResendConfirmationEmailSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreAuthResendConfirmationEmailSchema.js
 var coreAuthResendConfirmationEmail200Schema = exports_external.object({
   status: exports_external.boolean().describe("True if the confirmation email was sent, false otherwise."),
   warnings: exports_external.array(exports_external.object({
@@ -11607,7 +11563,7 @@ var coreAuthResendConfirmationEmailMutationRequestSchema = exports_external.obje
   redirect: exports_external.coerce.string().default("").describe("Redirect the user to this site url after confirmation.").nullable().nullish()
 });
 var coreAuthResendConfirmationEmailMutationResponseSchema = coreAuthResendConfirmationEmail200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBackupGetAsyncBackupLinksBackupSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBackupGetAsyncBackupLinksBackupSchema.js
 var coreBackupGetAsyncBackupLinksBackup200Schema = exports_external.object({
   filesize: exports_external.coerce.string().describe("Backup file size"),
   fileurl: exports_external.coerce.string().describe("Backup file URL"),
@@ -11620,7 +11576,7 @@ var coreBackupGetAsyncBackupLinksBackupMutationRequestSchema = exports_external.
   backupid: exports_external.coerce.string().describe("Backup id")
 });
 var coreBackupGetAsyncBackupLinksBackupMutationResponseSchema = coreBackupGetAsyncBackupLinksBackup200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBackupGetAsyncBackupLinksRestoreSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBackupGetAsyncBackupLinksRestoreSchema.js
 var coreBackupGetAsyncBackupLinksRestore200Schema = exports_external.object({
   restoreurl: exports_external.coerce.string().describe("Restore url")
 });
@@ -11630,7 +11586,7 @@ var coreBackupGetAsyncBackupLinksRestoreMutationRequestSchema = exports_external
   contextid: exports_external.coerce.number().int().describe("Context id")
 });
 var coreBackupGetAsyncBackupLinksRestoreMutationResponseSchema = coreBackupGetAsyncBackupLinksRestore200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBackupGetAsyncBackupProgressSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBackupGetAsyncBackupProgressSchema.js
 var coreBackupGetAsyncBackupProgress200Schema = exports_external.array(exports_external.object({
   status: exports_external.coerce.number().int().describe("Backup Status"),
   progress: exports_external.coerce.number().describe("Backup progress"),
@@ -11643,7 +11599,7 @@ var coreBackupGetAsyncBackupProgressMutationRequestSchema = exports_external.obj
   contextid: exports_external.coerce.number().int().describe("Context id")
 });
 var coreBackupGetAsyncBackupProgressMutationResponseSchema = coreBackupGetAsyncBackupProgress200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBackupGetCopyProgressSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBackupGetCopyProgressSchema.js
 var coreBackupGetCopyProgress200Schema = exports_external.array(exports_external.object({
   status: exports_external.coerce.number().int().describe("Copy Status"),
   progress: exports_external.coerce.number().describe("Copy progress"),
@@ -11659,14 +11615,14 @@ var coreBackupGetCopyProgressMutationRequestSchema = exports_external.object({
   }))
 });
 var coreBackupGetCopyProgressMutationResponseSchema = coreBackupGetCopyProgress200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBackupSubmitCopyFormSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBackupSubmitCopyFormSchema.js
 var coreBackupSubmitCopyForm200Schema = exports_external.coerce.string().describe("JSON response.");
 var coreBackupSubmitCopyForm400Schema = errorResponseSchema;
 var coreBackupSubmitCopyFormMutationRequestSchema = exports_external.object({
   jsonformdata: exports_external.coerce.string().describe("The data from the create copy form, encoded as a json array")
 });
 var coreBackupSubmitCopyFormMutationResponseSchema = coreBackupSubmitCopyForm200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBadgesDisableBadgesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBadgesDisableBadgesSchema.js
 var coreBadgesDisableBadges200Schema = exports_external.object({
   result: exports_external.boolean().describe("The processing result"),
   warnings: exports_external.array(exports_external.object({
@@ -11681,7 +11637,7 @@ var coreBadgesDisableBadgesMutationRequestSchema = exports_external.object({
   badgeids: exports_external.array(exports_external.coerce.string().describe("The badge identifiers to update"))
 });
 var coreBadgesDisableBadgesMutationResponseSchema = coreBadgesDisableBadges200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBadgesEnableBadgesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBadgesEnableBadgesSchema.js
 var coreBadgesEnableBadges200Schema = exports_external.object({
   result: exports_external.array(exports_external.object({
     badgeid: exports_external.coerce.number().int().describe("The badge identifier"),
@@ -11699,7 +11655,7 @@ var coreBadgesEnableBadgesMutationRequestSchema = exports_external.object({
   badgeids: exports_external.array(exports_external.coerce.string().describe("The badge identifiers to update"))
 });
 var coreBadgesEnableBadgesMutationResponseSchema = coreBadgesEnableBadges200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBadgesGetBadgeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBadgesGetBadgeSchema.js
 var coreBadgesGetBadge200Schema = exports_external.object({
   badge: exports_external.object({
     type: exports_external.coerce.string().describe("BadgeClass"),
@@ -11733,7 +11689,7 @@ var coreBadgesGetBadgeMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("Badge id")
 });
 var coreBadgesGetBadgeMutationResponseSchema = coreBadgesGetBadge200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBadgesGetUserBadgeByHashSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBadgesGetUserBadgeByHashSchema.js
 var coreBadgesGetUserBadgeByHash200Schema = exports_external.object({
   badge: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Badge id").optional(),
@@ -11810,7 +11766,7 @@ var coreBadgesGetUserBadgeByHashMutationRequestSchema = exports_external.object(
   hash: exports_external.coerce.string().describe("Badge issued hash")
 });
 var coreBadgesGetUserBadgeByHashMutationResponseSchema = coreBadgesGetUserBadgeByHash200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBadgesGetUserBadgesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBadgesGetUserBadgesSchema.js
 var coreBadgesGetUserBadges200Schema = exports_external.object({
   badges: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Badge id").optional(),
@@ -11892,7 +11848,7 @@ var coreBadgesGetUserBadgesMutationRequestSchema = exports_external.object({
   onlypublic: exports_external.boolean().default(false).describe("Whether to return only public badges").nullable().nullish()
 });
 var coreBadgesGetUserBadgesMutationResponseSchema = coreBadgesGetUserBadges200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlockFetchAddableBlocksSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlockFetchAddableBlocksSchema.js
 var coreBlockFetchAddableBlocks200Schema = exports_external.array(exports_external.object({
   name: exports_external.coerce.string().describe("The name of the block."),
   title: exports_external.coerce.string().describe("The title of the block."),
@@ -11907,7 +11863,7 @@ var coreBlockFetchAddableBlocksMutationRequestSchema = exports_external.object({
   pagehash: exports_external.coerce.string().default("").describe("Page hash").nullable().nullish()
 });
 var coreBlockFetchAddableBlocksMutationResponseSchema = coreBlockFetchAddableBlocks200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlockGetCourseBlocksSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlockGetCourseBlocksSchema.js
 var coreBlockGetCourseBlocks200Schema = exports_external.object({
   blocks: exports_external.array(exports_external.object({
     instanceid: exports_external.coerce.number().int().describe("Block instance id."),
@@ -11954,7 +11910,7 @@ var coreBlockGetCourseBlocksMutationRequestSchema = exports_external.object({
   returncontents: exports_external.boolean().default(false).describe("Whether to return the block contents.").nullable().nullish()
 });
 var coreBlockGetCourseBlocksMutationResponseSchema = coreBlockGetCourseBlocks200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlockGetDashboardBlocksSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlockGetDashboardBlocksSchema.js
 var coreBlockGetDashboardBlocks200Schema = exports_external.object({
   blocks: exports_external.array(exports_external.object({
     instanceid: exports_external.coerce.number().int().describe("Block instance id."),
@@ -12002,7 +11958,7 @@ var coreBlockGetDashboardBlocksMutationRequestSchema = exports_external.object({
   mypage: exports_external.coerce.string().default("__default").describe("What my page to return blocks of").nullable().nullish()
 });
 var coreBlockGetDashboardBlocksMutationResponseSchema = coreBlockGetDashboardBlocks200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlogAddEntrySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlogAddEntrySchema.js
 var coreBlogAddEntry200Schema = exports_external.object({
   entryid: exports_external.coerce.number().int().describe("The new entry id."),
   warnings: exports_external.array(exports_external.object({
@@ -12045,7 +12001,7 @@ var coreBlogAddEntryMutationRequestSchema = exports_external.object({
   ])).describe("The allowed keys (value format) are: \n- `inlineattachmentsid` (int); the draft file area id for inline attachments. Default to 0\n- `attachmentsid` (int); the draft file area id for attachments. Default to 0\n- `publishstate` (str); the publish state of the entry (draft, site or public). Default to site\n- `courseassoc` (int); the course id to associate the entry with. Default to 0\n- `modassoc` (int); the module id to associate the entry with. Default to 0\n- `tags` (str); the tags to associate the entry with, comma separated. Default to empty").optional()
 });
 var coreBlogAddEntryMutationResponseSchema = coreBlogAddEntry200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlogDeleteEntrySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlogDeleteEntrySchema.js
 var coreBlogDeleteEntry200Schema = exports_external.object({
   status: exports_external.boolean().describe("True indicates the entry was deleted."),
   warnings: exports_external.array(exports_external.object({
@@ -12060,7 +12016,7 @@ var coreBlogDeleteEntryMutationRequestSchema = exports_external.object({
   entryid: exports_external.coerce.number().int().describe("The entry id to remove.")
 });
 var coreBlogDeleteEntryMutationResponseSchema = coreBlogDeleteEntry200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlogGetAccessInformationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlogGetAccessInformationSchema.js
 var coreBlogGetAccessInformation200Schema = exports_external.object({
   canview: exports_external.boolean().describe("Whether the user can view blogs"),
   cansearch: exports_external.boolean().describe("Whether the user can search blogs"),
@@ -12077,7 +12033,7 @@ var coreBlogGetAccessInformation200Schema = exports_external.object({
 });
 var coreBlogGetAccessInformation400Schema = errorResponseSchema;
 var coreBlogGetAccessInformationMutationResponseSchema = coreBlogGetAccessInformation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlogGetEntriesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlogGetEntriesSchema.js
 var coreBlogGetEntries200Schema = exports_external.object({
   entries: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Post/entry id."),
@@ -12163,7 +12119,7 @@ var coreBlogGetEntriesMutationRequestSchema = exports_external.object({
   perpage: exports_external.coerce.number().int().default(10).describe("The number of posts to return per page.").nullable().nullish()
 });
 var coreBlogGetEntriesMutationResponseSchema = coreBlogGetEntries200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlogPrepareEntryForEditionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlogPrepareEntryForEditionSchema.js
 var coreBlogPrepareEntryForEdition200Schema = exports_external.object({
   inlineattachmentsid: exports_external.coerce.number().int().describe("Draft item id for the text editor."),
   attachmentsid: exports_external.coerce.number().int().describe("Draft item id for the file manager."),
@@ -12186,7 +12142,7 @@ var coreBlogPrepareEntryForEditionMutationRequestSchema = exports_external.objec
   entryid: exports_external.coerce.number().int().describe("The entry id to edit.")
 });
 var coreBlogPrepareEntryForEditionMutationResponseSchema = coreBlogPrepareEntryForEdition200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlogUpdateEntrySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlogUpdateEntrySchema.js
 var coreBlogUpdateEntry200Schema = exports_external.object({
   status: exports_external.boolean().describe("The update result, true if everything went well."),
   warnings: exports_external.array(exports_external.object({
@@ -12230,7 +12186,7 @@ var coreBlogUpdateEntryMutationRequestSchema = exports_external.object({
   ])).describe("The allowed keys (value format) are: \n- `inlineattachmentsid` (int); the draft file area id for inline attachments. Default to 0\n- `attachmentsid` (int); the draft file area id for attachments. Default to 0\n- `publishstate` (str); the publish state of the entry (draft, site or public). Default to site\n- `courseassoc` (int); the course id to associate the entry with. Default to 0\n- `modassoc` (int); the module id to associate the entry with. Default to 0\n- `tags` (str); the tags to associate the entry with, comma separated. Default to empty").optional()
 });
 var coreBlogUpdateEntryMutationResponseSchema = coreBlogUpdateEntry200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlogViewEntriesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreBlogViewEntriesSchema.js
 var coreBlogViewEntries200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -12257,7 +12213,7 @@ var coreBlogViewEntriesMutationRequestSchema = exports_external.object({
   })).optional()
 });
 var coreBlogViewEntriesMutationResponseSchema = coreBlogViewEntries200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarCreateCalendarEventsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarCreateCalendarEventsSchema.js
 var coreCalendarCreateCalendarEvents200Schema = exports_external.object({
   events: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("event id"),
@@ -12303,7 +12259,7 @@ var coreCalendarCreateCalendarEventsMutationRequestSchema = exports_external.obj
   }))
 });
 var coreCalendarCreateCalendarEventsMutationResponseSchema = coreCalendarCreateCalendarEvents200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarDeleteCalendarEventsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarDeleteCalendarEventsSchema.js
 var coreCalendarDeleteCalendarEvents200Schema = exports_external.null();
 var coreCalendarDeleteCalendarEvents400Schema = errorResponseSchema;
 var coreCalendarDeleteCalendarEventsMutationRequestSchema = exports_external.object({
@@ -12313,7 +12269,7 @@ var coreCalendarDeleteCalendarEventsMutationRequestSchema = exports_external.obj
   }))
 });
 var coreCalendarDeleteCalendarEventsMutationResponseSchema = coreCalendarDeleteCalendarEvents200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarDeleteSubscriptionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarDeleteSubscriptionSchema.js
 var coreCalendarDeleteSubscription200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -12328,7 +12284,7 @@ var coreCalendarDeleteSubscriptionMutationRequestSchema = exports_external.objec
   subscriptionid: exports_external.coerce.number().int().describe("The id of the subscription")
 });
 var coreCalendarDeleteSubscriptionMutationResponseSchema = coreCalendarDeleteSubscription200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetActionEventsByCourseSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetActionEventsByCourseSchema.js
 var coreCalendarGetActionEventsByCourse200Schema = exports_external.object({
   events: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("id"),
@@ -12440,7 +12396,7 @@ var coreCalendarGetActionEventsByCourseMutationRequestSchema = exports_external.
   searchvalue: exports_external.coerce.string().describe("The value a user wishes to search against").nullable().nullish()
 });
 var coreCalendarGetActionEventsByCourseMutationResponseSchema = coreCalendarGetActionEventsByCourse200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetActionEventsByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetActionEventsByCoursesSchema.js
 var coreCalendarGetActionEventsByCourses200Schema = exports_external.object({
   groupedbycourse: exports_external.array(exports_external.object({
     events: exports_external.array(exports_external.object({
@@ -12554,7 +12510,7 @@ var coreCalendarGetActionEventsByCoursesMutationRequestSchema = exports_external
   searchvalue: exports_external.coerce.string().describe("The value a user wishes to search against").nullable().nullish()
 });
 var coreCalendarGetActionEventsByCoursesMutationResponseSchema = coreCalendarGetActionEventsByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetActionEventsByTimesortSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetActionEventsByTimesortSchema.js
 var coreCalendarGetActionEventsByTimesort200Schema = exports_external.object({
   events: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("id"),
@@ -12667,7 +12623,7 @@ var coreCalendarGetActionEventsByTimesortMutationRequestSchema = exports_externa
   searchvalue: exports_external.coerce.string().describe("The value a user wishes to search against").nullable().nullish()
 });
 var coreCalendarGetActionEventsByTimesortMutationResponseSchema = coreCalendarGetActionEventsByTimesort200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetAllowedEventTypesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetAllowedEventTypesSchema.js
 var coreCalendarGetAllowedEventTypes200Schema = exports_external.object({
   allowedeventtypes: exports_external.array(exports_external.coerce.string().describe("Allowed event types to be created in the given course.")),
   warnings: exports_external.array(exports_external.object({
@@ -12682,7 +12638,7 @@ var coreCalendarGetAllowedEventTypesMutationRequestSchema = exports_external.obj
   courseid: exports_external.coerce.number().int().default(0).describe("Course to check, empty for site.").nullable().nullish()
 });
 var coreCalendarGetAllowedEventTypesMutationResponseSchema = coreCalendarGetAllowedEventTypes200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetCalendarAccessInformationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetCalendarAccessInformationSchema.js
 var coreCalendarGetCalendarAccessInformation200Schema = exports_external.object({
   canmanageentries: exports_external.boolean().describe("Whether the user can manage entries."),
   canmanageownentries: exports_external.boolean().describe("Whether the user can manage its own entries."),
@@ -12699,7 +12655,7 @@ var coreCalendarGetCalendarAccessInformationMutationRequestSchema = exports_exte
   courseid: exports_external.coerce.number().int().default(0).describe("Course to check, empty for site calendar events.").nullable().nullish()
 });
 var coreCalendarGetCalendarAccessInformationMutationResponseSchema = coreCalendarGetCalendarAccessInformation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetCalendarDayViewSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetCalendarDayViewSchema.js
 var coreCalendarGetCalendarDayView200Schema = exports_external.object({
   events: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("id"),
@@ -12866,7 +12822,7 @@ var coreCalendarGetCalendarDayViewMutationRequestSchema = exports_external.objec
   categoryid: exports_external.coerce.number().int().describe("Category being viewed").nullable().nullish()
 });
 var coreCalendarGetCalendarDayViewMutationResponseSchema = coreCalendarGetCalendarDayView200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetCalendarEventByIdSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetCalendarEventByIdSchema.js
 var coreCalendarGetCalendarEventById200Schema = exports_external.object({
   event: exports_external.object({
     id: exports_external.coerce.number().int().describe("id"),
@@ -12977,7 +12933,7 @@ var coreCalendarGetCalendarEventByIdMutationRequestSchema = exports_external.obj
   eventid: exports_external.coerce.number().int().describe("The event id to be retrieved")
 });
 var coreCalendarGetCalendarEventByIdMutationResponseSchema = coreCalendarGetCalendarEventById200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetCalendarEventsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetCalendarEventsSchema.js
 var coreCalendarGetCalendarEvents200Schema = exports_external.object({
   events: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("event id"),
@@ -13024,7 +12980,7 @@ var coreCalendarGetCalendarEventsMutationRequestSchema = exports_external.object
   }).optional()
 });
 var coreCalendarGetCalendarEventsMutationResponseSchema = coreCalendarGetCalendarEvents200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetCalendarExportTokenSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetCalendarExportTokenSchema.js
 var coreCalendarGetCalendarExportToken200Schema = exports_external.object({
   token: exports_external.coerce.string().describe("The calendar permanent access token for calendar export."),
   warnings: exports_external.array(exports_external.object({
@@ -13036,7 +12992,7 @@ var coreCalendarGetCalendarExportToken200Schema = exports_external.object({
 });
 var coreCalendarGetCalendarExportToken400Schema = errorResponseSchema;
 var coreCalendarGetCalendarExportTokenMutationResponseSchema = coreCalendarGetCalendarExportToken200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetCalendarMonthlyViewSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetCalendarMonthlyViewSchema.js
 var coreCalendarGetCalendarMonthlyView200Schema = exports_external.object({
   url: exports_external.coerce.string().describe("url"),
   courseid: exports_external.coerce.number().int().describe("courseid"),
@@ -13244,7 +13200,7 @@ var coreCalendarGetCalendarMonthlyViewMutationRequestSchema = exports_external.o
   view: exports_external.coerce.string().default("month").describe("The view mode of the calendar").nullable().nullish()
 });
 var coreCalendarGetCalendarMonthlyViewMutationResponseSchema = coreCalendarGetCalendarMonthlyView200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetCalendarUpcomingViewSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetCalendarUpcomingViewSchema.js
 var coreCalendarGetCalendarUpcomingView200Schema = exports_external.object({
   events: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("id"),
@@ -13375,7 +13331,7 @@ var coreCalendarGetCalendarUpcomingViewMutationRequestSchema = exports_external.
   categoryid: exports_external.coerce.number().int().describe("Category being viewed").nullable().nullish()
 });
 var coreCalendarGetCalendarUpcomingViewMutationResponseSchema = coreCalendarGetCalendarUpcomingView200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetTimestampsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarGetTimestampsSchema.js
 var coreCalendarGetTimestamps200Schema = exports_external.object({
   timestamps: exports_external.array(exports_external.object({
     key: exports_external.coerce.string().describe("Timestamp key"),
@@ -13394,7 +13350,7 @@ var coreCalendarGetTimestampsMutationRequestSchema = exports_external.object({
   }))
 });
 var coreCalendarGetTimestampsMutationResponseSchema = coreCalendarGetTimestamps200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarSubmitCreateUpdateFormSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarSubmitCreateUpdateFormSchema.js
 var coreCalendarSubmitCreateUpdateForm200Schema = exports_external.object({
   event: exports_external.object({
     id: exports_external.coerce.number().int().describe("id"),
@@ -13500,7 +13456,7 @@ var coreCalendarSubmitCreateUpdateFormMutationRequestSchema = exports_external.o
   formdata: exports_external.coerce.string().describe("The data from the event form")
 });
 var coreCalendarSubmitCreateUpdateFormMutationResponseSchema = coreCalendarSubmitCreateUpdateForm200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarUpdateEventStartDaySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCalendarUpdateEventStartDaySchema.js
 var coreCalendarUpdateEventStartDay200Schema = exports_external.object({
   event: exports_external.object({
     id: exports_external.coerce.number().int().describe("id"),
@@ -13606,7 +13562,7 @@ var coreCalendarUpdateEventStartDayMutationRequestSchema = exports_external.obje
   daytimestamp: exports_external.coerce.number().int().describe("Timestamp for the new start day")
 });
 var coreCalendarUpdateEventStartDayMutationResponseSchema = coreCalendarUpdateEventStartDay200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreChangeEditmodeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreChangeEditmodeSchema.js
 var coreChangeEditmode200Schema = exports_external.object({
   success: exports_external.boolean().describe("The edit mode was changed")
 });
@@ -13616,7 +13572,7 @@ var coreChangeEditmodeMutationRequestSchema = exports_external.object({
   context: exports_external.coerce.number().int().describe("Page context id")
 });
 var coreChangeEditmodeMutationResponseSchema = coreChangeEditmode200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCheckGetResultAdmintreeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCheckGetResultAdmintreeSchema.js
 var coreCheckGetResultAdmintree200Schema = exports_external.object({
   status: exports_external.coerce.string().describe("Result status constant"),
   summary: exports_external.coerce.string().describe("Summary of result"),
@@ -13631,7 +13587,7 @@ var coreCheckGetResultAdmintreeMutationRequestSchema = exports_external.object({
                 Depending on the check, details could be slower to return.`).nullable().nullish()
 });
 var coreCheckGetResultAdmintreeMutationResponseSchema = coreCheckGetResultAdmintree200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCohortAddCohortMembersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCohortAddCohortMembersSchema.js
 var coreCohortAddCohortMembers200Schema = exports_external.object({
   warnings: exports_external.array(exports_external.object({
     item: exports_external.coerce.string().describe("item").nullable().nullish(),
@@ -13656,7 +13612,7 @@ var coreCohortAddCohortMembersMutationRequestSchema = exports_external.object({
   }))
 });
 var coreCohortAddCohortMembersMutationResponseSchema = coreCohortAddCohortMembers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCohortCreateCohortsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCohortCreateCohortsSchema.js
 var coreCohortCreateCohorts200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("cohort id"),
   name: exports_external.coerce.string().describe("cohort name"),
@@ -13688,7 +13644,7 @@ var coreCohortCreateCohortsMutationRequestSchema = exports_external.object({
   }))
 });
 var coreCohortCreateCohortsMutationResponseSchema = coreCohortCreateCohorts200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCohortDeleteCohortMembersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCohortDeleteCohortMembersSchema.js
 var coreCohortDeleteCohortMembers200Schema = exports_external.null();
 var coreCohortDeleteCohortMembers400Schema = errorResponseSchema;
 var coreCohortDeleteCohortMembersMutationRequestSchema = exports_external.object({
@@ -13698,14 +13654,14 @@ var coreCohortDeleteCohortMembersMutationRequestSchema = exports_external.object
   }))
 });
 var coreCohortDeleteCohortMembersMutationResponseSchema = coreCohortDeleteCohortMembers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCohortDeleteCohortsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCohortDeleteCohortsSchema.js
 var coreCohortDeleteCohorts200Schema = exports_external.null();
 var coreCohortDeleteCohorts400Schema = errorResponseSchema;
 var coreCohortDeleteCohortsMutationRequestSchema = exports_external.object({
   cohortids: exports_external.array(exports_external.coerce.number().int().describe("cohort ID"))
 });
 var coreCohortDeleteCohortsMutationResponseSchema = coreCohortDeleteCohorts200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCohortGetCohortMembersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCohortGetCohortMembersSchema.js
 var coreCohortGetCohortMembers200Schema = exports_external.array(exports_external.object({
   cohortid: exports_external.coerce.number().int().describe("cohort record id"),
   userids: exports_external.array(exports_external.coerce.number().int().describe("user id"))
@@ -13715,7 +13671,7 @@ var coreCohortGetCohortMembersMutationRequestSchema = exports_external.object({
   cohortids: exports_external.array(exports_external.coerce.number().int().describe("Cohort ID"))
 });
 var coreCohortGetCohortMembersMutationResponseSchema = coreCohortGetCohortMembers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCohortGetCohortsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCohortGetCohortsSchema.js
 var coreCohortGetCohorts200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("ID of the cohort"),
   name: exports_external.coerce.string().describe("cohort name"),
@@ -13737,7 +13693,7 @@ var coreCohortGetCohortsMutationRequestSchema = exports_external.object({
   cohortids: exports_external.array(exports_external.coerce.number().int().describe("Cohort ID")).optional()
 });
 var coreCohortGetCohortsMutationResponseSchema = coreCohortGetCohorts200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCohortSearchCohortsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCohortSearchCohortsSchema.js
 var coreCohortSearchCohorts200Schema = exports_external.object({
   cohorts: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("ID of the cohort"),
@@ -13769,7 +13725,7 @@ var coreCohortSearchCohortsMutationRequestSchema = exports_external.object({
   limitnum: exports_external.coerce.number().int().default(25).describe("Number of records to fetch").nullable().nullish()
 });
 var coreCohortSearchCohortsMutationResponseSchema = coreCohortSearchCohorts200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCohortUpdateCohortsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCohortUpdateCohortsSchema.js
 var coreCohortUpdateCohorts200Schema = exports_external.null();
 var coreCohortUpdateCohorts400Schema = errorResponseSchema;
 var coreCohortUpdateCohortsMutationRequestSchema = exports_external.object({
@@ -13794,7 +13750,7 @@ var coreCohortUpdateCohortsMutationRequestSchema = exports_external.object({
   }))
 });
 var coreCohortUpdateCohortsMutationResponseSchema = coreCohortUpdateCohorts200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCommentAddCommentsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCommentAddCommentsSchema.js
 var coreCommentAddComments200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("Comment ID"),
   content: exports_external.coerce.string().describe("The content text formatted"),
@@ -13820,7 +13776,7 @@ var coreCommentAddCommentsMutationRequestSchema = exports_external.object({
   }))
 });
 var coreCommentAddCommentsMutationResponseSchema = coreCommentAddComments200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCommentDeleteCommentsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCommentDeleteCommentsSchema.js
 var coreCommentDeleteComments200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -13832,7 +13788,7 @@ var coreCommentDeleteCommentsMutationRequestSchema = exports_external.object({
   comments: exports_external.array(exports_external.coerce.number().int().default(0).describe("id of the comment").nullable())
 });
 var coreCommentDeleteCommentsMutationResponseSchema = coreCommentDeleteComments200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCommentGetCommentsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCommentGetCommentsSchema.js
 var coreCommentGetComments200Schema = exports_external.object({
   comments: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Comment ID"),
@@ -13868,7 +13824,7 @@ var coreCommentGetCommentsMutationRequestSchema = exports_external.object({
   sortdirection: exports_external.coerce.string().default("DESC").describe("Sort direction: ASC or DESC").nullable().nullish()
 });
 var coreCommentGetCommentsMutationResponseSchema = coreCommentGetComments200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyAddCompetencyToCourseSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyAddCompetencyToCourseSchema.js
 var coreCompetencyAddCompetencyToCourse200Schema = exports_external.boolean().describe("True if successful.");
 var coreCompetencyAddCompetencyToCourse400Schema = errorResponseSchema;
 var coreCompetencyAddCompetencyToCourseMutationRequestSchema = exports_external.object({
@@ -13876,7 +13832,7 @@ var coreCompetencyAddCompetencyToCourseMutationRequestSchema = exports_external.
   competencyid: exports_external.coerce.number().int().describe("The competency id")
 });
 var coreCompetencyAddCompetencyToCourseMutationResponseSchema = coreCompetencyAddCompetencyToCourse200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyAddCompetencyToPlanSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyAddCompetencyToPlanSchema.js
 var coreCompetencyAddCompetencyToPlan200Schema = exports_external.boolean().describe("True if successful.");
 var coreCompetencyAddCompetencyToPlan400Schema = errorResponseSchema;
 var coreCompetencyAddCompetencyToPlanMutationRequestSchema = exports_external.object({
@@ -13884,7 +13840,7 @@ var coreCompetencyAddCompetencyToPlanMutationRequestSchema = exports_external.ob
   competencyid: exports_external.coerce.number().int().describe("The competency id")
 });
 var coreCompetencyAddCompetencyToPlanMutationResponseSchema = coreCompetencyAddCompetencyToPlan200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyAddCompetencyToTemplateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyAddCompetencyToTemplateSchema.js
 var coreCompetencyAddCompetencyToTemplate200Schema = exports_external.boolean().describe("True if successful.");
 var coreCompetencyAddCompetencyToTemplate400Schema = errorResponseSchema;
 var coreCompetencyAddCompetencyToTemplateMutationRequestSchema = exports_external.object({
@@ -13892,7 +13848,7 @@ var coreCompetencyAddCompetencyToTemplateMutationRequestSchema = exports_externa
   competencyid: exports_external.coerce.number().int().describe("The competency id")
 });
 var coreCompetencyAddCompetencyToTemplateMutationResponseSchema = coreCompetencyAddCompetencyToTemplate200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyAddRelatedCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyAddRelatedCompetencySchema.js
 var coreCompetencyAddRelatedCompetency200Schema = exports_external.boolean().describe("True if successful.");
 var coreCompetencyAddRelatedCompetency400Schema = errorResponseSchema;
 var coreCompetencyAddRelatedCompetencyMutationRequestSchema = exports_external.object({
@@ -13900,49 +13856,49 @@ var coreCompetencyAddRelatedCompetencyMutationRequestSchema = exports_external.o
   relatedcompetencyid: exports_external.coerce.number().int().describe("The related competency id")
 });
 var coreCompetencyAddRelatedCompetencyMutationResponseSchema = coreCompetencyAddRelatedCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyApprovePlanSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyApprovePlanSchema.js
 var coreCompetencyApprovePlan200Schema = exports_external.boolean().describe("The success");
 var coreCompetencyApprovePlan400Schema = errorResponseSchema;
 var coreCompetencyApprovePlanMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The plan ID")
 });
 var coreCompetencyApprovePlanMutationResponseSchema = coreCompetencyApprovePlan200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCompetencyFrameworkViewedSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCompetencyFrameworkViewedSchema.js
 var coreCompetencyCompetencyFrameworkViewed200Schema = exports_external.boolean().describe("True if the event competency framework was logged");
 var coreCompetencyCompetencyFrameworkViewed400Schema = errorResponseSchema;
 var coreCompetencyCompetencyFrameworkViewedMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The competency framework id")
 });
 var coreCompetencyCompetencyFrameworkViewedMutationResponseSchema = coreCompetencyCompetencyFrameworkViewed200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCompetencyViewedSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCompetencyViewedSchema.js
 var coreCompetencyCompetencyViewed200Schema = exports_external.boolean().describe("True if the event competency viewed was logged");
 var coreCompetencyCompetencyViewed400Schema = errorResponseSchema;
 var coreCompetencyCompetencyViewedMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The competency id")
 });
 var coreCompetencyCompetencyViewedMutationResponseSchema = coreCompetencyCompetencyViewed200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCompletePlanSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCompletePlanSchema.js
 var coreCompetencyCompletePlan200Schema = exports_external.boolean().describe("True if completing learning plan was successful");
 var coreCompetencyCompletePlan400Schema = errorResponseSchema;
 var coreCompetencyCompletePlanMutationRequestSchema = exports_external.object({
   planid: exports_external.coerce.number().int().describe("The plan id")
 });
 var coreCompetencyCompletePlanMutationResponseSchema = coreCompetencyCompletePlan200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCountCompetenciesInCourseSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCountCompetenciesInCourseSchema.js
 var coreCompetencyCountCompetenciesInCourse200Schema = exports_external.coerce.number().int().describe("The number of competencies in this course.");
 var coreCompetencyCountCompetenciesInCourse400Schema = errorResponseSchema;
 var coreCompetencyCountCompetenciesInCourseMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The course id")
 });
 var coreCompetencyCountCompetenciesInCourseMutationResponseSchema = coreCompetencyCountCompetenciesInCourse200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCountCompetenciesInTemplateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCountCompetenciesInTemplateSchema.js
 var coreCompetencyCountCompetenciesInTemplate200Schema = exports_external.coerce.number().int().describe("The number of competencies in this learning plan template.");
 var coreCompetencyCountCompetenciesInTemplate400Schema = errorResponseSchema;
 var coreCompetencyCountCompetenciesInTemplateMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The template id")
 });
 var coreCompetencyCountCompetenciesInTemplateMutationResponseSchema = coreCompetencyCountCompetenciesInTemplate200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCountCompetenciesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCountCompetenciesSchema.js
 var coreCompetencyCountCompetencies200Schema = exports_external.coerce.number().int().describe("The number of competencies found.");
 var coreCompetencyCountCompetencies400Schema = errorResponseSchema;
 var coreCompetencyCountCompetenciesMutationRequestSchema = exports_external.object({
@@ -13952,7 +13908,7 @@ var coreCompetencyCountCompetenciesMutationRequestSchema = exports_external.obje
   }))
 });
 var coreCompetencyCountCompetenciesMutationResponseSchema = coreCompetencyCountCompetencies200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCountCompetencyFrameworksSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCountCompetencyFrameworksSchema.js
 var coreCompetencyCountCompetencyFrameworks200Schema = exports_external.coerce.number().int().describe("The number of competency frameworks found.");
 var coreCompetencyCountCompetencyFrameworks400Schema = errorResponseSchema;
 var coreCompetencyCountCompetencyFrameworksMutationRequestSchema = exports_external.object({
@@ -13964,21 +13920,21 @@ var coreCompetencyCountCompetencyFrameworksMutationRequestSchema = exports_exter
   includes: exports_external.coerce.string().default("children").describe("What other contextes to fetch the frameworks from. (children, parents, self)").nullable().nullish()
 });
 var coreCompetencyCountCompetencyFrameworksMutationResponseSchema = coreCompetencyCountCompetencyFrameworks200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCountCourseModuleCompetenciesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCountCourseModuleCompetenciesSchema.js
 var coreCompetencyCountCourseModuleCompetencies200Schema = exports_external.coerce.number().int().describe("The number of competencies found.");
 var coreCompetencyCountCourseModuleCompetencies400Schema = errorResponseSchema;
 var coreCompetencyCountCourseModuleCompetenciesMutationRequestSchema = exports_external.object({
   cmid: exports_external.coerce.number().int().describe("The course module id")
 });
 var coreCompetencyCountCourseModuleCompetenciesMutationResponseSchema = coreCompetencyCountCourseModuleCompetencies200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCountCoursesUsingCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCountCoursesUsingCompetencySchema.js
 var coreCompetencyCountCoursesUsingCompetency200Schema = exports_external.coerce.number().int().describe("The number of courses using this competency");
 var coreCompetencyCountCoursesUsingCompetency400Schema = errorResponseSchema;
 var coreCompetencyCountCoursesUsingCompetencyMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The competency id")
 });
 var coreCompetencyCountCoursesUsingCompetencyMutationResponseSchema = coreCompetencyCountCoursesUsingCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCountTemplatesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCountTemplatesSchema.js
 var coreCompetencyCountTemplates200Schema = exports_external.coerce.number().int().describe("The number of learning plan templates found.");
 var coreCompetencyCountTemplates400Schema = errorResponseSchema;
 var coreCompetencyCountTemplatesMutationRequestSchema = exports_external.object({
@@ -13990,14 +13946,14 @@ var coreCompetencyCountTemplatesMutationRequestSchema = exports_external.object(
   includes: exports_external.coerce.string().default("children").describe("What other contextes to fetch the frameworks from. (children, parents, self)").nullable().nullish()
 });
 var coreCompetencyCountTemplatesMutationResponseSchema = coreCompetencyCountTemplates200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCountTemplatesUsingCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCountTemplatesUsingCompetencySchema.js
 var coreCompetencyCountTemplatesUsingCompetency200Schema = exports_external.coerce.number().int().describe("The number of learning plan templates using this competency");
 var coreCompetencyCountTemplatesUsingCompetency400Schema = errorResponseSchema;
 var coreCompetencyCountTemplatesUsingCompetencyMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The competency id")
 });
 var coreCompetencyCountTemplatesUsingCompetencyMutationResponseSchema = coreCompetencyCountTemplatesUsingCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCreateCompetencyFrameworkSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCreateCompetencyFrameworkSchema.js
 var coreCompetencyCreateCompetencyFramework200Schema = exports_external.object({
   shortname: exports_external.coerce.string().describe("shortname"),
   idnumber: exports_external.coerce.string().describe("idnumber"),
@@ -14037,7 +13993,7 @@ var coreCompetencyCreateCompetencyFrameworkMutationRequestSchema = exports_exter
   })
 });
 var coreCompetencyCreateCompetencyFrameworkMutationResponseSchema = coreCompetencyCreateCompetencyFramework200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCreateCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCreateCompetencySchema.js
 var coreCompetencyCreateCompetency200Schema = exports_external.object({
   shortname: exports_external.coerce.string().describe("shortname"),
   idnumber: exports_external.coerce.string().describe("idnumber"),
@@ -14079,7 +14035,7 @@ var coreCompetencyCreateCompetencyMutationRequestSchema = exports_external.objec
   })
 });
 var coreCompetencyCreateCompetencyMutationResponseSchema = coreCompetencyCreateCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCreatePlanSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCreatePlanSchema.js
 var coreCompetencyCreatePlan200Schema = exports_external.object({
   name: exports_external.coerce.string().describe("name"),
   description: exports_external.coerce.string().describe("description"),
@@ -14188,7 +14144,7 @@ var coreCompetencyCreatePlanMutationRequestSchema = exports_external.object({
   })
 });
 var coreCompetencyCreatePlanMutationResponseSchema = coreCompetencyCreatePlan200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCreateTemplateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCreateTemplateSchema.js
 var coreCompetencyCreateTemplate200Schema = exports_external.object({
   shortname: exports_external.coerce.string().describe("shortname"),
   description: exports_external.coerce.string().describe("description"),
@@ -14225,7 +14181,7 @@ var coreCompetencyCreateTemplateMutationRequestSchema = exports_external.object(
   })
 });
 var coreCompetencyCreateTemplateMutationResponseSchema = coreCompetencyCreateTemplate200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCreateUserEvidenceCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyCreateUserEvidenceCompetencySchema.js
 var coreCompetencyCreateUserEvidenceCompetency200Schema = exports_external.object({
   userevidenceid: exports_external.coerce.number().int().describe("userevidenceid"),
   competencyid: exports_external.coerce.number().int().describe("competencyid"),
@@ -14240,35 +14196,35 @@ var coreCompetencyCreateUserEvidenceCompetencyMutationRequestSchema = exports_ex
   competencyid: exports_external.coerce.number().int().describe("The competency ID.")
 });
 var coreCompetencyCreateUserEvidenceCompetencyMutationResponseSchema = coreCompetencyCreateUserEvidenceCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDeleteCompetencyFrameworkSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDeleteCompetencyFrameworkSchema.js
 var coreCompetencyDeleteCompetencyFramework200Schema = exports_external.boolean().describe("True if the delete was successful");
 var coreCompetencyDeleteCompetencyFramework400Schema = errorResponseSchema;
 var coreCompetencyDeleteCompetencyFrameworkMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("Data base record id for the framework")
 });
 var coreCompetencyDeleteCompetencyFrameworkMutationResponseSchema = coreCompetencyDeleteCompetencyFramework200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDeleteCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDeleteCompetencySchema.js
 var coreCompetencyDeleteCompetency200Schema = exports_external.boolean().describe("True if the delete was successful");
 var coreCompetencyDeleteCompetency400Schema = errorResponseSchema;
 var coreCompetencyDeleteCompetencyMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("Data base record id for the competency")
 });
 var coreCompetencyDeleteCompetencyMutationResponseSchema = coreCompetencyDeleteCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDeleteEvidenceSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDeleteEvidenceSchema.js
 var coreCompetencyDeleteEvidence200Schema = exports_external.boolean().describe("The success");
 var coreCompetencyDeleteEvidence400Schema = errorResponseSchema;
 var coreCompetencyDeleteEvidenceMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The evidence ID")
 });
 var coreCompetencyDeleteEvidenceMutationResponseSchema = coreCompetencyDeleteEvidence200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDeletePlanSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDeletePlanSchema.js
 var coreCompetencyDeletePlan200Schema = exports_external.boolean().describe("True if the delete was successful");
 var coreCompetencyDeletePlan400Schema = errorResponseSchema;
 var coreCompetencyDeletePlanMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("Data base record id for the learning plan")
 });
 var coreCompetencyDeletePlanMutationResponseSchema = coreCompetencyDeletePlan200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDeleteTemplateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDeleteTemplateSchema.js
 var coreCompetencyDeleteTemplate200Schema = exports_external.boolean().describe("True if the delete was successful");
 var coreCompetencyDeleteTemplate400Schema = errorResponseSchema;
 var coreCompetencyDeleteTemplateMutationRequestSchema = exports_external.object({
@@ -14276,7 +14232,7 @@ var coreCompetencyDeleteTemplateMutationRequestSchema = exports_external.object(
   deleteplans: exports_external.boolean().describe("Boolean to indicate if plans must be deleted")
 });
 var coreCompetencyDeleteTemplateMutationResponseSchema = coreCompetencyDeleteTemplate200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDeleteUserEvidenceCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDeleteUserEvidenceCompetencySchema.js
 var coreCompetencyDeleteUserEvidenceCompetency200Schema = exports_external.boolean().describe("True if the delete was successful");
 var coreCompetencyDeleteUserEvidenceCompetency400Schema = errorResponseSchema;
 var coreCompetencyDeleteUserEvidenceCompetencyMutationRequestSchema = exports_external.object({
@@ -14284,14 +14240,14 @@ var coreCompetencyDeleteUserEvidenceCompetencyMutationRequestSchema = exports_ex
   competencyid: exports_external.coerce.number().int().describe("The competency ID.")
 });
 var coreCompetencyDeleteUserEvidenceCompetencyMutationResponseSchema = coreCompetencyDeleteUserEvidenceCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDeleteUserEvidenceSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDeleteUserEvidenceSchema.js
 var coreCompetencyDeleteUserEvidence200Schema = exports_external.boolean().describe("True if the delete was successful");
 var coreCompetencyDeleteUserEvidence400Schema = errorResponseSchema;
 var coreCompetencyDeleteUserEvidenceMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The user evidence ID.")
 });
 var coreCompetencyDeleteUserEvidenceMutationResponseSchema = coreCompetencyDeleteUserEvidence200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDuplicateCompetencyFrameworkSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDuplicateCompetencyFrameworkSchema.js
 var coreCompetencyDuplicateCompetencyFramework200Schema = exports_external.object({
   shortname: exports_external.coerce.string().describe("shortname"),
   idnumber: exports_external.coerce.string().describe("idnumber"),
@@ -14316,7 +14272,7 @@ var coreCompetencyDuplicateCompetencyFrameworkMutationRequestSchema = exports_ex
   id: exports_external.coerce.number().int().describe("Data base record id for the framework")
 });
 var coreCompetencyDuplicateCompetencyFrameworkMutationResponseSchema = coreCompetencyDuplicateCompetencyFramework200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDuplicateTemplateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyDuplicateTemplateSchema.js
 var coreCompetencyDuplicateTemplate200Schema = exports_external.object({
   shortname: exports_external.coerce.string().describe("shortname"),
   description: exports_external.coerce.string().describe("description"),
@@ -14341,7 +14297,7 @@ var coreCompetencyDuplicateTemplateMutationRequestSchema = exports_external.obje
   id: exports_external.coerce.number().int().describe("The template id")
 });
 var coreCompetencyDuplicateTemplateMutationResponseSchema = coreCompetencyDuplicateTemplate200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyGetScaleValuesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyGetScaleValuesSchema.js
 var coreCompetencyGetScaleValues200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("Scale value ID"),
   name: exports_external.coerce.string().describe("Scale value name")
@@ -14351,7 +14307,7 @@ var coreCompetencyGetScaleValuesMutationRequestSchema = exports_external.object(
   scaleid: exports_external.coerce.number().int().describe("The scale id")
 });
 var coreCompetencyGetScaleValuesMutationResponseSchema = coreCompetencyGetScaleValues200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyGradeCompetencyInCourseSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyGradeCompetencyInCourseSchema.js
 var coreCompetencyGradeCompetencyInCourse200Schema = exports_external.object({
   usercompetencyid: exports_external.coerce.number().int().describe("usercompetencyid"),
   contextid: exports_external.coerce.number().int().describe("contextid"),
@@ -14395,7 +14351,7 @@ var coreCompetencyGradeCompetencyInCourseMutationRequestSchema = exports_externa
   note: exports_external.coerce.string().describe("A note to attach to the evidence").nullable().nullish()
 });
 var coreCompetencyGradeCompetencyInCourseMutationResponseSchema = coreCompetencyGradeCompetencyInCourse200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyGradeCompetencyInPlanSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyGradeCompetencyInPlanSchema.js
 var coreCompetencyGradeCompetencyInPlan200Schema = exports_external.object({
   usercompetencyid: exports_external.coerce.number().int().describe("usercompetencyid"),
   contextid: exports_external.coerce.number().int().describe("contextid"),
@@ -14438,7 +14394,7 @@ var coreCompetencyGradeCompetencyInPlanMutationRequestSchema = exports_external.
   note: exports_external.coerce.string().describe("A note to attach to the evidence").nullable().nullish()
 });
 var coreCompetencyGradeCompetencyInPlanMutationResponseSchema = coreCompetencyGradeCompetencyInPlan200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyGradeCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyGradeCompetencySchema.js
 var coreCompetencyGradeCompetency200Schema = exports_external.object({
   usercompetencyid: exports_external.coerce.number().int().describe("usercompetencyid"),
   contextid: exports_external.coerce.number().int().describe("contextid"),
@@ -14481,7 +14437,7 @@ var coreCompetencyGradeCompetencyMutationRequestSchema = exports_external.object
   note: exports_external.coerce.string().describe("A note to attach to the evidence").nullable().nullish()
 });
 var coreCompetencyGradeCompetencyMutationResponseSchema = coreCompetencyGradeCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListCompetenciesInTemplateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListCompetenciesInTemplateSchema.js
 var coreCompetencyListCompetenciesInTemplate200Schema = exports_external.array(exports_external.object({
   shortname: exports_external.coerce.string().describe("shortname"),
   idnumber: exports_external.coerce.string().describe("idnumber"),
@@ -14506,7 +14462,7 @@ var coreCompetencyListCompetenciesInTemplateMutationRequestSchema = exports_exte
   id: exports_external.coerce.number().int().describe("The template id")
 });
 var coreCompetencyListCompetenciesInTemplateMutationResponseSchema = coreCompetencyListCompetenciesInTemplate200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListCompetenciesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListCompetenciesSchema.js
 var coreCompetencyListCompetencies200Schema = exports_external.array(exports_external.object({
   shortname: exports_external.coerce.string().describe("shortname"),
   idnumber: exports_external.coerce.string().describe("idnumber"),
@@ -14538,7 +14494,7 @@ var coreCompetencyListCompetenciesMutationRequestSchema = exports_external.objec
   limit: exports_external.coerce.number().int().default(0).describe("Return this number of records at most.").nullable().nullish()
 });
 var coreCompetencyListCompetenciesMutationResponseSchema = coreCompetencyListCompetencies200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListCompetencyFrameworksSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListCompetencyFrameworksSchema.js
 var coreCompetencyListCompetencyFrameworks200Schema = exports_external.array(exports_external.object({
   shortname: exports_external.coerce.string().describe("shortname"),
   idnumber: exports_external.coerce.string().describe("idnumber"),
@@ -14574,7 +14530,7 @@ var coreCompetencyListCompetencyFrameworksMutationRequestSchema = exports_extern
   query: exports_external.coerce.string().default("").describe("A query string to filter the results").nullable().nullish()
 });
 var coreCompetencyListCompetencyFrameworksMutationResponseSchema = coreCompetencyListCompetencyFrameworks200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListCourseCompetenciesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListCourseCompetenciesSchema.js
 var coreCompetencyListCourseCompetencies200Schema = exports_external.array(exports_external.object({
   competency: exports_external.object({
     shortname: exports_external.coerce.string().describe("shortname"),
@@ -14611,7 +14567,7 @@ var coreCompetencyListCourseCompetenciesMutationRequestSchema = exports_external
   id: exports_external.coerce.number().int().describe("The course id")
 });
 var coreCompetencyListCourseCompetenciesMutationResponseSchema = coreCompetencyListCourseCompetencies200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListCourseModuleCompetenciesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListCourseModuleCompetenciesSchema.js
 var coreCompetencyListCourseModuleCompetencies200Schema = exports_external.array(exports_external.object({
   competency: exports_external.object({
     shortname: exports_external.coerce.string().describe("shortname"),
@@ -14649,7 +14605,7 @@ var coreCompetencyListCourseModuleCompetenciesMutationRequestSchema = exports_ex
   cmid: exports_external.coerce.number().int().describe("The course module id")
 });
 var coreCompetencyListCourseModuleCompetenciesMutationResponseSchema = coreCompetencyListCourseModuleCompetencies200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListPlanCompetenciesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListPlanCompetenciesSchema.js
 var coreCompetencyListPlanCompetencies200Schema = exports_external.array(exports_external.object({
   competency: exports_external.object({
     shortname: exports_external.coerce.string().describe("shortname"),
@@ -14729,7 +14685,7 @@ var coreCompetencyListPlanCompetenciesMutationRequestSchema = exports_external.o
   id: exports_external.coerce.number().int().describe("The plan ID.")
 });
 var coreCompetencyListPlanCompetenciesMutationResponseSchema = coreCompetencyListPlanCompetencies200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListTemplatesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListTemplatesSchema.js
 var coreCompetencyListTemplates200Schema = exports_external.array(exports_external.object({
   shortname: exports_external.coerce.string().describe("shortname"),
   description: exports_external.coerce.string().describe("description"),
@@ -14764,7 +14720,7 @@ var coreCompetencyListTemplatesMutationRequestSchema = exports_external.object({
   onlyvisible: exports_external.boolean().default(false).describe("If should list only visible templates").nullable().nullish()
 });
 var coreCompetencyListTemplatesMutationResponseSchema = coreCompetencyListTemplates200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListTemplatesUsingCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListTemplatesUsingCompetencySchema.js
 var coreCompetencyListTemplatesUsingCompetency200Schema = exports_external.array(exports_external.object({
   shortname: exports_external.coerce.string().describe("shortname"),
   description: exports_external.coerce.string().describe("description"),
@@ -14789,7 +14745,7 @@ var coreCompetencyListTemplatesUsingCompetencyMutationRequestSchema = exports_ex
   id: exports_external.coerce.number().int().describe("The competency id")
 });
 var coreCompetencyListTemplatesUsingCompetencyMutationResponseSchema = coreCompetencyListTemplatesUsingCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListUserPlansSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyListUserPlansSchema.js
 var coreCompetencyListUserPlans200Schema = exports_external.array(exports_external.object({
   name: exports_external.coerce.string().describe("name"),
   description: exports_external.coerce.string().describe("description"),
@@ -14885,49 +14841,49 @@ var coreCompetencyListUserPlansMutationRequestSchema = exports_external.object({
   userid: exports_external.coerce.number().int().describe("The user ID")
 });
 var coreCompetencyListUserPlansMutationResponseSchema = coreCompetencyListUserPlans200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyMoveDownCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyMoveDownCompetencySchema.js
 var coreCompetencyMoveDownCompetency200Schema = exports_external.boolean().describe("True if the update was successful");
 var coreCompetencyMoveDownCompetency400Schema = errorResponseSchema;
 var coreCompetencyMoveDownCompetencyMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The competency id")
 });
 var coreCompetencyMoveDownCompetencyMutationResponseSchema = coreCompetencyMoveDownCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyMoveUpCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyMoveUpCompetencySchema.js
 var coreCompetencyMoveUpCompetency200Schema = exports_external.boolean().describe("True if the update was successful");
 var coreCompetencyMoveUpCompetency400Schema = errorResponseSchema;
 var coreCompetencyMoveUpCompetencyMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The competency id")
 });
 var coreCompetencyMoveUpCompetencyMutationResponseSchema = coreCompetencyMoveUpCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyPlanCancelReviewRequestSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyPlanCancelReviewRequestSchema.js
 var coreCompetencyPlanCancelReviewRequest200Schema = exports_external.boolean().describe("The success");
 var coreCompetencyPlanCancelReviewRequest400Schema = errorResponseSchema;
 var coreCompetencyPlanCancelReviewRequestMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The plan ID")
 });
 var coreCompetencyPlanCancelReviewRequestMutationResponseSchema = coreCompetencyPlanCancelReviewRequest200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyPlanRequestReviewSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyPlanRequestReviewSchema.js
 var coreCompetencyPlanRequestReview200Schema = exports_external.boolean().describe("The success");
 var coreCompetencyPlanRequestReview400Schema = errorResponseSchema;
 var coreCompetencyPlanRequestReviewMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The plan ID")
 });
 var coreCompetencyPlanRequestReviewMutationResponseSchema = coreCompetencyPlanRequestReview200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyPlanStartReviewSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyPlanStartReviewSchema.js
 var coreCompetencyPlanStartReview200Schema = exports_external.boolean().describe("The success");
 var coreCompetencyPlanStartReview400Schema = errorResponseSchema;
 var coreCompetencyPlanStartReviewMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The plan ID")
 });
 var coreCompetencyPlanStartReviewMutationResponseSchema = coreCompetencyPlanStartReview200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyPlanStopReviewSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyPlanStopReviewSchema.js
 var coreCompetencyPlanStopReview200Schema = exports_external.boolean().describe("The success");
 var coreCompetencyPlanStopReview400Schema = errorResponseSchema;
 var coreCompetencyPlanStopReviewMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The plan ID")
 });
 var coreCompetencyPlanStopReviewMutationResponseSchema = coreCompetencyPlanStopReview200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReadCompetencyFrameworkSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReadCompetencyFrameworkSchema.js
 var coreCompetencyReadCompetencyFramework200Schema = exports_external.object({
   shortname: exports_external.coerce.string().describe("shortname"),
   idnumber: exports_external.coerce.string().describe("idnumber"),
@@ -14952,7 +14908,7 @@ var coreCompetencyReadCompetencyFrameworkMutationRequestSchema = exports_externa
   id: exports_external.coerce.number().int().describe("Data base record id for the framework")
 });
 var coreCompetencyReadCompetencyFrameworkMutationResponseSchema = coreCompetencyReadCompetencyFramework200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReadCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReadCompetencySchema.js
 var coreCompetencyReadCompetency200Schema = exports_external.object({
   shortname: exports_external.coerce.string().describe("shortname"),
   idnumber: exports_external.coerce.string().describe("idnumber"),
@@ -14977,7 +14933,7 @@ var coreCompetencyReadCompetencyMutationRequestSchema = exports_external.object(
   id: exports_external.coerce.number().int().describe("Data base record id for the competency")
 });
 var coreCompetencyReadCompetencyMutationResponseSchema = coreCompetencyReadCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReadPlanSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReadPlanSchema.js
 var coreCompetencyReadPlan200Schema = exports_external.object({
   name: exports_external.coerce.string().describe("name"),
   description: exports_external.coerce.string().describe("description"),
@@ -15073,7 +15029,7 @@ var coreCompetencyReadPlanMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("Data base record id for the plan")
 });
 var coreCompetencyReadPlanMutationResponseSchema = coreCompetencyReadPlan200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReadTemplateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReadTemplateSchema.js
 var coreCompetencyReadTemplate200Schema = exports_external.object({
   shortname: exports_external.coerce.string().describe("shortname"),
   description: exports_external.coerce.string().describe("description"),
@@ -15098,7 +15054,7 @@ var coreCompetencyReadTemplateMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("Data base record id for the template")
 });
 var coreCompetencyReadTemplateMutationResponseSchema = coreCompetencyReadTemplate200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReadUserEvidenceSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReadUserEvidenceSchema.js
 var coreCompetencyReadUserEvidence200Schema = exports_external.object({
   userid: exports_external.coerce.number().int().describe("userid"),
   name: exports_external.coerce.string().describe("name"),
@@ -15160,7 +15116,7 @@ var coreCompetencyReadUserEvidenceMutationRequestSchema = exports_external.objec
   id: exports_external.coerce.number().int().describe("The user evidence ID.")
 });
 var coreCompetencyReadUserEvidenceMutationResponseSchema = coreCompetencyReadUserEvidence200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyRemoveCompetencyFromCourseSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyRemoveCompetencyFromCourseSchema.js
 var coreCompetencyRemoveCompetencyFromCourse200Schema = exports_external.boolean().describe("True if successful.");
 var coreCompetencyRemoveCompetencyFromCourse400Schema = errorResponseSchema;
 var coreCompetencyRemoveCompetencyFromCourseMutationRequestSchema = exports_external.object({
@@ -15168,7 +15124,7 @@ var coreCompetencyRemoveCompetencyFromCourseMutationRequestSchema = exports_exte
   competencyid: exports_external.coerce.number().int().describe("The competency id")
 });
 var coreCompetencyRemoveCompetencyFromCourseMutationResponseSchema = coreCompetencyRemoveCompetencyFromCourse200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyRemoveCompetencyFromPlanSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyRemoveCompetencyFromPlanSchema.js
 var coreCompetencyRemoveCompetencyFromPlan200Schema = exports_external.boolean().describe("True if successful.");
 var coreCompetencyRemoveCompetencyFromPlan400Schema = errorResponseSchema;
 var coreCompetencyRemoveCompetencyFromPlanMutationRequestSchema = exports_external.object({
@@ -15176,7 +15132,7 @@ var coreCompetencyRemoveCompetencyFromPlanMutationRequestSchema = exports_extern
   competencyid: exports_external.coerce.number().int().describe("The competency id")
 });
 var coreCompetencyRemoveCompetencyFromPlanMutationResponseSchema = coreCompetencyRemoveCompetencyFromPlan200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyRemoveCompetencyFromTemplateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyRemoveCompetencyFromTemplateSchema.js
 var coreCompetencyRemoveCompetencyFromTemplate200Schema = exports_external.boolean().describe("True if successful.");
 var coreCompetencyRemoveCompetencyFromTemplate400Schema = errorResponseSchema;
 var coreCompetencyRemoveCompetencyFromTemplateMutationRequestSchema = exports_external.object({
@@ -15184,7 +15140,7 @@ var coreCompetencyRemoveCompetencyFromTemplateMutationRequestSchema = exports_ex
   competencyid: exports_external.coerce.number().int().describe("The competency id")
 });
 var coreCompetencyRemoveCompetencyFromTemplateMutationResponseSchema = coreCompetencyRemoveCompetencyFromTemplate200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyRemoveRelatedCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyRemoveRelatedCompetencySchema.js
 var coreCompetencyRemoveRelatedCompetency200Schema = exports_external.boolean().describe("True if successful.");
 var coreCompetencyRemoveRelatedCompetency400Schema = errorResponseSchema;
 var coreCompetencyRemoveRelatedCompetencyMutationRequestSchema = exports_external.object({
@@ -15192,14 +15148,14 @@ var coreCompetencyRemoveRelatedCompetencyMutationRequestSchema = exports_externa
   relatedcompetencyid: exports_external.coerce.number().int().describe("The related competency id")
 });
 var coreCompetencyRemoveRelatedCompetencyMutationResponseSchema = coreCompetencyRemoveRelatedCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReopenPlanSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReopenPlanSchema.js
 var coreCompetencyReopenPlan200Schema = exports_external.boolean().describe("True if reopening learning plan was successful");
 var coreCompetencyReopenPlan400Schema = errorResponseSchema;
 var coreCompetencyReopenPlanMutationRequestSchema = exports_external.object({
   planid: exports_external.coerce.number().int().describe("The plan id")
 });
 var coreCompetencyReopenPlanMutationResponseSchema = coreCompetencyReopenPlan200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReorderCourseCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReorderCourseCompetencySchema.js
 var coreCompetencyReorderCourseCompetency200Schema = exports_external.boolean().describe("True if successful.");
 var coreCompetencyReorderCourseCompetency400Schema = errorResponseSchema;
 var coreCompetencyReorderCourseCompetencyMutationRequestSchema = exports_external.object({
@@ -15208,7 +15164,7 @@ var coreCompetencyReorderCourseCompetencyMutationRequestSchema = exports_externa
   competencyidto: exports_external.coerce.number().int().describe("The competency id we are moving to")
 });
 var coreCompetencyReorderCourseCompetencyMutationResponseSchema = coreCompetencyReorderCourseCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReorderPlanCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReorderPlanCompetencySchema.js
 var coreCompetencyReorderPlanCompetency200Schema = exports_external.boolean().describe("True if successful.");
 var coreCompetencyReorderPlanCompetency400Schema = errorResponseSchema;
 var coreCompetencyReorderPlanCompetencyMutationRequestSchema = exports_external.object({
@@ -15217,7 +15173,7 @@ var coreCompetencyReorderPlanCompetencyMutationRequestSchema = exports_external.
   competencyidto: exports_external.coerce.number().int().describe("The competency id we are moving to")
 });
 var coreCompetencyReorderPlanCompetencyMutationResponseSchema = coreCompetencyReorderPlanCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReorderTemplateCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyReorderTemplateCompetencySchema.js
 var coreCompetencyReorderTemplateCompetency200Schema = exports_external.boolean().describe("True if successful.");
 var coreCompetencyReorderTemplateCompetency400Schema = errorResponseSchema;
 var coreCompetencyReorderTemplateCompetencyMutationRequestSchema = exports_external.object({
@@ -15226,14 +15182,14 @@ var coreCompetencyReorderTemplateCompetencyMutationRequestSchema = exports_exter
   competencyidto: exports_external.coerce.number().int().describe("The competency id we are moving to")
 });
 var coreCompetencyReorderTemplateCompetencyMutationResponseSchema = coreCompetencyReorderTemplateCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyRequestReviewOfUserEvidenceLinkedCompetenciesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyRequestReviewOfUserEvidenceLinkedCompetenciesSchema.js
 var coreCompetencyRequestReviewOfUserEvidenceLinkedCompetencies200Schema = exports_external.boolean().describe("True if all competencies were send to review");
 var coreCompetencyRequestReviewOfUserEvidenceLinkedCompetencies400Schema = errorResponseSchema;
 var coreCompetencyRequestReviewOfUserEvidenceLinkedCompetenciesMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The user evidence ID.")
 });
 var coreCompetencyRequestReviewOfUserEvidenceLinkedCompetenciesMutationResponseSchema = coreCompetencyRequestReviewOfUserEvidenceLinkedCompetencies200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencySearchCompetenciesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencySearchCompetenciesSchema.js
 var coreCompetencySearchCompetencies200Schema = exports_external.array(exports_external.object({
   shortname: exports_external.coerce.string().describe("shortname"),
   idnumber: exports_external.coerce.string().describe("idnumber"),
@@ -15259,7 +15215,7 @@ var coreCompetencySearchCompetenciesMutationRequestSchema = exports_external.obj
   competencyframeworkid: exports_external.coerce.number().int().describe("Competency framework id")
 });
 var coreCompetencySearchCompetenciesMutationResponseSchema = coreCompetencySearchCompetencies200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencySetCourseCompetencyRuleoutcomeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencySetCourseCompetencyRuleoutcomeSchema.js
 var coreCompetencySetCourseCompetencyRuleoutcome200Schema = exports_external.boolean().describe("True if the update was successful");
 var coreCompetencySetCourseCompetencyRuleoutcome400Schema = errorResponseSchema;
 var coreCompetencySetCourseCompetencyRuleoutcomeMutationRequestSchema = exports_external.object({
@@ -15267,7 +15223,7 @@ var coreCompetencySetCourseCompetencyRuleoutcomeMutationRequestSchema = exports_
   ruleoutcome: exports_external.coerce.number().int().describe("Ruleoutcome value")
 });
 var coreCompetencySetCourseCompetencyRuleoutcomeMutationResponseSchema = coreCompetencySetCourseCompetencyRuleoutcome200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencySetParentCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencySetParentCompetencySchema.js
 var coreCompetencySetParentCompetency200Schema = exports_external.boolean().describe("True if the update was successful");
 var coreCompetencySetParentCompetency400Schema = errorResponseSchema;
 var coreCompetencySetParentCompetencyMutationRequestSchema = exports_external.object({
@@ -15275,35 +15231,35 @@ var coreCompetencySetParentCompetencyMutationRequestSchema = exports_external.ob
   parentid: exports_external.coerce.number().int().describe("The new competency parent id")
 });
 var coreCompetencySetParentCompetencyMutationResponseSchema = coreCompetencySetParentCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyTemplateHasRelatedDataSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyTemplateHasRelatedDataSchema.js
 var coreCompetencyTemplateHasRelatedData200Schema = exports_external.boolean().describe("True if the template has related data");
 var coreCompetencyTemplateHasRelatedData400Schema = errorResponseSchema;
 var coreCompetencyTemplateHasRelatedDataMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The template id")
 });
 var coreCompetencyTemplateHasRelatedDataMutationResponseSchema = coreCompetencyTemplateHasRelatedData200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyTemplateViewedSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyTemplateViewedSchema.js
 var coreCompetencyTemplateViewed200Schema = exports_external.boolean().describe("True if the log of the view was successful");
 var coreCompetencyTemplateViewed400Schema = errorResponseSchema;
 var coreCompetencyTemplateViewedMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("Data base record id for the template")
 });
 var coreCompetencyTemplateViewedMutationResponseSchema = coreCompetencyTemplateViewed200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUnapprovePlanSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUnapprovePlanSchema.js
 var coreCompetencyUnapprovePlan200Schema = exports_external.boolean().describe("The success");
 var coreCompetencyUnapprovePlan400Schema = errorResponseSchema;
 var coreCompetencyUnapprovePlanMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The plan ID")
 });
 var coreCompetencyUnapprovePlanMutationResponseSchema = coreCompetencyUnapprovePlan200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUnlinkPlanFromTemplateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUnlinkPlanFromTemplateSchema.js
 var coreCompetencyUnlinkPlanFromTemplate200Schema = exports_external.boolean().describe("True if the unlink was successful");
 var coreCompetencyUnlinkPlanFromTemplate400Schema = errorResponseSchema;
 var coreCompetencyUnlinkPlanFromTemplateMutationRequestSchema = exports_external.object({
   planid: exports_external.coerce.number().int().describe("Data base record id for the plan")
 });
 var coreCompetencyUnlinkPlanFromTemplateMutationResponseSchema = coreCompetencyUnlinkPlanFromTemplate200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUpdateCompetencyFrameworkSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUpdateCompetencyFrameworkSchema.js
 var coreCompetencyUpdateCompetencyFramework200Schema = exports_external.boolean().describe("True if the update was successful");
 var coreCompetencyUpdateCompetencyFramework400Schema = errorResponseSchema;
 var coreCompetencyUpdateCompetencyFrameworkMutationRequestSchema = exports_external.object({
@@ -15326,7 +15282,7 @@ var coreCompetencyUpdateCompetencyFrameworkMutationRequestSchema = exports_exter
   })
 });
 var coreCompetencyUpdateCompetencyFrameworkMutationResponseSchema = coreCompetencyUpdateCompetencyFramework200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUpdateCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUpdateCompetencySchema.js
 var coreCompetencyUpdateCompetency200Schema = exports_external.boolean().describe("True if the update was successful");
 var coreCompetencyUpdateCompetency400Schema = errorResponseSchema;
 var coreCompetencyUpdateCompetencyMutationRequestSchema = exports_external.object({
@@ -15351,7 +15307,7 @@ var coreCompetencyUpdateCompetencyMutationRequestSchema = exports_external.objec
   })
 });
 var coreCompetencyUpdateCompetencyMutationResponseSchema = coreCompetencyUpdateCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUpdateCourseCompetencySettingsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUpdateCourseCompetencySettingsSchema.js
 var coreCompetencyUpdateCourseCompetencySettings200Schema = exports_external.boolean().describe("True if the update was successful.");
 var coreCompetencyUpdateCourseCompetencySettings400Schema = errorResponseSchema;
 var coreCompetencyUpdateCourseCompetencySettingsMutationRequestSchema = exports_external.object({
@@ -15361,7 +15317,7 @@ var coreCompetencyUpdateCourseCompetencySettingsMutationRequestSchema = exports_
   })
 });
 var coreCompetencyUpdateCourseCompetencySettingsMutationResponseSchema = coreCompetencyUpdateCourseCompetencySettings200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUpdatePlanSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUpdatePlanSchema.js
 var coreCompetencyUpdatePlan200Schema = exports_external.object({
   name: exports_external.coerce.string().describe("name"),
   description: exports_external.coerce.string().describe("description"),
@@ -15471,7 +15427,7 @@ var coreCompetencyUpdatePlanMutationRequestSchema = exports_external.object({
   })
 });
 var coreCompetencyUpdatePlanMutationResponseSchema = coreCompetencyUpdatePlan200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUpdateTemplateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUpdateTemplateSchema.js
 var coreCompetencyUpdateTemplate200Schema = exports_external.boolean().describe("True if the update was successful");
 var coreCompetencyUpdateTemplate400Schema = errorResponseSchema;
 var coreCompetencyUpdateTemplateMutationRequestSchema = exports_external.object({
@@ -15491,7 +15447,7 @@ var coreCompetencyUpdateTemplateMutationRequestSchema = exports_external.object(
   })
 });
 var coreCompetencyUpdateTemplateMutationResponseSchema = coreCompetencyUpdateTemplate200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUserCompetencyCancelReviewRequestSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUserCompetencyCancelReviewRequestSchema.js
 var coreCompetencyUserCompetencyCancelReviewRequest200Schema = exports_external.boolean().describe("The success");
 var coreCompetencyUserCompetencyCancelReviewRequest400Schema = errorResponseSchema;
 var coreCompetencyUserCompetencyCancelReviewRequestMutationRequestSchema = exports_external.object({
@@ -15499,7 +15455,7 @@ var coreCompetencyUserCompetencyCancelReviewRequestMutationRequestSchema = expor
   competencyid: exports_external.coerce.number().int().describe("The competency ID")
 });
 var coreCompetencyUserCompetencyCancelReviewRequestMutationResponseSchema = coreCompetencyUserCompetencyCancelReviewRequest200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUserCompetencyPlanViewedSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUserCompetencyPlanViewedSchema.js
 var coreCompetencyUserCompetencyPlanViewed200Schema = exports_external.boolean().describe("True if the event user competency plan viewed was logged");
 var coreCompetencyUserCompetencyPlanViewed400Schema = errorResponseSchema;
 var coreCompetencyUserCompetencyPlanViewedMutationRequestSchema = exports_external.object({
@@ -15508,7 +15464,7 @@ var coreCompetencyUserCompetencyPlanViewedMutationRequestSchema = exports_extern
   planid: exports_external.coerce.number().int().describe("The plan id")
 });
 var coreCompetencyUserCompetencyPlanViewedMutationResponseSchema = coreCompetencyUserCompetencyPlanViewed200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUserCompetencyRequestReviewSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUserCompetencyRequestReviewSchema.js
 var coreCompetencyUserCompetencyRequestReview200Schema = exports_external.boolean().describe("The success");
 var coreCompetencyUserCompetencyRequestReview400Schema = errorResponseSchema;
 var coreCompetencyUserCompetencyRequestReviewMutationRequestSchema = exports_external.object({
@@ -15516,7 +15472,7 @@ var coreCompetencyUserCompetencyRequestReviewMutationRequestSchema = exports_ext
   competencyid: exports_external.coerce.number().int().describe("The competency ID")
 });
 var coreCompetencyUserCompetencyRequestReviewMutationResponseSchema = coreCompetencyUserCompetencyRequestReview200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUserCompetencyStartReviewSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUserCompetencyStartReviewSchema.js
 var coreCompetencyUserCompetencyStartReview200Schema = exports_external.boolean().describe("The success");
 var coreCompetencyUserCompetencyStartReview400Schema = errorResponseSchema;
 var coreCompetencyUserCompetencyStartReviewMutationRequestSchema = exports_external.object({
@@ -15524,7 +15480,7 @@ var coreCompetencyUserCompetencyStartReviewMutationRequestSchema = exports_exter
   competencyid: exports_external.coerce.number().int().describe("The competency ID")
 });
 var coreCompetencyUserCompetencyStartReviewMutationResponseSchema = coreCompetencyUserCompetencyStartReview200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUserCompetencyStopReviewSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUserCompetencyStopReviewSchema.js
 var coreCompetencyUserCompetencyStopReview200Schema = exports_external.boolean().describe("The success");
 var coreCompetencyUserCompetencyStopReview400Schema = errorResponseSchema;
 var coreCompetencyUserCompetencyStopReviewMutationRequestSchema = exports_external.object({
@@ -15532,7 +15488,7 @@ var coreCompetencyUserCompetencyStopReviewMutationRequestSchema = exports_extern
   competencyid: exports_external.coerce.number().int().describe("The competency ID")
 });
 var coreCompetencyUserCompetencyStopReviewMutationResponseSchema = coreCompetencyUserCompetencyStopReview200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUserCompetencyViewedInCourseSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUserCompetencyViewedInCourseSchema.js
 var coreCompetencyUserCompetencyViewedInCourse200Schema = exports_external.boolean().describe("True if the event user competency viewed in course was logged");
 var coreCompetencyUserCompetencyViewedInCourse400Schema = errorResponseSchema;
 var coreCompetencyUserCompetencyViewedInCourseMutationRequestSchema = exports_external.object({
@@ -15541,7 +15497,7 @@ var coreCompetencyUserCompetencyViewedInCourseMutationRequestSchema = exports_ex
   courseid: exports_external.coerce.number().int().describe("The course id")
 });
 var coreCompetencyUserCompetencyViewedInCourseMutationResponseSchema = coreCompetencyUserCompetencyViewedInCourse200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUserCompetencyViewedInPlanSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUserCompetencyViewedInPlanSchema.js
 var coreCompetencyUserCompetencyViewedInPlan200Schema = exports_external.boolean().describe("True if the event user competency viewed in plan was logged");
 var coreCompetencyUserCompetencyViewedInPlan400Schema = errorResponseSchema;
 var coreCompetencyUserCompetencyViewedInPlanMutationRequestSchema = exports_external.object({
@@ -15550,14 +15506,14 @@ var coreCompetencyUserCompetencyViewedInPlanMutationRequestSchema = exports_exte
   planid: exports_external.coerce.number().int().describe("The plan id")
 });
 var coreCompetencyUserCompetencyViewedInPlanMutationResponseSchema = coreCompetencyUserCompetencyViewedInPlan200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUserCompetencyViewedSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompetencyUserCompetencyViewedSchema.js
 var coreCompetencyUserCompetencyViewed200Schema = exports_external.boolean().describe("True if the event user competency viewed was logged");
 var coreCompetencyUserCompetencyViewed400Schema = errorResponseSchema;
 var coreCompetencyUserCompetencyViewedMutationRequestSchema = exports_external.object({
   usercompetencyid: exports_external.coerce.number().int().describe("The user competency id")
 });
 var coreCompetencyUserCompetencyViewedMutationResponseSchema = coreCompetencyUserCompetencyViewed200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompletionGetActivitiesCompletionStatusSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompletionGetActivitiesCompletionStatusSchema.js
 var coreCompletionGetActivitiesCompletionStatus200Schema = exports_external.object({
   statuses: exports_external.array(exports_external.object({
     cmid: exports_external.coerce.number().int().describe("course module ID"),
@@ -15601,7 +15557,7 @@ var coreCompletionGetActivitiesCompletionStatusMutationRequestSchema = exports_e
   userid: exports_external.coerce.number().int().describe("User ID")
 });
 var coreCompletionGetActivitiesCompletionStatusMutationResponseSchema = coreCompletionGetActivitiesCompletionStatus200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompletionGetCourseCompletionStatusSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompletionGetCourseCompletionStatusSchema.js
 var coreCompletionGetCourseCompletionStatus200Schema = exports_external.object({
   completionstatus: exports_external.object({
     completed: exports_external.boolean().describe("true if the course is complete, false otherwise"),
@@ -15633,7 +15589,7 @@ var coreCompletionGetCourseCompletionStatusMutationRequestSchema = exports_exter
   userid: exports_external.coerce.number().int().describe("User ID")
 });
 var coreCompletionGetCourseCompletionStatusMutationResponseSchema = coreCompletionGetCourseCompletionStatus200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompletionMarkCourseSelfCompletedSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompletionMarkCourseSelfCompletedSchema.js
 var coreCompletionMarkCourseSelfCompleted200Schema = exports_external.object({
   status: exports_external.boolean().describe("status, true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -15648,7 +15604,7 @@ var coreCompletionMarkCourseSelfCompletedMutationRequestSchema = exports_externa
   courseid: exports_external.coerce.number().int().describe("Course ID")
 });
 var coreCompletionMarkCourseSelfCompletedMutationResponseSchema = coreCompletionMarkCourseSelfCompleted200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompletionOverrideActivityCompletionStatusSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompletionOverrideActivityCompletionStatusSchema.js
 var coreCompletionOverrideActivityCompletionStatus200Schema = exports_external.object({
   cmid: exports_external.coerce.number().int().describe("The course module id"),
   userid: exports_external.coerce.number().int().describe("The user id to which the completion info belongs"),
@@ -15665,7 +15621,7 @@ var coreCompletionOverrideActivityCompletionStatusMutationRequestSchema = export
   newstate: exports_external.coerce.number().int().describe("the new activity completion state")
 });
 var coreCompletionOverrideActivityCompletionStatusMutationResponseSchema = coreCompletionOverrideActivityCompletionStatus200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompletionUpdateActivityCompletionStatusManuallySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCompletionUpdateActivityCompletionStatusManuallySchema.js
 var coreCompletionUpdateActivityCompletionStatusManually200Schema = exports_external.object({
   status: exports_external.boolean().describe("status, true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -15681,7 +15637,7 @@ var coreCompletionUpdateActivityCompletionStatusManuallyMutationRequestSchema = 
   completed: exports_external.boolean().describe("activity completed or not")
 });
 var coreCompletionUpdateActivityCompletionStatusManuallyMutationResponseSchema = coreCompletionUpdateActivityCompletionStatusManually200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreContentbankCopyContentSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreContentbankCopyContentSchema.js
 var coreContentbankCopyContent200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The id of the new content"),
   warnings: exports_external.array(exports_external.object({
@@ -15697,7 +15653,7 @@ var coreContentbankCopyContentMutationRequestSchema = exports_external.object({
   name: exports_external.coerce.string().describe("The new name for the content")
 });
 var coreContentbankCopyContentMutationResponseSchema = coreContentbankCopyContent200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreContentbankDeleteContentSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreContentbankDeleteContentSchema.js
 var coreContentbankDeleteContent200Schema = exports_external.object({
   result: exports_external.boolean().describe("The processing result"),
   warnings: exports_external.array(exports_external.object({
@@ -15712,7 +15668,7 @@ var coreContentbankDeleteContentMutationRequestSchema = exports_external.object(
   contentids: exports_external.array(exports_external.coerce.number().int().describe("The content id to delete"))
 });
 var coreContentbankDeleteContentMutationResponseSchema = coreContentbankDeleteContent200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreContentbankRenameContentSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreContentbankRenameContentSchema.js
 var coreContentbankRenameContent200Schema = exports_external.object({
   result: exports_external.boolean().describe("The processing result"),
   warnings: exports_external.array(exports_external.object({
@@ -15728,7 +15684,7 @@ var coreContentbankRenameContentMutationRequestSchema = exports_external.object(
   name: exports_external.coerce.string().describe("The new name for the content")
 });
 var coreContentbankRenameContentMutationResponseSchema = coreContentbankRenameContent200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreContentbankSetContentVisibilitySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreContentbankSetContentVisibilitySchema.js
 var coreContentbankSetContentVisibility200Schema = exports_external.object({
   result: exports_external.boolean().describe("The processing result"),
   warnings: exports_external.array(exports_external.object({
@@ -15744,7 +15700,7 @@ var coreContentbankSetContentVisibilityMutationRequestSchema = exports_external.
   visibility: exports_external.coerce.number().int().describe("The new visibility for the content")
 });
 var coreContentbankSetContentVisibilityMutationResponseSchema = coreContentbankSetContentVisibility200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseAddContentItemToUserFavouritesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseAddContentItemToUserFavouritesSchema.js
 var coreCourseAddContentItemToUserFavourites200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The id of the content item"),
   name: exports_external.coerce.string().describe("Name of the content item"),
@@ -15766,7 +15722,7 @@ var coreCourseAddContentItemToUserFavouritesMutationRequestSchema = exports_exte
   contentitemid: exports_external.coerce.number().int().describe("id of the content item")
 });
 var coreCourseAddContentItemToUserFavouritesMutationResponseSchema = coreCourseAddContentItemToUserFavourites200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseCheckUpdatesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseCheckUpdatesSchema.js
 var coreCourseCheckUpdates200Schema = exports_external.object({
   instances: exports_external.array(exports_external.object({
     contextlevel: exports_external.coerce.string().describe("The context level"),
@@ -15797,7 +15753,7 @@ var coreCourseCheckUpdatesMutationRequestSchema = exports_external.object({
                                                         gradeitems, outcomes`)).optional()
 });
 var coreCourseCheckUpdatesMutationResponseSchema = coreCourseCheckUpdates200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseCreateCategoriesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseCreateCategoriesSchema.js
 var coreCourseCreateCategories200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("new category id"),
   name: exports_external.coerce.string().describe("new category name")
@@ -15815,7 +15771,7 @@ var coreCourseCreateCategoriesMutationRequestSchema = exports_external.object({
   }))
 });
 var coreCourseCreateCategoriesMutationResponseSchema = coreCourseCreateCategories200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseCreateCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseCreateCoursesSchema.js
 var coreCourseCreateCourses200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("course id"),
   shortname: exports_external.coerce.string().describe("short name")
@@ -15858,7 +15814,7 @@ var coreCourseCreateCoursesMutationRequestSchema = exports_external.object({
   }))
 });
 var coreCourseCreateCoursesMutationResponseSchema = coreCourseCreateCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseDeleteCategoriesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseDeleteCategoriesSchema.js
 var coreCourseDeleteCategories200Schema = exports_external.null();
 var coreCourseDeleteCategories400Schema = errorResponseSchema;
 var coreCourseDeleteCategoriesMutationRequestSchema = exports_external.object({
@@ -15870,7 +15826,7 @@ var coreCourseDeleteCategoriesMutationRequestSchema = exports_external.object({
   }))
 });
 var coreCourseDeleteCategoriesMutationResponseSchema = coreCourseDeleteCategories200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseDeleteCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseDeleteCoursesSchema.js
 var coreCourseDeleteCourses200Schema = exports_external.object({
   warnings: exports_external.array(exports_external.object({
     item: exports_external.coerce.string().describe("item").nullable().nullish(),
@@ -15884,14 +15840,14 @@ var coreCourseDeleteCoursesMutationRequestSchema = exports_external.object({
   courseids: exports_external.array(exports_external.coerce.number().int().describe("course ID"))
 });
 var coreCourseDeleteCoursesMutationResponseSchema = coreCourseDeleteCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseDeleteModulesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseDeleteModulesSchema.js
 var coreCourseDeleteModules200Schema = exports_external.null();
 var coreCourseDeleteModules400Schema = errorResponseSchema;
 var coreCourseDeleteModulesMutationRequestSchema = exports_external.object({
   cmids: exports_external.array(exports_external.coerce.number().int().describe("course module ID"))
 });
 var coreCourseDeleteModulesMutationResponseSchema = coreCourseDeleteModules200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseDuplicateCourseSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseDuplicateCourseSchema.js
 var coreCourseDuplicateCourse200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("course id"),
   shortname: exports_external.coerce.string().describe("short name")
@@ -15947,7 +15903,7 @@ var coreCourseDuplicateCourseMutationRequestSchema = exports_external.object({
   ])).describe("The allowed keys (value format) are: \n- `activities` (int); Include course activites (default to 1 that is equal to yes)\n- `blocks` (int); Include course blocks (default to 1 that is equal to yes)\n- `filters` (int); Include course filters  (default to 1 that is equal to yes)\n- `users` (int); Include users (default to 0 that is equal to no)\n- `enrolments` (int); Include enrolment methods (default to 1 - restore only with users)\n- `role_assignments` (int); Include role assignments  (default to 0 that is equal to no)\n- `comments` (int); Include user comments  (default to 0 that is equal to no)\n- `userscompletion` (int); Include user course completion information  (default to 0 that is equal to no)\n- `logs` (int); Include course logs  (default to 0 that is equal to no)\n- `grade_histories` (int); Include histories  (default to 0 that is equal to no)").optional()
 });
 var coreCourseDuplicateCourseMutationResponseSchema = coreCourseDuplicateCourse200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseEditModuleSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseEditModuleSchema.js
 var coreCourseEditModule200Schema = exports_external.coerce.string().describe("html to replace the current module with");
 var coreCourseEditModule400Schema = errorResponseSchema;
 var coreCourseEditModuleMutationRequestSchema = exports_external.object({
@@ -15956,7 +15912,7 @@ var coreCourseEditModuleMutationRequestSchema = exports_external.object({
   sectionreturn: exports_external.coerce.number().int().describe("section to return to").nullable().nullish()
 });
 var coreCourseEditModuleMutationResponseSchema = coreCourseEditModule200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseEditSectionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseEditSectionSchema.js
 var coreCourseEditSection200Schema = exports_external.coerce.string().describe("Additional data for javascript (JSON-encoded string)");
 var coreCourseEditSection400Schema = errorResponseSchema;
 var coreCourseEditSectionMutationRequestSchema = exports_external.object({
@@ -15965,7 +15921,7 @@ var coreCourseEditSectionMutationRequestSchema = exports_external.object({
   sectionreturn: exports_external.coerce.number().int().describe("section to return to").nullable().nullish()
 });
 var coreCourseEditSectionMutationResponseSchema = coreCourseEditSection200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseformatCreateModuleSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseformatCreateModuleSchema.js
 var coreCourseformatCreateModule200Schema = exports_external.coerce.string().describe("Encoded course update JSON");
 var coreCourseformatCreateModule400Schema = errorResponseSchema;
 var coreCourseformatCreateModuleMutationRequestSchema = exports_external.object({
@@ -15975,7 +15931,7 @@ var coreCourseformatCreateModuleMutationRequestSchema = exports_external.object(
   targetcmid: exports_external.coerce.number().int().describe("Optional target cm id").nullable().nullish()
 });
 var coreCourseformatCreateModuleMutationResponseSchema = coreCourseformatCreateModule200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseformatFileHandlersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseformatFileHandlersSchema.js
 var coreCourseformatFileHandlers200Schema = exports_external.array(exports_external.object({
   extension: exports_external.coerce.string().describe("File extension"),
   module: exports_external.coerce.string().describe("Target module"),
@@ -15986,14 +15942,14 @@ var coreCourseformatFileHandlersMutationRequestSchema = exports_external.object(
   courseid: exports_external.coerce.number().int().describe("course id")
 });
 var coreCourseformatFileHandlersMutationResponseSchema = coreCourseformatFileHandlers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseformatGetStateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseformatGetStateSchema.js
 var coreCourseformatGetState200Schema = exports_external.coerce.string().describe("Encoded course state JSON");
 var coreCourseformatGetState400Schema = errorResponseSchema;
 var coreCourseformatGetStateMutationRequestSchema = exports_external.object({
   courseid: exports_external.coerce.number().int().describe("course id")
 });
 var coreCourseformatGetStateMutationResponseSchema = coreCourseformatGetState200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseformatUpdateCourseSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseformatUpdateCourseSchema.js
 var coreCourseformatUpdateCourse200Schema = exports_external.coerce.string().describe("Encoded course update JSON");
 var coreCourseformatUpdateCourse400Schema = errorResponseSchema;
 var coreCourseformatUpdateCourseMutationRequestSchema = exports_external.object({
@@ -16004,7 +15960,7 @@ var coreCourseformatUpdateCourseMutationRequestSchema = exports_external.object(
   targetcmid: exports_external.coerce.number().int().describe("Optional target cm id").nullable().nullish()
 });
 var coreCourseformatUpdateCourseMutationResponseSchema = coreCourseformatUpdateCourse200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetActivityChooserFooterSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetActivityChooserFooterSchema.js
 var coreCourseGetActivityChooserFooter200Schema = exports_external.object({
   footer: exports_external.boolean().describe("Is a footer being return by this request?"),
   customfooterjs: exports_external.coerce.string().describe("The path to the plugin JS file").nullable().nullish(),
@@ -16017,7 +15973,7 @@ var coreCourseGetActivityChooserFooterMutationRequestSchema = exports_external.o
   sectionid: exports_external.coerce.number().int().describe("ID of the section")
 });
 var coreCourseGetActivityChooserFooterMutationResponseSchema = coreCourseGetActivityChooserFooter200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetCategoriesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetCategoriesSchema.js
 var coreCourseGetCategories200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("category id"),
   name: exports_external.coerce.string().describe("category name"),
@@ -16070,7 +16026,7 @@ var coreCourseGetCategoriesMutationRequestSchema = exports_external.object({
                                           (1 - default) otherwise only the category info (0)`).nullable().nullish()
 });
 var coreCourseGetCategoriesMutationResponseSchema = coreCourseGetCategories200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetContentsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetContentsSchema.js
 var coreCourseGetContents200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("Section ID"),
   name: exports_external.coerce.string().describe("Section name"),
@@ -16222,7 +16178,7 @@ var coreCourseGetContentsMutationRequestSchema = exports_external.object({
   ])).describe('The allowed keys (value format) are: \n- `excludemodules` (bool); Do not return modules, return only the sections structure\n- `excludecontents` (bool); Do not return module contents (i.e: files inside a resource)\n- `includestealthmodules` (bool); Return stealth modules for students in a special section (with id -1)\n- `sectionid` (int); Return only this section\n- `sectionnumber` (int); Return only this section with number (order)\n- `cmid` (int); Return only this module information (among the whole sections structure)\n- `modname` (string); Return only modules with this name "label, forum, etc..."\n- `modid` (int); Return only the module with this id (to be used with modname').optional()
 });
 var coreCourseGetContentsMutationResponseSchema = coreCourseGetContents200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetCourseContentItemsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetCourseContentItemsSchema.js
 var coreCourseGetCourseContentItems200Schema = exports_external.object({
   content_items: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The id of the content item"),
@@ -16246,7 +16202,7 @@ var coreCourseGetCourseContentItemsMutationRequestSchema = exports_external.obje
   sectionnum: exports_external.coerce.number().int().describe("Number of the section").nullable().nullish()
 });
 var coreCourseGetCourseContentItemsMutationResponseSchema = coreCourseGetCourseContentItems200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetCourseModuleByInstanceSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetCourseModuleByInstanceSchema.js
 var coreCourseGetCourseModuleByInstance200Schema = exports_external.object({
   cm: exports_external.object({
     id: exports_external.coerce.number().int().describe("The course module id"),
@@ -16301,7 +16257,7 @@ var coreCourseGetCourseModuleByInstanceMutationRequestSchema = exports_external.
   instance: exports_external.coerce.number().int().describe("The module instance id")
 });
 var coreCourseGetCourseModuleByInstanceMutationResponseSchema = coreCourseGetCourseModuleByInstance200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetCourseModuleSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetCourseModuleSchema.js
 var coreCourseGetCourseModule200Schema = exports_external.object({
   cm: exports_external.object({
     id: exports_external.coerce.number().int().describe("The course module id"),
@@ -16355,7 +16311,7 @@ var coreCourseGetCourseModuleMutationRequestSchema = exports_external.object({
   cmid: exports_external.coerce.number().int().describe("The course module id")
 });
 var coreCourseGetCourseModuleMutationResponseSchema = coreCourseGetCourseModule200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetCoursesByFieldSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetCoursesByFieldSchema.js
 var coreCourseGetCoursesByField200Schema = exports_external.object({
   courses: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("course id"),
@@ -16459,7 +16415,7 @@ var coreCourseGetCoursesByFieldMutationRequestSchema = exports_external.object({
   value: exports_external.coerce.string().default("").describe("The value to match").nullable().nullish()
 });
 var coreCourseGetCoursesByFieldMutationResponseSchema = coreCourseGetCoursesByField200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetCoursesSchema.js
 var coreCourseGetCourses200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("course id"),
   shortname: exports_external.coerce.string().describe("course short name"),
@@ -16511,7 +16467,7 @@ var coreCourseGetCoursesMutationRequestSchema = exports_external.object({
   }).optional()
 });
 var coreCourseGetCoursesMutationResponseSchema = coreCourseGetCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetEnrolledCoursesByTimelineClassificationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetEnrolledCoursesByTimelineClassificationSchema.js
 var coreCourseGetEnrolledCoursesByTimelineClassification200Schema = exports_external.object({
   courses: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("id"),
@@ -16551,7 +16507,7 @@ var coreCourseGetEnrolledCoursesByTimelineClassificationMutationRequestSchema = 
   requiredfields: exports_external.array(exports_external.coerce.string().describe("Field name to be included from the results").nullable()).optional()
 });
 var coreCourseGetEnrolledCoursesByTimelineClassificationMutationResponseSchema = coreCourseGetEnrolledCoursesByTimelineClassification200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetEnrolledCoursesWithActionEventsByTimelineClassificationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetEnrolledCoursesWithActionEventsByTimelineClassificationSchema.js
 var coreCourseGetEnrolledCoursesWithActionEventsByTimelineClassification200Schema = exports_external.object({
   courses: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("id"),
@@ -16593,7 +16549,7 @@ var coreCourseGetEnrolledCoursesWithActionEventsByTimelineClassificationMutation
   eventsto: exports_external.coerce.number().int().describe("Optional ending timestamp for action events").nullable().nullish()
 });
 var coreCourseGetEnrolledCoursesWithActionEventsByTimelineClassificationMutationResponseSchema = coreCourseGetEnrolledCoursesWithActionEventsByTimelineClassification200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetEnrolledUsersByCmidSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetEnrolledUsersByCmidSchema.js
 var coreCourseGetEnrolledUsersByCmid200Schema = exports_external.object({
   users: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("ID of the user"),
@@ -16616,7 +16572,7 @@ var coreCourseGetEnrolledUsersByCmidMutationRequestSchema = exports_external.obj
   onlyactive: exports_external.boolean().default(false).describe("whether to return only active users or all.").nullable().nullish()
 });
 var coreCourseGetEnrolledUsersByCmidMutationResponseSchema = coreCourseGetEnrolledUsersByCmid200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetModuleSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetModuleSchema.js
 var coreCourseGetModule200Schema = exports_external.coerce.string().describe("html to replace the current module with");
 var coreCourseGetModule400Schema = errorResponseSchema;
 var coreCourseGetModuleMutationRequestSchema = exports_external.object({
@@ -16624,7 +16580,7 @@ var coreCourseGetModuleMutationRequestSchema = exports_external.object({
   sectionreturn: exports_external.coerce.number().int().describe("section to return to").nullable().nullish()
 });
 var coreCourseGetModuleMutationResponseSchema = coreCourseGetModule200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetRecentCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetRecentCoursesSchema.js
 var coreCourseGetRecentCourses200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("id"),
   fullname: exports_external.coerce.string().describe("fullname"),
@@ -16657,7 +16613,7 @@ var coreCourseGetRecentCoursesMutationRequestSchema = exports_external.object({
   sort: exports_external.coerce.string().describe("Sort string").nullable().nullish()
 });
 var coreCourseGetRecentCoursesMutationResponseSchema = coreCourseGetRecentCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetUpdatesSinceSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetUpdatesSinceSchema.js
 var coreCourseGetUpdatesSince200Schema = exports_external.object({
   instances: exports_external.array(exports_external.object({
     contextlevel: exports_external.coerce.string().describe("The context level"),
@@ -16683,7 +16639,7 @@ var coreCourseGetUpdatesSinceMutationRequestSchema = exports_external.object({
                                                         gradeitems, outcomes`)).optional()
 });
 var coreCourseGetUpdatesSinceMutationResponseSchema = coreCourseGetUpdatesSince200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetUserAdministrationOptionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetUserAdministrationOptionsSchema.js
 var coreCourseGetUserAdministrationOptions200Schema = exports_external.object({
   courses: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Course id"),
@@ -16704,7 +16660,7 @@ var coreCourseGetUserAdministrationOptionsMutationRequestSchema = exports_extern
   courseids: exports_external.array(exports_external.coerce.number().int().describe("Course id."))
 });
 var coreCourseGetUserAdministrationOptionsMutationResponseSchema = coreCourseGetUserAdministrationOptions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetUserNavigationOptionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseGetUserNavigationOptionsSchema.js
 var coreCourseGetUserNavigationOptions200Schema = exports_external.object({
   courses: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Course id"),
@@ -16725,7 +16681,7 @@ var coreCourseGetUserNavigationOptionsMutationRequestSchema = exports_external.o
   courseids: exports_external.array(exports_external.coerce.number().int().describe("Course id."))
 });
 var coreCourseGetUserNavigationOptionsMutationResponseSchema = coreCourseGetUserNavigationOptions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseImportCourseSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseImportCourseSchema.js
 var coreCourseImportCourse200Schema = exports_external.null();
 var coreCourseImportCourse400Schema = errorResponseSchema;
 var coreCourseImportCourseMutationRequestSchema = exports_external.object({
@@ -16748,7 +16704,7 @@ var coreCourseImportCourseMutationRequestSchema = exports_external.object({
   ])).describe("The allowed keys (value format) are: \n- `activities` (int); Include course activites (default to 1 that is equal to yes)\n- `blocks` (int); Include course blocks (default to 1 that is equal to yes)\n- `filters` (int); Include course filters  (default to 1 that is equal to yes)").optional()
 });
 var coreCourseImportCourseMutationResponseSchema = coreCourseImportCourse200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseRemoveContentItemFromUserFavouritesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseRemoveContentItemFromUserFavouritesSchema.js
 var coreCourseRemoveContentItemFromUserFavourites200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The id of the content item"),
   name: exports_external.coerce.string().describe("Name of the content item"),
@@ -16770,7 +16726,7 @@ var coreCourseRemoveContentItemFromUserFavouritesMutationRequestSchema = exports
   contentitemid: exports_external.coerce.number().int().describe("id of the content item")
 });
 var coreCourseRemoveContentItemFromUserFavouritesMutationResponseSchema = coreCourseRemoveContentItemFromUserFavourites200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseSearchCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseSearchCoursesSchema.js
 var coreCourseSearchCourses200Schema = exports_external.object({
   total: exports_external.coerce.number().int().describe("total course count"),
   courses: exports_external.array(exports_external.object({
@@ -16840,7 +16796,7 @@ var coreCourseSearchCoursesMutationRequestSchema = exports_external.object({
   onlywithcompletion: exports_external.boolean().default(0).describe("limit to courses where completion is enabled").nullable().nullish()
 });
 var coreCourseSearchCoursesMutationResponseSchema = coreCourseSearchCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseSetFavouriteCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseSetFavouriteCoursesSchema.js
 var coreCourseSetFavouriteCourses200Schema = exports_external.object({
   warnings: exports_external.array(exports_external.object({
     item: exports_external.coerce.string().describe("item").nullable().nullish(),
@@ -16857,7 +16813,7 @@ var coreCourseSetFavouriteCoursesMutationRequestSchema = exports_external.object
   }))
 });
 var coreCourseSetFavouriteCoursesMutationResponseSchema = coreCourseSetFavouriteCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseToggleActivityRecommendationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseToggleActivityRecommendationSchema.js
 var coreCourseToggleActivityRecommendation200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("id of the activity or whatever"),
   area: exports_external.coerce.string().describe("The favourite area (itemtype)"),
@@ -16869,7 +16825,7 @@ var coreCourseToggleActivityRecommendationMutationRequestSchema = exports_extern
   id: exports_external.coerce.number().int().describe("id of the activity or whatever")
 });
 var coreCourseToggleActivityRecommendationMutationResponseSchema = coreCourseToggleActivityRecommendation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseUpdateCategoriesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseUpdateCategoriesSchema.js
 var coreCourseUpdateCategories200Schema = exports_external.null();
 var coreCourseUpdateCategories400Schema = errorResponseSchema;
 var coreCourseUpdateCategoriesMutationRequestSchema = exports_external.object({
@@ -16884,7 +16840,7 @@ var coreCourseUpdateCategoriesMutationRequestSchema = exports_external.object({
   }))
 });
 var coreCourseUpdateCategoriesMutationResponseSchema = coreCourseUpdateCategories200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseUpdateCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseUpdateCoursesSchema.js
 var coreCourseUpdateCourses200Schema = exports_external.object({
   warnings: exports_external.array(exports_external.object({
     item: exports_external.coerce.string().describe("item").nullable().nullish(),
@@ -16933,7 +16889,7 @@ var coreCourseUpdateCoursesMutationRequestSchema = exports_external.object({
   }))
 });
 var coreCourseUpdateCoursesMutationResponseSchema = coreCourseUpdateCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseViewCourseSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCourseViewCourseSchema.js
 var coreCourseViewCourse200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -16949,7 +16905,7 @@ var coreCourseViewCourseMutationRequestSchema = exports_external.object({
   sectionnumber: exports_external.coerce.number().int().default(0).describe("section number").nullable().nullish()
 });
 var coreCourseViewCourseMutationResponseSchema = coreCourseViewCourse200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCreateUserfeedbackActionRecordSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCreateUserfeedbackActionRecordSchema.js
 var coreCreateUserfeedbackActionRecord200Schema = exports_external.null();
 var coreCreateUserfeedbackActionRecord400Schema = errorResponseSchema;
 var coreCreateUserfeedbackActionRecordMutationRequestSchema = exports_external.object({
@@ -16957,7 +16913,7 @@ var coreCreateUserfeedbackActionRecordMutationRequestSchema = exports_external.o
   contextid: exports_external.coerce.number().int().describe("The context id of the page the user is in")
 });
 var coreCreateUserfeedbackActionRecordMutationResponseSchema = coreCreateUserfeedbackActionRecord200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCustomfieldCreateCategorySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCustomfieldCreateCategorySchema.js
 var coreCustomfieldCreateCategory200Schema = exports_external.coerce.number().int().describe("Id of the category");
 var coreCustomfieldCreateCategory400Schema = errorResponseSchema;
 var coreCustomfieldCreateCategoryMutationRequestSchema = exports_external.object({
@@ -16966,21 +16922,21 @@ var coreCustomfieldCreateCategoryMutationRequestSchema = exports_external.object
   itemid: exports_external.coerce.number().int().describe("itemid")
 });
 var coreCustomfieldCreateCategoryMutationResponseSchema = coreCustomfieldCreateCategory200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCustomfieldDeleteCategorySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCustomfieldDeleteCategorySchema.js
 var coreCustomfieldDeleteCategory200Schema = exports_external.null();
 var coreCustomfieldDeleteCategory400Schema = errorResponseSchema;
 var coreCustomfieldDeleteCategoryMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("category ID to delete")
 });
 var coreCustomfieldDeleteCategoryMutationResponseSchema = coreCustomfieldDeleteCategory200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCustomfieldDeleteFieldSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCustomfieldDeleteFieldSchema.js
 var coreCustomfieldDeleteField200Schema = exports_external.null();
 var coreCustomfieldDeleteField400Schema = errorResponseSchema;
 var coreCustomfieldDeleteFieldMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("Custom field ID to delete")
 });
 var coreCustomfieldDeleteFieldMutationResponseSchema = coreCustomfieldDeleteField200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCustomfieldMoveCategorySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCustomfieldMoveCategorySchema.js
 var coreCustomfieldMoveCategory200Schema = exports_external.null();
 var coreCustomfieldMoveCategory400Schema = errorResponseSchema;
 var coreCustomfieldMoveCategoryMutationRequestSchema = exports_external.object({
@@ -16988,7 +16944,7 @@ var coreCustomfieldMoveCategoryMutationRequestSchema = exports_external.object({
   beforeid: exports_external.coerce.number().int().default(0).describe("Id of the category before which it needs to be moved").nullable().nullish()
 });
 var coreCustomfieldMoveCategoryMutationResponseSchema = coreCustomfieldMoveCategory200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCustomfieldMoveFieldSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCustomfieldMoveFieldSchema.js
 var coreCustomfieldMoveField200Schema = exports_external.null();
 var coreCustomfieldMoveField400Schema = errorResponseSchema;
 var coreCustomfieldMoveFieldMutationRequestSchema = exports_external.object({
@@ -16997,7 +16953,7 @@ var coreCustomfieldMoveFieldMutationRequestSchema = exports_external.object({
   beforeid: exports_external.coerce.number().int().default(0).describe("Id of the field before which it needs to be moved").nullable().nullish()
 });
 var coreCustomfieldMoveFieldMutationResponseSchema = coreCustomfieldMoveField200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCustomfieldReloadTemplateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreCustomfieldReloadTemplateSchema.js
 var coreCustomfieldReloadTemplate200Schema = exports_external.object({
   component: exports_external.coerce.string().describe("component"),
   area: exports_external.coerce.string().describe("area"),
@@ -17022,7 +16978,7 @@ var coreCustomfieldReloadTemplateMutationRequestSchema = exports_external.object
   itemid: exports_external.coerce.number().int().describe("itemid")
 });
 var coreCustomfieldReloadTemplateMutationResponseSchema = coreCustomfieldReloadTemplate200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreDynamicTabsGetContentSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreDynamicTabsGetContentSchema.js
 var coreDynamicTabsGetContent200Schema = exports_external.object({
   template: exports_external.coerce.string().describe("Template name"),
   content: exports_external.coerce.string().describe("JSON-encoded data for template"),
@@ -17034,7 +16990,7 @@ var coreDynamicTabsGetContentMutationRequestSchema = exports_external.object({
   jsondata: exports_external.coerce.string().describe("Json-encoded data")
 });
 var coreDynamicTabsGetContentMutationResponseSchema = coreDynamicTabsGetContent200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreEnrolGetCourseEnrolmentMethodsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreEnrolGetCourseEnrolmentMethodsSchema.js
 var coreEnrolGetCourseEnrolmentMethods200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("id of course enrolment instance"),
   courseid: exports_external.coerce.number().int().describe("id of course"),
@@ -17048,7 +17004,7 @@ var coreEnrolGetCourseEnrolmentMethodsMutationRequestSchema = exports_external.o
   courseid: exports_external.coerce.number().int().describe("Course id")
 });
 var coreEnrolGetCourseEnrolmentMethodsMutationResponseSchema = coreEnrolGetCourseEnrolmentMethods200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreEnrolGetEnrolledUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreEnrolGetEnrolledUsersSchema.js
 var coreEnrolGetEnrolledUsers200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("ID of the user"),
   username: exports_external.coerce.string().describe("Username policy is defined in Moodle security config").nullable().nullish(),
@@ -17109,7 +17065,7 @@ var coreEnrolGetEnrolledUsersMutationRequestSchema = exports_external.object({
   })).optional()
 });
 var coreEnrolGetEnrolledUsersMutationResponseSchema = coreEnrolGetEnrolledUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreEnrolGetEnrolledUsersWithCapabilitySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreEnrolGetEnrolledUsersWithCapabilitySchema.js
 var coreEnrolGetEnrolledUsersWithCapability200Schema = exports_external.array(exports_external.object({
   courseid: exports_external.coerce.number().int().describe("Course ID number in the Moodle course table"),
   capability: exports_external.coerce.string().describe("Capability name"),
@@ -17175,7 +17131,7 @@ var coreEnrolGetEnrolledUsersWithCapabilityMutationRequestSchema = exports_exter
   })).optional()
 });
 var coreEnrolGetEnrolledUsersWithCapabilityMutationResponseSchema = coreEnrolGetEnrolledUsersWithCapability200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreEnrolGetPotentialUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreEnrolGetPotentialUsersSchema.js
 var coreEnrolGetPotentialUsers200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("ID of the user"),
   username: exports_external.coerce.string().describe("The username").nullable().nullish(),
@@ -17229,7 +17185,7 @@ var coreEnrolGetPotentialUsersMutationRequestSchema = exports_external.object({
   perpage: exports_external.coerce.number().int().describe("Number per page")
 });
 var coreEnrolGetPotentialUsersMutationResponseSchema = coreEnrolGetPotentialUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreEnrolGetUsersCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreEnrolGetUsersCoursesSchema.js
 var coreEnrolGetUsersCourses200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("id of course"),
   shortname: exports_external.coerce.string().describe("short name of course"),
@@ -17277,7 +17233,7 @@ var coreEnrolGetUsersCoursesMutationRequestSchema = exports_external.object({
   returnusercount: exports_external.boolean().default(true).describe("Include count of enrolled users for each course? This can add several seconds to the response time if a user is on several large courses, so set this to false if the value will not be used to improve performance.").nullable().nullish()
 });
 var coreEnrolGetUsersCoursesMutationResponseSchema = coreEnrolGetUsersCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreEnrolSearchUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreEnrolSearchUsersSchema.js
 var coreEnrolSearchUsers200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("ID of the user"),
   username: exports_external.coerce.string().describe("The username").nullable().nullish(),
@@ -17331,7 +17287,7 @@ var coreEnrolSearchUsersMutationRequestSchema = exports_external.object({
   contextid: exports_external.coerce.number().int().describe("Context ID").nullable().nullish()
 });
 var coreEnrolSearchUsersMutationResponseSchema = coreEnrolSearchUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreEnrolSubmitUserEnrolmentFormSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreEnrolSubmitUserEnrolmentFormSchema.js
 var coreEnrolSubmitUserEnrolmentForm200Schema = exports_external.object({
   result: exports_external.boolean().describe("True if the user's enrolment was successfully updated"),
   validationerror: exports_external.boolean().default(false).describe("Indicates invalid form data").nullable().nullish()
@@ -17341,7 +17297,7 @@ var coreEnrolSubmitUserEnrolmentFormMutationRequestSchema = exports_external.obj
   formdata: exports_external.coerce.string().describe("The data from the event form")
 });
 var coreEnrolSubmitUserEnrolmentFormMutationResponseSchema = coreEnrolSubmitUserEnrolmentForm200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreEnrolUnenrolUserEnrolmentSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreEnrolUnenrolUserEnrolmentSchema.js
 var coreEnrolUnenrolUserEnrolment200Schema = exports_external.object({
   result: exports_external.boolean().describe("True if the user's enrolment was successfully updated"),
   errors: exports_external.array(exports_external.object({
@@ -17354,7 +17310,7 @@ var coreEnrolUnenrolUserEnrolmentMutationRequestSchema = exports_external.object
   ueid: exports_external.coerce.number().int().describe("User enrolment ID")
 });
 var coreEnrolUnenrolUserEnrolmentMutationResponseSchema = coreEnrolUnenrolUserEnrolment200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFetchNotificationsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFetchNotificationsSchema.js
 var coreFetchNotifications200Schema = exports_external.array(exports_external.object({
   template: exports_external.coerce.string().describe("Name of the template"),
   variables: exports_external.object({
@@ -17369,7 +17325,7 @@ var coreFetchNotificationsMutationRequestSchema = exports_external.object({
   contextid: exports_external.coerce.number().int().describe("Context ID")
 });
 var coreFetchNotificationsMutationResponseSchema = coreFetchNotifications200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFilesDeleteDraftFilesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFilesDeleteDraftFilesSchema.js
 var coreFilesDeleteDraftFiles200Schema = exports_external.object({
   parentpaths: exports_external.array(exports_external.coerce.string().describe("Path to parent directory of the deleted files.")),
   warnings: exports_external.array(exports_external.object({
@@ -17388,7 +17344,7 @@ var coreFilesDeleteDraftFilesMutationRequestSchema = exports_external.object({
   }))
 });
 var coreFilesDeleteDraftFilesMutationResponseSchema = coreFilesDeleteDraftFiles200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFilesGetFilesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFilesGetFilesSchema.js
 var coreFilesGetFiles200Schema = exports_external.object({
   parents: exports_external.array(exports_external.object({
     contextid: exports_external.coerce.number().int(),
@@ -17427,7 +17383,7 @@ var coreFilesGetFilesMutationRequestSchema = exports_external.object({
   instanceid: exports_external.coerce.number().int().describe("The instance id for where the file is located.").nullable().nullish()
 });
 var coreFilesGetFilesMutationResponseSchema = coreFilesGetFiles200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFilesGetUnusedDraftItemidSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFilesGetUnusedDraftItemidSchema.js
 var coreFilesGetUnusedDraftItemid200Schema = exports_external.object({
   component: exports_external.coerce.string().describe("File area component."),
   contextid: exports_external.coerce.number().int().describe("File area context."),
@@ -17443,7 +17399,7 @@ var coreFilesGetUnusedDraftItemid200Schema = exports_external.object({
 });
 var coreFilesGetUnusedDraftItemid400Schema = errorResponseSchema;
 var coreFilesGetUnusedDraftItemidMutationResponseSchema = coreFilesGetUnusedDraftItemid200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFilesUploadSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFilesUploadSchema.js
 var coreFilesUpload200Schema = exports_external.object({
   contextid: exports_external.coerce.number().int(),
   component: exports_external.coerce.string(),
@@ -17468,7 +17424,7 @@ var coreFilesUploadMutationRequestSchema = exports_external.object({
                          with the context level`).nullable().nullish()
 });
 var coreFilesUploadMutationResponseSchema = coreFilesUpload200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFiltersGetAllStatesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFiltersGetAllStatesSchema.js
 var coreFiltersGetAllStates200Schema = exports_external.object({
   filters: exports_external.array(exports_external.object({
     contextlevel: exports_external.coerce.string().describe("The context level where the filters are: (coursecat, course, module)."),
@@ -17487,7 +17443,7 @@ var coreFiltersGetAllStates200Schema = exports_external.object({
 });
 var coreFiltersGetAllStates400Schema = errorResponseSchema;
 var coreFiltersGetAllStatesMutationResponseSchema = coreFiltersGetAllStates200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFiltersGetAvailableInContextSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFiltersGetAvailableInContextSchema.js
 var coreFiltersGetAvailableInContext200Schema = exports_external.object({
   filters: exports_external.array(exports_external.object({
     contextlevel: exports_external.coerce.string().describe("The context level where the filters are: (coursecat, course, module)."),
@@ -17512,7 +17468,7 @@ var coreFiltersGetAvailableInContextMutationRequestSchema = exports_external.obj
   }))
 });
 var coreFiltersGetAvailableInContextMutationResponseSchema = coreFiltersGetAvailableInContext200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFormDynamicFormSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFormDynamicFormSchema.js
 var coreFormDynamicForm200Schema = exports_external.object({
   submitted: exports_external.boolean().describe("If form was submitted and validated"),
   data: exports_external.coerce.string().describe("JSON-encoded return data from form processing method").nullable().nullish(),
@@ -17525,7 +17481,7 @@ var coreFormDynamicFormMutationRequestSchema = exports_external.object({
   formdata: exports_external.coerce.string().describe("url-encoded form data")
 });
 var coreFormDynamicFormMutationResponseSchema = coreFormDynamicForm200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFormGetFiletypesBrowserDataSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreFormGetFiletypesBrowserDataSchema.js
 var coreFormGetFiletypesBrowserData200Schema = exports_external.object({
   groups: exports_external.array(exports_external.object({
     key: exports_external.coerce.string().describe("The file type group identifier"),
@@ -17549,7 +17505,7 @@ var coreFormGetFiletypesBrowserDataMutationRequestSchema = exports_external.obje
   current: exports_external.coerce.string().default("").describe("Current types that should be selected.").nullable().nullish()
 });
 var coreFormGetFiletypesBrowserDataMutationResponseSchema = coreFormGetFiletypesBrowserData200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGetComponentStringsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGetComponentStringsSchema.js
 var coreGetComponentStrings200Schema = exports_external.array(exports_external.object({
   stringid: exports_external.coerce.string().describe("string id"),
   string: exports_external.coerce.string().describe("translated string")
@@ -17560,7 +17516,7 @@ var coreGetComponentStringsMutationRequestSchema = exports_external.object({
   lang: exports_external.coerce.string().describe("lang").nullable().nullish()
 });
 var coreGetComponentStringsMutationResponseSchema = coreGetComponentStrings200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGetFragmentSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGetFragmentSchema.js
 var coreGetFragment200Schema = exports_external.object({
   html: exports_external.coerce.string().describe("HTML fragment."),
   javascript: exports_external.coerce.string().describe("JavaScript fragment")
@@ -17576,7 +17532,7 @@ var coreGetFragmentMutationRequestSchema = exports_external.object({
   })).optional()
 });
 var coreGetFragmentMutationResponseSchema = coreGetFragment200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGetStringSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGetStringSchema.js
 var coreGetString200Schema = exports_external.coerce.string().describe("translated string");
 var coreGetString400Schema = errorResponseSchema;
 var coreGetStringMutationRequestSchema = exports_external.object({
@@ -17590,7 +17546,7 @@ var coreGetStringMutationRequestSchema = exports_external.object({
   })).optional()
 });
 var coreGetStringMutationResponseSchema = coreGetString200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGetStringsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGetStringsSchema.js
 var coreGetStrings200Schema = exports_external.array(exports_external.object({
   stringid: exports_external.coerce.string().describe("string id"),
   component: exports_external.coerce.string().describe("string component"),
@@ -17611,7 +17567,7 @@ var coreGetStringsMutationRequestSchema = exports_external.object({
   }))
 });
 var coreGetStringsMutationResponseSchema = coreGetStrings200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGetUserDatesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGetUserDatesSchema.js
 var coreGetUserDates200Schema = exports_external.object({
   dates: exports_external.array(exports_external.coerce.string().describe("formatted dates strings"))
 });
@@ -17629,7 +17585,7 @@ var coreGetUserDatesMutationRequestSchema = exports_external.object({
   }))
 });
 var coreGetUserDatesMutationResponseSchema = coreGetUserDates200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesCreateGradecategoriesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesCreateGradecategoriesSchema.js
 var coreGradesCreateGradecategories200Schema = exports_external.object({
   categoryids: exports_external.array(exports_external.coerce.number().int().describe("created cateogry ID")),
   warnings: exports_external.array(exports_external.object({
@@ -17668,7 +17624,7 @@ var coreGradesCreateGradecategoriesMutationRequestSchema = exports_external.obje
   }))
 });
 var coreGradesCreateGradecategoriesMutationResponseSchema = coreGradesCreateGradecategories200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGetEnrolledUsersForSearchWidgetSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGetEnrolledUsersForSearchWidgetSchema.js
 var coreGradesGetEnrolledUsersForSearchWidget200Schema = exports_external.object({
   users: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("ID of the user"),
@@ -17692,7 +17648,7 @@ var coreGradesGetEnrolledUsersForSearchWidgetMutationRequestSchema = exports_ext
   groupid: exports_external.coerce.number().int().default(0).describe("Group Id").nullable().nullish()
 });
 var coreGradesGetEnrolledUsersForSearchWidgetMutationResponseSchema = coreGradesGetEnrolledUsersForSearchWidget200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGetEnrolledUsersForSelectorSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGetEnrolledUsersForSelectorSchema.js
 var coreGradesGetEnrolledUsersForSelector200Schema = exports_external.object({
   users: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("ID of the user"),
@@ -17750,7 +17706,7 @@ var coreGradesGetEnrolledUsersForSelectorMutationRequestSchema = exports_externa
   groupid: exports_external.coerce.number().int().default(0).describe("Group Id").nullable().nullish()
 });
 var coreGradesGetEnrolledUsersForSelectorMutationResponseSchema = coreGradesGetEnrolledUsersForSelector200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGetFeedbackSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGetFeedbackSchema.js
 var coreGradesGetFeedback200Schema = exports_external.object({
   feedbacktext: exports_external.coerce.string().describe("The full feedback text"),
   title: exports_external.coerce.string().describe("Title of the grade item that the feedback is for"),
@@ -17765,7 +17721,7 @@ var coreGradesGetFeedbackMutationRequestSchema = exports_external.object({
   itemid: exports_external.coerce.number().int().describe("Grade Item ID")
 });
 var coreGradesGetFeedbackMutationResponseSchema = coreGradesGetFeedback200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGetGradableUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGetGradableUsersSchema.js
 var coreGradesGetGradableUsers200Schema = exports_external.object({
   users: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("ID of the user"),
@@ -17824,7 +17780,7 @@ var coreGradesGetGradableUsersMutationRequestSchema = exports_external.object({
   onlyactive: exports_external.boolean().default(false).describe("Only active enrolment").nullable().nullish()
 });
 var coreGradesGetGradableUsersMutationResponseSchema = coreGradesGetGradableUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGetGradeitemsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGetGradeitemsSchema.js
 var coreGradesGetGradeitems200Schema = exports_external.object({
   gradeItems: exports_external.array(exports_external.object({
     id: exports_external.coerce.string().describe("An ID for the grade item"),
@@ -17843,14 +17799,14 @@ var coreGradesGetGradeitemsMutationRequestSchema = exports_external.object({
   courseid: exports_external.coerce.number().int().describe("Course ID")
 });
 var coreGradesGetGradeitemsMutationResponseSchema = coreGradesGetGradeitems200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGetGradeTreeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGetGradeTreeSchema.js
 var coreGradesGetGradeTree200Schema = exports_external.coerce.string().describe("JSON encoded data representing the course grade tree structure.");
 var coreGradesGetGradeTree400Schema = errorResponseSchema;
 var coreGradesGetGradeTreeMutationRequestSchema = exports_external.object({
   courseid: exports_external.coerce.number().int().describe("Course ID")
 });
 var coreGradesGetGradeTreeMutationResponseSchema = coreGradesGetGradeTree200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGetGroupsForSearchWidgetSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGetGroupsForSearchWidgetSchema.js
 var coreGradesGetGroupsForSearchWidget200Schema = exports_external.object({
   groups: exports_external.array(exports_external.object({
     id: exports_external.coerce.string().describe("An ID for the group"),
@@ -17870,7 +17826,7 @@ var coreGradesGetGroupsForSearchWidgetMutationRequestSchema = exports_external.o
   cmid: exports_external.coerce.number().int().default(0).describe("Course module Id").nullable().nullish()
 });
 var coreGradesGetGroupsForSearchWidgetMutationResponseSchema = coreGradesGetGroupsForSearchWidget200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGetGroupsForSelectorSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGetGroupsForSelectorSchema.js
 var coreGradesGetGroupsForSelector200Schema = exports_external.object({
   groups: exports_external.array(exports_external.object({
     id: exports_external.coerce.string().describe("An ID for the group"),
@@ -17890,7 +17846,7 @@ var coreGradesGetGroupsForSelectorMutationRequestSchema = exports_external.objec
   cmid: exports_external.coerce.number().int().default(0).describe("Course module Id").nullable().nullish()
 });
 var coreGradesGetGroupsForSelectorMutationResponseSchema = coreGradesGetGroupsForSelector200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGraderGradingpanelPointFetchSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGraderGradingpanelPointFetchSchema.js
 var coreGradesGraderGradingpanelPointFetch200Schema = exports_external.object({
   templatename: exports_external.coerce.string().describe("The template to use when rendering this data"),
   hasgrade: exports_external.boolean().describe("Does the user have a grade?"),
@@ -17917,7 +17873,7 @@ var coreGradesGraderGradingpanelPointFetchMutationRequestSchema = exports_extern
   gradeduserid: exports_external.coerce.number().int().describe("The ID of the user show")
 });
 var coreGradesGraderGradingpanelPointFetchMutationResponseSchema = coreGradesGraderGradingpanelPointFetch200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGraderGradingpanelPointStoreSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGraderGradingpanelPointStoreSchema.js
 var coreGradesGraderGradingpanelPointStore200Schema = exports_external.object({
   templatename: exports_external.coerce.string().describe("The template to use when rendering this data"),
   hasgrade: exports_external.boolean().describe("Does the user have a grade?"),
@@ -17946,7 +17902,7 @@ var coreGradesGraderGradingpanelPointStoreMutationRequestSchema = exports_extern
   formdata: exports_external.coerce.string().describe("The serialised form data representing the grade")
 });
 var coreGradesGraderGradingpanelPointStoreMutationResponseSchema = coreGradesGraderGradingpanelPointStore200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGraderGradingpanelScaleFetchSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGraderGradingpanelScaleFetchSchema.js
 var coreGradesGraderGradingpanelScaleFetch200Schema = exports_external.object({
   templatename: exports_external.coerce.string().describe("The template to use when rendering this data"),
   hasgrade: exports_external.boolean().describe("Does the user have a grade?"),
@@ -17977,7 +17933,7 @@ var coreGradesGraderGradingpanelScaleFetchMutationRequestSchema = exports_extern
   gradeduserid: exports_external.coerce.number().int().describe("The ID of the user show")
 });
 var coreGradesGraderGradingpanelScaleFetchMutationResponseSchema = coreGradesGraderGradingpanelScaleFetch200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGraderGradingpanelScaleStoreSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesGraderGradingpanelScaleStoreSchema.js
 var coreGradesGraderGradingpanelScaleStore200Schema = exports_external.object({
   templatename: exports_external.coerce.string().describe("The template to use when rendering this data"),
   hasgrade: exports_external.boolean().describe("Does the user have a grade?"),
@@ -18010,7 +17966,7 @@ var coreGradesGraderGradingpanelScaleStoreMutationRequestSchema = exports_extern
   formdata: exports_external.coerce.string().describe("The serialised form data representing the grade")
 });
 var coreGradesGraderGradingpanelScaleStoreMutationResponseSchema = coreGradesGraderGradingpanelScaleStore200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesUpdateGradesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradesUpdateGradesSchema.js
 var coreGradesUpdateGrades200Schema = exports_external.coerce.number().int().describe(`A value like 0 => OK, 1 => FAILED
             as defined in lib/grade/constants.php`);
 var coreGradesUpdateGrades400Schema = errorResponseSchema;
@@ -18039,7 +17995,7 @@ var coreGradesUpdateGradesMutationRequestSchema = exports_external.object({
   }).optional()
 });
 var coreGradesUpdateGradesMutationResponseSchema = coreGradesUpdateGrades200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradingGetDefinitionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradingGetDefinitionsSchema.js
 var coreGradingGetDefinitions200Schema = exports_external.object({
   areas: exports_external.array(exports_external.object({
     cmid: exports_external.coerce.number().int().describe("course module id"),
@@ -18108,7 +18064,7 @@ var coreGradingGetDefinitionsMutationRequestSchema = exports_external.object({
   activeonly: exports_external.boolean().default(0).describe("Only the active method").nullable().nullish()
 });
 var coreGradingGetDefinitionsMutationResponseSchema = coreGradingGetDefinitions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradingGetGradingformInstancesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradingGetGradingformInstancesSchema.js
 var coreGradingGetGradingformInstances200Schema = exports_external.object({
   instances: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("instance id"),
@@ -18152,7 +18108,7 @@ var coreGradingGetGradingformInstancesMutationRequestSchema = exports_external.o
   since: exports_external.coerce.number().int().default(0).describe("submitted since").nullable().nullish()
 });
 var coreGradingGetGradingformInstancesMutationResponseSchema = coreGradingGetGradingformInstances200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradingSaveDefinitionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGradingSaveDefinitionsSchema.js
 var coreGradingSaveDefinitions200Schema = exports_external.null();
 var coreGradingSaveDefinitions400Schema = errorResponseSchema;
 var coreGradingSaveDefinitionsMutationRequestSchema = exports_external.object({
@@ -18211,7 +18167,7 @@ var coreGradingSaveDefinitionsMutationRequestSchema = exports_external.object({
   }))
 });
 var coreGradingSaveDefinitionsMutationResponseSchema = coreGradingSaveDefinitions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupAddGroupMembersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupAddGroupMembersSchema.js
 var coreGroupAddGroupMembers200Schema = exports_external.null();
 var coreGroupAddGroupMembers400Schema = errorResponseSchema;
 var coreGroupAddGroupMembersMutationRequestSchema = exports_external.object({
@@ -18221,7 +18177,7 @@ var coreGroupAddGroupMembersMutationRequestSchema = exports_external.object({
   }))
 });
 var coreGroupAddGroupMembersMutationResponseSchema = coreGroupAddGroupMembers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupAssignGroupingSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupAssignGroupingSchema.js
 var coreGroupAssignGrouping200Schema = exports_external.null();
 var coreGroupAssignGrouping400Schema = errorResponseSchema;
 var coreGroupAssignGroupingMutationRequestSchema = exports_external.object({
@@ -18231,7 +18187,7 @@ var coreGroupAssignGroupingMutationRequestSchema = exports_external.object({
   }))
 });
 var coreGroupAssignGroupingMutationResponseSchema = coreGroupAssignGrouping200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupCreateGroupingsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupCreateGroupingsSchema.js
 var coreGroupCreateGroupings200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("grouping record id"),
   courseid: exports_external.coerce.number().int().describe("id of course"),
@@ -18259,7 +18215,7 @@ var coreGroupCreateGroupingsMutationRequestSchema = exports_external.object({
   }))
 });
 var coreGroupCreateGroupingsMutationResponseSchema = coreGroupCreateGroupings200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupCreateGroupsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupCreateGroupsSchema.js
 var coreGroupCreateGroups200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("group record id"),
   courseid: exports_external.coerce.number().int().describe("id of course"),
@@ -18293,14 +18249,14 @@ var coreGroupCreateGroupsMutationRequestSchema = exports_external.object({
   }))
 });
 var coreGroupCreateGroupsMutationResponseSchema = coreGroupCreateGroups200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupDeleteGroupingsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupDeleteGroupingsSchema.js
 var coreGroupDeleteGroupings200Schema = exports_external.null();
 var coreGroupDeleteGroupings400Schema = errorResponseSchema;
 var coreGroupDeleteGroupingsMutationRequestSchema = exports_external.object({
   groupingids: exports_external.array(exports_external.coerce.number().int().describe("grouping ID"))
 });
 var coreGroupDeleteGroupingsMutationResponseSchema = coreGroupDeleteGroupings200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupDeleteGroupMembersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupDeleteGroupMembersSchema.js
 var coreGroupDeleteGroupMembers200Schema = exports_external.null();
 var coreGroupDeleteGroupMembers400Schema = errorResponseSchema;
 var coreGroupDeleteGroupMembersMutationRequestSchema = exports_external.object({
@@ -18310,14 +18266,14 @@ var coreGroupDeleteGroupMembersMutationRequestSchema = exports_external.object({
   }))
 });
 var coreGroupDeleteGroupMembersMutationResponseSchema = coreGroupDeleteGroupMembers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupDeleteGroupsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupDeleteGroupsSchema.js
 var coreGroupDeleteGroups200Schema = exports_external.null();
 var coreGroupDeleteGroups400Schema = errorResponseSchema;
 var coreGroupDeleteGroupsMutationRequestSchema = exports_external.object({
   groupids: exports_external.array(exports_external.coerce.number().int().describe("Group ID"))
 });
 var coreGroupDeleteGroupsMutationResponseSchema = coreGroupDeleteGroups200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetActivityAllowedGroupsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetActivityAllowedGroupsSchema.js
 var coreGroupGetActivityAllowedGroups200Schema = exports_external.object({
   groups: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("group record id"),
@@ -18341,7 +18297,7 @@ var coreGroupGetActivityAllowedGroupsMutationRequestSchema = exports_external.ob
   userid: exports_external.coerce.number().int().default(0).describe("id of user, empty for current user").nullable().nullish()
 });
 var coreGroupGetActivityAllowedGroupsMutationResponseSchema = coreGroupGetActivityAllowedGroups200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetActivityGroupmodeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetActivityGroupmodeSchema.js
 var coreGroupGetActivityGroupmode200Schema = exports_external.object({
   groupmode: exports_external.coerce.number().int().describe(`group mode:
                                                     0 for no groups, 1 for separate groups, 2 for visible groups`),
@@ -18357,7 +18313,7 @@ var coreGroupGetActivityGroupmodeMutationRequestSchema = exports_external.object
   cmid: exports_external.coerce.number().int().describe("course module id")
 });
 var coreGroupGetActivityGroupmodeMutationResponseSchema = coreGroupGetActivityGroupmode200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetCourseGroupingsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetCourseGroupingsSchema.js
 var coreGroupGetCourseGroupings200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("grouping record id"),
   courseid: exports_external.coerce.number().int().describe("id of course"),
@@ -18371,7 +18327,7 @@ var coreGroupGetCourseGroupingsMutationRequestSchema = exports_external.object({
   courseid: exports_external.coerce.number().int().describe("id of course")
 });
 var coreGroupGetCourseGroupingsMutationResponseSchema = coreGroupGetCourseGroupings200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetCourseGroupsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetCourseGroupsSchema.js
 var coreGroupGetCourseGroups200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("group record id"),
   courseid: exports_external.coerce.number().int().describe("id of course"),
@@ -18388,7 +18344,7 @@ var coreGroupGetCourseGroupsMutationRequestSchema = exports_external.object({
   courseid: exports_external.coerce.number().int().describe("id of course")
 });
 var coreGroupGetCourseGroupsMutationResponseSchema = coreGroupGetCourseGroups200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetCourseUserGroupsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetCourseUserGroupsSchema.js
 var coreGroupGetCourseUserGroups200Schema = exports_external.object({
   groups: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("group record id"),
@@ -18412,7 +18368,7 @@ var coreGroupGetCourseUserGroupsMutationRequestSchema = exports_external.object(
   groupingid: exports_external.coerce.number().int().default(0).describe("returns only groups in the specified grouping").nullable().nullish()
 });
 var coreGroupGetCourseUserGroupsMutationResponseSchema = coreGroupGetCourseUserGroups200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetGroupingsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetGroupingsSchema.js
 var coreGroupGetGroupings200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("grouping record id"),
   courseid: exports_external.coerce.number().int().describe("id of course"),
@@ -18450,7 +18406,7 @@ var coreGroupGetGroupingsMutationRequestSchema = exports_external.object({
   returngroups: exports_external.boolean().default(0).describe("return associated groups").nullable().nullish()
 });
 var coreGroupGetGroupingsMutationResponseSchema = coreGroupGetGroupings200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetGroupMembersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetGroupMembersSchema.js
 var coreGroupGetGroupMembers200Schema = exports_external.array(exports_external.object({
   groupid: exports_external.coerce.number().int().describe("group record id"),
   userids: exports_external.array(exports_external.coerce.number().int().describe("user id"))
@@ -18460,7 +18416,7 @@ var coreGroupGetGroupMembersMutationRequestSchema = exports_external.object({
   groupids: exports_external.array(exports_external.coerce.number().int().describe("Group ID"))
 });
 var coreGroupGetGroupMembersMutationResponseSchema = coreGroupGetGroupMembers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetGroupsForSelectorSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetGroupsForSelectorSchema.js
 var coreGroupGetGroupsForSelector200Schema = exports_external.object({
   groups: exports_external.array(exports_external.object({
     id: exports_external.coerce.string().describe("An ID for the group"),
@@ -18480,7 +18436,7 @@ var coreGroupGetGroupsForSelectorMutationRequestSchema = exports_external.object
   cmid: exports_external.coerce.number().int().default(0).describe("Course module Id").nullable().nullish()
 });
 var coreGroupGetGroupsForSelectorMutationResponseSchema = coreGroupGetGroupsForSelector200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetGroupsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupGetGroupsSchema.js
 var coreGroupGetGroups200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("group record id"),
   courseid: exports_external.coerce.number().int().describe("id of course"),
@@ -18504,7 +18460,7 @@ var coreGroupGetGroupsMutationRequestSchema = exports_external.object({
   groupids: exports_external.array(exports_external.coerce.number().int().describe("Group ID"))
 });
 var coreGroupGetGroupsMutationResponseSchema = coreGroupGetGroups200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupUnassignGroupingSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupUnassignGroupingSchema.js
 var coreGroupUnassignGrouping200Schema = exports_external.null();
 var coreGroupUnassignGrouping400Schema = errorResponseSchema;
 var coreGroupUnassignGroupingMutationRequestSchema = exports_external.object({
@@ -18514,7 +18470,7 @@ var coreGroupUnassignGroupingMutationRequestSchema = exports_external.object({
   }))
 });
 var coreGroupUnassignGroupingMutationResponseSchema = coreGroupUnassignGrouping200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupUpdateGroupingsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupUpdateGroupingsSchema.js
 var coreGroupUpdateGroupings200Schema = exports_external.null();
 var coreGroupUpdateGroupings400Schema = errorResponseSchema;
 var coreGroupUpdateGroupingsMutationRequestSchema = exports_external.object({
@@ -18531,7 +18487,7 @@ var coreGroupUpdateGroupingsMutationRequestSchema = exports_external.object({
   }))
 });
 var coreGroupUpdateGroupingsMutationResponseSchema = coreGroupUpdateGroupings200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupUpdateGroupsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreGroupUpdateGroupsSchema.js
 var coreGroupUpdateGroups200Schema = exports_external.null();
 var coreGroupUpdateGroups400Schema = errorResponseSchema;
 var coreGroupUpdateGroupsMutationRequestSchema = exports_external.object({
@@ -18551,7 +18507,7 @@ var coreGroupUpdateGroupsMutationRequestSchema = exports_external.object({
   }))
 });
 var coreGroupUpdateGroupsMutationResponseSchema = coreGroupUpdateGroups200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreH5pGetTrustedH5pFileSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreH5pGetTrustedH5pFileSchema.js
 var coreH5pGetTrustedH5pFile200Schema = exports_external.object({
   files: exports_external.array(exports_external.object({
     filename: exports_external.coerce.string().describe("File name.").nullable().nullish(),
@@ -18580,7 +18536,7 @@ var coreH5pGetTrustedH5pFileMutationRequestSchema = exports_external.object({
   copyright: exports_external.coerce.number().int().default(0).describe("The copyright option").nullable().nullish()
 });
 var coreH5pGetTrustedH5pFileMutationResponseSchema = coreH5pGetTrustedH5pFile200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageBlockUserSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageBlockUserSchema.js
 var coreMessageBlockUser200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -18593,7 +18549,7 @@ var coreMessageBlockUserMutationRequestSchema = exports_external.object({
   blockeduserid: exports_external.coerce.number().int().describe("The id of the user being blocked")
 });
 var coreMessageBlockUserMutationResponseSchema = coreMessageBlockUser200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageConfirmContactRequestSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageConfirmContactRequestSchema.js
 var coreMessageConfirmContactRequest200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -18606,7 +18562,7 @@ var coreMessageConfirmContactRequestMutationRequestSchema = exports_external.obj
   requesteduserid: exports_external.coerce.number().int().describe("The id of the user being requested")
 });
 var coreMessageConfirmContactRequestMutationResponseSchema = coreMessageConfirmContactRequest200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageCreateContactRequestSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageCreateContactRequestSchema.js
 var coreMessageCreateContactRequest200Schema = exports_external.object({
   request: exports_external.object({
     id: exports_external.coerce.number().int().describe("Message id"),
@@ -18627,7 +18583,7 @@ var coreMessageCreateContactRequestMutationRequestSchema = exports_external.obje
   requesteduserid: exports_external.coerce.number().int().describe("The id of the user being requested")
 });
 var coreMessageCreateContactRequestMutationResponseSchema = coreMessageCreateContactRequest200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageDataForMessageareaSearchMessagesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageDataForMessageareaSearchMessagesSchema.js
 var coreMessageDataForMessageareaSearchMessages200Schema = exports_external.object({
   contacts: exports_external.array(exports_external.object({
     userid: exports_external.coerce.number().int().describe("The user's id"),
@@ -18655,7 +18611,7 @@ var coreMessageDataForMessageareaSearchMessagesMutationRequestSchema = exports_e
   limitnum: exports_external.coerce.number().int().default(0).describe("Limit number").nullable().nullish()
 });
 var coreMessageDataForMessageareaSearchMessagesMutationResponseSchema = coreMessageDataForMessageareaSearchMessages200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageDeclineContactRequestSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageDeclineContactRequestSchema.js
 var coreMessageDeclineContactRequest200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -18668,7 +18624,7 @@ var coreMessageDeclineContactRequestMutationRequestSchema = exports_external.obj
   requesteduserid: exports_external.coerce.number().int().describe("The id of the user being requested")
 });
 var coreMessageDeclineContactRequestMutationResponseSchema = coreMessageDeclineContactRequest200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageDeleteContactsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageDeleteContactsSchema.js
 var coreMessageDeleteContacts200Schema = exports_external.null();
 var coreMessageDeleteContacts400Schema = errorResponseSchema;
 var coreMessageDeleteContactsMutationRequestSchema = exports_external.object({
@@ -18677,7 +18633,7 @@ var coreMessageDeleteContactsMutationRequestSchema = exports_external.object({
                     current user`).nullable().nullish()
 });
 var coreMessageDeleteContactsMutationResponseSchema = coreMessageDeleteContacts200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageDeleteConversationsByIdSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageDeleteConversationsByIdSchema.js
 var coreMessageDeleteConversationsById200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -18690,7 +18646,7 @@ var coreMessageDeleteConversationsByIdMutationRequestSchema = exports_external.o
   conversationids: exports_external.array(exports_external.coerce.number().int().describe("The id of the conversation"))
 });
 var coreMessageDeleteConversationsByIdMutationResponseSchema = coreMessageDeleteConversationsById200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageDeleteMessageForAllUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageDeleteMessageForAllUsersSchema.js
 var coreMessageDeleteMessageForAllUsers200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -18703,7 +18659,7 @@ var coreMessageDeleteMessageForAllUsersMutationRequestSchema = exports_external.
   userid: exports_external.coerce.number().int().describe("The user id of who we want to delete the message for all users")
 });
 var coreMessageDeleteMessageForAllUsersMutationResponseSchema = coreMessageDeleteMessageForAllUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageDeleteMessageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageDeleteMessageSchema.js
 var coreMessageDeleteMessage200Schema = exports_external.object({
   status: exports_external.boolean().describe("True if the message was deleted, false otherwise"),
   warnings: exports_external.array(exports_external.object({
@@ -18720,7 +18676,7 @@ var coreMessageDeleteMessageMutationRequestSchema = exports_external.object({
   read: exports_external.boolean().default(true).describe("If is a message read").nullable().nullish()
 });
 var coreMessageDeleteMessageMutationResponseSchema = coreMessageDeleteMessage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetBlockedUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetBlockedUsersSchema.js
 var coreMessageGetBlockedUsers200Schema = exports_external.object({
   users: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("User ID"),
@@ -18739,7 +18695,7 @@ var coreMessageGetBlockedUsersMutationRequestSchema = exports_external.object({
   userid: exports_external.coerce.number().int().describe("the user whose blocked users we want to retrieve")
 });
 var coreMessageGetBlockedUsersMutationResponseSchema = coreMessageGetBlockedUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetContactRequestsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetContactRequestsSchema.js
 var coreMessageGetContactRequests200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("The user id"),
   fullname: exports_external.coerce.string().describe("The user's name"),
@@ -18774,7 +18730,7 @@ var coreMessageGetContactRequestsMutationRequestSchema = exports_external.object
   limitnum: exports_external.coerce.number().int().default(0).describe("Limit number").nullable().nullish()
 });
 var coreMessageGetContactRequestsMutationResponseSchema = coreMessageGetContactRequests200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetConversationBetweenUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetConversationBetweenUsersSchema.js
 var coreMessageGetConversationBetweenUsers200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The conversation id"),
   name: exports_external.coerce.string().describe("The conversation name, if set").nullable().nullish(),
@@ -18834,7 +18790,7 @@ var coreMessageGetConversationBetweenUsersMutationRequestSchema = exports_extern
   newestmessagesfirst: exports_external.boolean().default(true).describe("Order messages by newest first").nullable().nullish()
 });
 var coreMessageGetConversationBetweenUsersMutationResponseSchema = coreMessageGetConversationBetweenUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetConversationCountsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetConversationCountsSchema.js
 var coreMessageGetConversationCounts200Schema = exports_external.object({
   favourites: exports_external.coerce.number().int().describe("Total number of favourite conversations"),
   types: exports_external.object({
@@ -18848,7 +18804,7 @@ var coreMessageGetConversationCountsMutationRequestSchema = exports_external.obj
   userid: exports_external.coerce.number().int().default(0).describe("id of the user, 0 for current user").nullable().nullish()
 });
 var coreMessageGetConversationCountsMutationResponseSchema = coreMessageGetConversationCounts200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetConversationMembersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetConversationMembersSchema.js
 var coreMessageGetConversationMembers200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("The user id"),
   fullname: exports_external.coerce.string().describe("The user's name"),
@@ -18886,7 +18842,7 @@ var coreMessageGetConversationMembersMutationRequestSchema = exports_external.ob
   limitnum: exports_external.coerce.number().int().default(0).describe("Limit number").nullable().nullish()
 });
 var coreMessageGetConversationMembersMutationResponseSchema = coreMessageGetConversationMembers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetConversationMessagesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetConversationMessagesSchema.js
 var coreMessageGetConversationMessages200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The conversation id"),
   members: exports_external.array(exports_external.object({
@@ -18933,7 +18889,7 @@ var coreMessageGetConversationMessagesMutationRequestSchema = exports_external.o
   timefrom: exports_external.coerce.number().int().default(0).describe("The timestamp from which the messages were created").nullable().nullish()
 });
 var coreMessageGetConversationMessagesMutationResponseSchema = coreMessageGetConversationMessages200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetConversationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetConversationSchema.js
 var coreMessageGetConversation200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The conversation id"),
   name: exports_external.coerce.string().describe("The conversation name, if set").nullable().nullish(),
@@ -18993,7 +18949,7 @@ var coreMessageGetConversationMutationRequestSchema = exports_external.object({
   newestmessagesfirst: exports_external.boolean().default(true).describe("Order messages by newest first").nullable().nullish()
 });
 var coreMessageGetConversationMutationResponseSchema = coreMessageGetConversation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetConversationsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetConversationsSchema.js
 var coreMessageGetConversations200Schema = exports_external.object({
   conversations: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The conversation id"),
@@ -19054,7 +19010,7 @@ var coreMessageGetConversationsMutationRequestSchema = exports_external.object({
                     conversations (false) when private conversations are requested.`).nullable().nullish()
 });
 var coreMessageGetConversationsMutationResponseSchema = coreMessageGetConversations200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetMemberInfoSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetMemberInfoSchema.js
 var coreMessageGetMemberInfo200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("The user id"),
   fullname: exports_external.coerce.string().describe("The user's name"),
@@ -19090,7 +19046,7 @@ var coreMessageGetMemberInfoMutationRequestSchema = exports_external.object({
   includeprivacyinfo: exports_external.boolean().default(false).describe("include privacy info in response").nullable().nullish()
 });
 var coreMessageGetMemberInfoMutationResponseSchema = coreMessageGetMemberInfo200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetMessageProcessorSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetMessageProcessorSchema.js
 var coreMessageGetMessageProcessor200Schema = exports_external.object({
   systemconfigured: exports_external.boolean().describe("Site configuration status"),
   userconfigured: exports_external.boolean().describe("The user configuration status")
@@ -19101,7 +19057,7 @@ var coreMessageGetMessageProcessorMutationRequestSchema = exports_external.objec
   name: exports_external.coerce.string().describe("The name of the message processor")
 });
 var coreMessageGetMessageProcessorMutationResponseSchema = coreMessageGetMessageProcessor200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetMessagesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetMessagesSchema.js
 var coreMessageGetMessages200Schema = exports_external.object({
   messages: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Message id"),
@@ -19144,14 +19100,14 @@ var coreMessageGetMessagesMutationRequestSchema = exports_external.object({
   limitnum: exports_external.coerce.number().int().default(0).describe("limit number").nullable().nullish()
 });
 var coreMessageGetMessagesMutationResponseSchema = coreMessageGetMessages200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetReceivedContactRequestsCountSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetReceivedContactRequestsCountSchema.js
 var coreMessageGetReceivedContactRequestsCount200Schema = exports_external.coerce.number().int().describe("The number of received contact requests");
 var coreMessageGetReceivedContactRequestsCount400Schema = errorResponseSchema;
 var coreMessageGetReceivedContactRequestsCountMutationRequestSchema = exports_external.object({
   userid: exports_external.coerce.number().int().describe("The id of the user we want to return the number of received contact requests for")
 });
 var coreMessageGetReceivedContactRequestsCountMutationResponseSchema = coreMessageGetReceivedContactRequestsCount200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetSelfConversationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetSelfConversationSchema.js
 var coreMessageGetSelfConversation200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The conversation id"),
   name: exports_external.coerce.string().describe("The conversation name, if set").nullable().nullish(),
@@ -19206,7 +19162,7 @@ var coreMessageGetSelfConversationMutationRequestSchema = exports_external.objec
   newestmessagesfirst: exports_external.boolean().default(true).describe("Order messages by newest first").nullable().nullish()
 });
 var coreMessageGetSelfConversationMutationResponseSchema = coreMessageGetSelfConversation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetUnreadConversationCountsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetUnreadConversationCountsSchema.js
 var coreMessageGetUnreadConversationCounts200Schema = exports_external.object({
   favourites: exports_external.coerce.number().int().describe("Total number of unread favourite conversations"),
   types: exports_external.object({
@@ -19220,21 +19176,21 @@ var coreMessageGetUnreadConversationCountsMutationRequestSchema = exports_extern
   userid: exports_external.coerce.number().int().default(0).describe("id of the user, 0 for current user").nullable().nullish()
 });
 var coreMessageGetUnreadConversationCountsMutationResponseSchema = coreMessageGetUnreadConversationCounts200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetUnreadConversationsCountSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetUnreadConversationsCountSchema.js
 var coreMessageGetUnreadConversationsCount200Schema = exports_external.coerce.number().int().describe("The count of unread messages for the user");
 var coreMessageGetUnreadConversationsCount400Schema = errorResponseSchema;
 var coreMessageGetUnreadConversationsCountMutationRequestSchema = exports_external.object({
   useridto: exports_external.coerce.number().int().describe("the user id who received the message, 0 for any user")
 });
 var coreMessageGetUnreadConversationsCountMutationResponseSchema = coreMessageGetUnreadConversationsCount200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetUnreadNotificationCountSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetUnreadNotificationCountSchema.js
 var coreMessageGetUnreadNotificationCount200Schema = exports_external.coerce.number().int().describe("The count of unread notifications.");
 var coreMessageGetUnreadNotificationCount400Schema = errorResponseSchema;
 var coreMessageGetUnreadNotificationCountMutationRequestSchema = exports_external.object({
   useridto: exports_external.coerce.number().int().describe("user id who received the notification, 0 for any user")
 });
 var coreMessageGetUnreadNotificationCountMutationResponseSchema = coreMessageGetUnreadNotificationCount200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetUserContactsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetUserContactsSchema.js
 var coreMessageGetUserContacts200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("The user id"),
   fullname: exports_external.coerce.string().describe("The user's name"),
@@ -19269,7 +19225,7 @@ var coreMessageGetUserContactsMutationRequestSchema = exports_external.object({
   limitnum: exports_external.coerce.number().int().default(0).describe("Limit number").nullable().nullish()
 });
 var coreMessageGetUserContactsMutationResponseSchema = coreMessageGetUserContacts200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetUserMessagePreferencesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetUserMessagePreferencesSchema.js
 var coreMessageGetUserMessagePreferences200Schema = exports_external.object({
   preferences: exports_external.object({
     userid: exports_external.coerce.number().int().describe("User id"),
@@ -19311,7 +19267,7 @@ var coreMessageGetUserMessagePreferencesMutationRequestSchema = exports_external
   userid: exports_external.coerce.number().int().default(0).describe("id of the user, 0 for current user").nullable().nullish()
 });
 var coreMessageGetUserMessagePreferencesMutationResponseSchema = coreMessageGetUserMessagePreferences200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetUserNotificationPreferencesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageGetUserNotificationPreferencesSchema.js
 var coreMessageGetUserNotificationPreferences200Schema = exports_external.object({
   preferences: exports_external.object({
     userid: exports_external.coerce.number().int().describe("User id"),
@@ -19351,7 +19307,7 @@ var coreMessageGetUserNotificationPreferencesMutationRequestSchema = exports_ext
   userid: exports_external.coerce.number().int().default(0).describe("id of the user, 0 for current user").nullable().nullish()
 });
 var coreMessageGetUserNotificationPreferencesMutationResponseSchema = coreMessageGetUserNotificationPreferences200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageMarkAllConversationMessagesAsReadSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageMarkAllConversationMessagesAsReadSchema.js
 var coreMessageMarkAllConversationMessagesAsRead200Schema = exports_external.null();
 var coreMessageMarkAllConversationMessagesAsRead400Schema = errorResponseSchema;
 var coreMessageMarkAllConversationMessagesAsReadMutationRequestSchema = exports_external.object({
@@ -19359,7 +19315,7 @@ var coreMessageMarkAllConversationMessagesAsReadMutationRequestSchema = exports_
   conversationid: exports_external.coerce.number().int().describe("The conversation id who who we are marking the messages as read for")
 });
 var coreMessageMarkAllConversationMessagesAsReadMutationResponseSchema = coreMessageMarkAllConversationMessagesAsRead200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageMarkAllNotificationsAsReadSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageMarkAllNotificationsAsReadSchema.js
 var coreMessageMarkAllNotificationsAsRead200Schema = exports_external.boolean().describe("True if the messages were marked read, false otherwise");
 var coreMessageMarkAllNotificationsAsRead400Schema = errorResponseSchema;
 var coreMessageMarkAllNotificationsAsReadMutationRequestSchema = exports_external.object({
@@ -19368,7 +19324,7 @@ var coreMessageMarkAllNotificationsAsReadMutationRequestSchema = exports_externa
   timecreatedto: exports_external.coerce.number().int().default(0).describe("mark messages created before this time as read, 0 for all messages").nullable().nullish()
 });
 var coreMessageMarkAllNotificationsAsReadMutationResponseSchema = coreMessageMarkAllNotificationsAsRead200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageMarkMessageReadSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageMarkMessageReadSchema.js
 var coreMessageMarkMessageRead200Schema = exports_external.object({
   messageid: exports_external.coerce.number().int().describe("the id of the message in the messages table"),
   warnings: exports_external.array(exports_external.object({
@@ -19384,7 +19340,7 @@ var coreMessageMarkMessageReadMutationRequestSchema = exports_external.object({
   timeread: exports_external.coerce.number().int().default(0).describe("timestamp for when the message should be marked read").nullable().nullish()
 });
 var coreMessageMarkMessageReadMutationResponseSchema = coreMessageMarkMessageRead200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageMarkNotificationReadSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageMarkNotificationReadSchema.js
 var coreMessageMarkNotificationRead200Schema = exports_external.object({
   notificationid: exports_external.coerce.number().int().describe("id of the notification"),
   warnings: exports_external.array(exports_external.object({
@@ -19400,7 +19356,7 @@ var coreMessageMarkNotificationReadMutationRequestSchema = exports_external.obje
   timeread: exports_external.coerce.number().int().default(0).describe("timestamp for when the notification should be marked read").nullable().nullish()
 });
 var coreMessageMarkNotificationReadMutationResponseSchema = coreMessageMarkNotificationRead200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageMessageProcessorConfigFormSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageMessageProcessorConfigFormSchema.js
 var coreMessageMessageProcessorConfigForm200Schema = exports_external.null();
 var coreMessageMessageProcessorConfigForm400Schema = errorResponseSchema;
 var coreMessageMessageProcessorConfigFormMutationRequestSchema = exports_external.object({
@@ -19412,7 +19368,7 @@ var coreMessageMessageProcessorConfigFormMutationRequestSchema = exports_externa
   }))
 });
 var coreMessageMessageProcessorConfigFormMutationResponseSchema = coreMessageMessageProcessorConfigForm200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageMessageSearchUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageMessageSearchUsersSchema.js
 var coreMessageMessageSearchUsers200Schema = exports_external.object({
   contacts: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The user id"),
@@ -19477,7 +19433,7 @@ var coreMessageMessageSearchUsersMutationRequestSchema = exports_external.object
   limitnum: exports_external.coerce.number().int().default(0).describe("Limit number").nullable().nullish()
 });
 var coreMessageMessageSearchUsersMutationResponseSchema = coreMessageMessageSearchUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageMuteConversationsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageMuteConversationsSchema.js
 var coreMessageMuteConversations200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -19490,7 +19446,7 @@ var coreMessageMuteConversationsMutationRequestSchema = exports_external.object(
   conversationids: exports_external.array(exports_external.coerce.number().int().describe("id of the conversation"))
 });
 var coreMessageMuteConversationsMutationResponseSchema = coreMessageMuteConversations200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageSearchContactsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageSearchContactsSchema.js
 var coreMessageSearchContacts200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("User ID"),
   fullname: exports_external.coerce.string().describe("User full name"),
@@ -19503,7 +19459,7 @@ var coreMessageSearchContactsMutationRequestSchema = exports_external.object({
   onlymycourses: exports_external.boolean().default(false).describe("Limit search to the user's courses").nullable().nullish()
 });
 var coreMessageSearchContactsMutationResponseSchema = coreMessageSearchContacts200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageSendInstantMessagesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageSendInstantMessagesSchema.js
 var coreMessageSendInstantMessages200Schema = exports_external.array(exports_external.object({
   msgid: exports_external.coerce.number().int().describe("test this to know if it succeeds:  id of the created message if it succeeded, -1 when failed"),
   clientmsgid: exports_external.coerce.string().describe("your own id for the message").nullable().nullish(),
@@ -19524,7 +19480,7 @@ var coreMessageSendInstantMessagesMutationRequestSchema = exports_external.objec
   }))
 });
 var coreMessageSendInstantMessagesMutationResponseSchema = coreMessageSendInstantMessages200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageSendMessagesToConversationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageSendMessagesToConversationSchema.js
 var coreMessageSendMessagesToConversation200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("The id of the message"),
   useridfrom: exports_external.coerce.number().int().describe("The id of the user who sent the message"),
@@ -19540,7 +19496,7 @@ var coreMessageSendMessagesToConversationMutationRequestSchema = exports_externa
   }))
 });
 var coreMessageSendMessagesToConversationMutationResponseSchema = coreMessageSendMessagesToConversation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageSetFavouriteConversationsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageSetFavouriteConversationsSchema.js
 var coreMessageSetFavouriteConversations200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -19553,7 +19509,7 @@ var coreMessageSetFavouriteConversationsMutationRequestSchema = exports_external
   conversations: exports_external.array(exports_external.coerce.number().int().default(0).describe("id of the conversation").nullable())
 });
 var coreMessageSetFavouriteConversationsMutationResponseSchema = coreMessageSetFavouriteConversations200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageUnblockUserSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageUnblockUserSchema.js
 var coreMessageUnblockUser200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -19566,7 +19522,7 @@ var coreMessageUnblockUserMutationRequestSchema = exports_external.object({
   unblockeduserid: exports_external.coerce.number().int().describe("The id of the user being unblocked")
 });
 var coreMessageUnblockUserMutationResponseSchema = coreMessageUnblockUser200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageUnmuteConversationsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageUnmuteConversationsSchema.js
 var coreMessageUnmuteConversations200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -19579,7 +19535,7 @@ var coreMessageUnmuteConversationsMutationRequestSchema = exports_external.objec
   conversationids: exports_external.array(exports_external.coerce.number().int().describe("id of the conversation"))
 });
 var coreMessageUnmuteConversationsMutationResponseSchema = coreMessageUnmuteConversations200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageUnsetFavouriteConversationsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMessageUnsetFavouriteConversationsSchema.js
 var coreMessageUnsetFavouriteConversations200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -19592,7 +19548,7 @@ var coreMessageUnsetFavouriteConversationsMutationRequestSchema = exports_extern
   conversations: exports_external.array(exports_external.coerce.number().int().default(0).describe("id of the conversation").nullable())
 });
 var coreMessageUnsetFavouriteConversationsMutationResponseSchema = coreMessageUnsetFavouriteConversations200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMoodlenetAuthCheckSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMoodlenetAuthCheckSchema.js
 var coreMoodlenetAuthCheck200Schema = exports_external.object({
   loginurl: exports_external.coerce.string().describe("Login url"),
   status: exports_external.boolean().describe("status: true if success"),
@@ -19609,7 +19565,7 @@ var coreMoodlenetAuthCheckMutationRequestSchema = exports_external.object({
   courseid: exports_external.coerce.number().int().describe("Course ID")
 });
 var coreMoodlenetAuthCheckMutationResponseSchema = coreMoodlenetAuthCheck200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMoodlenetGetSharedCourseInfoSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMoodlenetGetSharedCourseInfoSchema.js
 var coreMoodlenetGetSharedCourseInfo200Schema = exports_external.object({
   name: exports_external.coerce.string().describe("Course short name"),
   type: exports_external.coerce.string().describe("Course type"),
@@ -19629,7 +19585,7 @@ var coreMoodlenetGetSharedCourseInfoMutationRequestSchema = exports_external.obj
   courseid: exports_external.coerce.number().int().describe("The course id")
 });
 var coreMoodlenetGetSharedCourseInfoMutationResponseSchema = coreMoodlenetGetSharedCourseInfo200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMoodlenetGetShareInfoActivitySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMoodlenetGetShareInfoActivitySchema.js
 var coreMoodlenetGetShareInfoActivity200Schema = exports_external.object({
   name: exports_external.coerce.string().describe("Activity name"),
   type: exports_external.coerce.string().describe("Activity type"),
@@ -19649,7 +19605,7 @@ var coreMoodlenetGetShareInfoActivityMutationRequestSchema = exports_external.ob
   cmid: exports_external.coerce.number().int().describe("The cmid of the activity")
 });
 var coreMoodlenetGetShareInfoActivityMutationResponseSchema = coreMoodlenetGetShareInfoActivity200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMoodlenetSendActivitySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMoodlenetSendActivitySchema.js
 var coreMoodlenetSendActivity200Schema = exports_external.object({
   status: exports_external.boolean().describe("Status: true if success"),
   resourceurl: exports_external.coerce.string().describe("Resource URL from MoodleNet"),
@@ -19667,7 +19623,7 @@ var coreMoodlenetSendActivityMutationRequestSchema = exports_external.object({
   shareformat: exports_external.coerce.number().int().describe("Share format")
 });
 var coreMoodlenetSendActivityMutationResponseSchema = coreMoodlenetSendActivity200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMoodlenetSendCourseSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMoodlenetSendCourseSchema.js
 var coreMoodlenetSendCourse200Schema = exports_external.object({
   status: exports_external.boolean().describe("Status: true if success"),
   resourceurl: exports_external.coerce.string().describe("Resource URL from MoodleNet"),
@@ -19686,7 +19642,7 @@ var coreMoodlenetSendCourseMutationRequestSchema = exports_external.object({
   cmids: exports_external.array(exports_external.coerce.number().int().describe("Course module id").nullable()).optional()
 });
 var coreMoodlenetSendCourseMutationResponseSchema = coreMoodlenetSendCourse200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMyViewPageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreMyViewPageSchema.js
 var coreMyViewPage200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -19701,7 +19657,7 @@ var coreMyViewPageMutationRequestSchema = exports_external.object({
   page: exports_external.coerce.string().describe("My page to trigger a view event")
 });
 var coreMyViewPageMutationResponseSchema = coreMyViewPage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreNotesCreateNotesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreNotesCreateNotesSchema.js
 var coreNotesCreateNotes200Schema = exports_external.array(exports_external.object({
   clientnoteid: exports_external.coerce.string().describe("your own id for the note").nullable().nullish(),
   noteid: exports_external.coerce.number().int().describe("ID of the created note when successful, -1 when failed"),
@@ -19719,7 +19675,7 @@ var coreNotesCreateNotesMutationRequestSchema = exports_external.object({
   }))
 });
 var coreNotesCreateNotesMutationResponseSchema = coreNotesCreateNotes200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreNotesDeleteNotesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreNotesDeleteNotesSchema.js
 var coreNotesDeleteNotes200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item is always 'note'").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("When errorcode is savedfailed the note could not be modified.When errorcode is badparam, an incorrect parameter was provided.When errorcode is badid, the note does not exist").nullable().nullish(),
@@ -19731,7 +19687,7 @@ var coreNotesDeleteNotesMutationRequestSchema = exports_external.object({
   notes: exports_external.array(exports_external.coerce.number().int().describe("ID of the note to be deleted"))
 });
 var coreNotesDeleteNotesMutationResponseSchema = coreNotesDeleteNotes200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreNotesGetCourseNotesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreNotesGetCourseNotesSchema.js
 var coreNotesGetCourseNotes200Schema = exports_external.object({
   sitenotes: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("id of this note"),
@@ -19781,7 +19737,7 @@ var coreNotesGetCourseNotesMutationRequestSchema = exports_external.object({
   userid: exports_external.coerce.number().int().default(0).describe("user id").nullable().nullish()
 });
 var coreNotesGetCourseNotesMutationResponseSchema = coreNotesGetCourseNotes200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreNotesGetNotesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreNotesGetNotesSchema.js
 var coreNotesGetNotes200Schema = exports_external.object({
   notes: exports_external.array(exports_external.object({
     noteid: exports_external.coerce.number().int().describe("id of the note").nullable().nullish(),
@@ -19803,7 +19759,7 @@ var coreNotesGetNotesMutationRequestSchema = exports_external.object({
   notes: exports_external.array(exports_external.coerce.number().int().describe("ID of the note to be retrieved"))
 });
 var coreNotesGetNotesMutationResponseSchema = coreNotesGetNotes200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreNotesUpdateNotesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreNotesUpdateNotesSchema.js
 var coreNotesUpdateNotes200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item is always 'note'").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("When errorcode is savedfailed the note could not be modified.When errorcode is badparam, an incorrect parameter was provided.When errorcode is badid, the note does not exist").nullable().nullish(),
@@ -19820,7 +19776,7 @@ var coreNotesUpdateNotesMutationRequestSchema = exports_external.object({
   })).optional()
 });
 var coreNotesUpdateNotesMutationResponseSchema = coreNotesUpdateNotes200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreNotesViewNotesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreNotesViewNotesSchema.js
 var coreNotesViewNotes200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -19836,7 +19792,7 @@ var coreNotesViewNotesMutationRequestSchema = exports_external.object({
   userid: exports_external.coerce.number().int().default(0).describe("user id, 0 means view all the user notes").nullable().nullish()
 });
 var coreNotesViewNotesMutationResponseSchema = coreNotesViewNotes200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreOutputLoadFontawesomeIconMapSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreOutputLoadFontawesomeIconMapSchema.js
 var coreOutputLoadFontawesomeIconMap200Schema = exports_external.array(exports_external.object({
   component: exports_external.coerce.string().describe("The component for the icon."),
   pix: exports_external.coerce.string().describe("Value to map the icon from."),
@@ -19844,7 +19800,7 @@ var coreOutputLoadFontawesomeIconMap200Schema = exports_external.array(exports_e
 }));
 var coreOutputLoadFontawesomeIconMap400Schema = errorResponseSchema;
 var coreOutputLoadFontawesomeIconMapMutationResponseSchema = coreOutputLoadFontawesomeIconMap200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreOutputLoadFontawesomeIconSystemMapSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreOutputLoadFontawesomeIconSystemMapSchema.js
 var coreOutputLoadFontawesomeIconSystemMap200Schema = exports_external.array(exports_external.object({
   component: exports_external.coerce.string().describe("The component for the icon."),
   pix: exports_external.coerce.string().describe("Value to map the icon from."),
@@ -19855,7 +19811,7 @@ var coreOutputLoadFontawesomeIconSystemMapMutationRequestSchema = exports_extern
   themename: exports_external.coerce.string().describe("The theme to fetch the map for")
 });
 var coreOutputLoadFontawesomeIconSystemMapMutationResponseSchema = coreOutputLoadFontawesomeIconSystemMap200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreOutputLoadTemplateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreOutputLoadTemplateSchema.js
 var coreOutputLoadTemplate200Schema = exports_external.coerce.string().describe("template");
 var coreOutputLoadTemplate400Schema = errorResponseSchema;
 var coreOutputLoadTemplateMutationRequestSchema = exports_external.object({
@@ -19865,7 +19821,7 @@ var coreOutputLoadTemplateMutationRequestSchema = exports_external.object({
   includecomments: exports_external.boolean().default(false).describe("Include comments or not").nullable().nullish()
 });
 var coreOutputLoadTemplateMutationResponseSchema = coreOutputLoadTemplate200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreOutputLoadTemplateWithDependenciesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreOutputLoadTemplateWithDependenciesSchema.js
 var coreOutputLoadTemplateWithDependencies200Schema = exports_external.object({
   templates: exports_external.array(exports_external.object({
     component: exports_external.coerce.string().describe("component containing the resource"),
@@ -19887,7 +19843,7 @@ var coreOutputLoadTemplateWithDependenciesMutationRequestSchema = exports_extern
   lang: exports_external.coerce.string().describe("lang").nullable().nullish()
 });
 var coreOutputLoadTemplateWithDependenciesMutationResponseSchema = coreOutputLoadTemplateWithDependencies200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreOutputPollStoredProgressSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreOutputPollStoredProgressSchema.js
 var coreOutputPollStoredProgress200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("stored_progress record id"),
   uniqueid: exports_external.coerce.string().describe("unique element id"),
@@ -19902,7 +19858,7 @@ var coreOutputPollStoredProgressMutationRequestSchema = exports_external.object(
   ids: exports_external.array(exports_external.coerce.number().int().describe("The stored_progress ID"))
 });
 var coreOutputPollStoredProgressMutationResponseSchema = coreOutputPollStoredProgress200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/corePaymentGetAvailableGatewaysSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/corePaymentGetAvailableGatewaysSchema.js
 var corePaymentGetAvailableGateways200Schema = exports_external.array(exports_external.object({
   shortname: exports_external.coerce.string().describe("Name of the plugin"),
   name: exports_external.coerce.string().describe("Human readable name of the gateway"),
@@ -19917,7 +19873,7 @@ var corePaymentGetAvailableGatewaysMutationRequestSchema = exports_external.obje
   itemid: exports_external.coerce.number().int().describe("An identifier for payment area in the component")
 });
 var corePaymentGetAvailableGatewaysMutationResponseSchema = corePaymentGetAvailableGateways200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreQuestionGetRandomQuestionSummariesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreQuestionGetRandomQuestionSummariesSchema.js
 var coreQuestionGetRandomQuestionSummaries200Schema = exports_external.object({
   totalcount: exports_external.coerce.number().int().describe("total number of questions in result set"),
   questions: exports_external.array(exports_external.object({
@@ -19943,7 +19899,7 @@ var coreQuestionGetRandomQuestionSummariesMutationRequestSchema = exports_extern
   offset: exports_external.coerce.number().int().default(0).describe("Number of items to skip from the begging of the result set").nullable().nullish()
 });
 var coreQuestionGetRandomQuestionSummariesMutationResponseSchema = coreQuestionGetRandomQuestionSummaries200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreQuestionUpdateFlagSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreQuestionUpdateFlagSchema.js
 var coreQuestionUpdateFlag200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -19964,7 +19920,7 @@ var coreQuestionUpdateFlagMutationRequestSchema = exports_external.object({
   newstate: exports_external.boolean().describe("the new state of the flag. true = flagged")
 });
 var coreQuestionUpdateFlagMutationResponseSchema = coreQuestionUpdateFlag200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreRatingAddRatingSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreRatingAddRatingSchema.js
 var coreRatingAddRating200Schema = exports_external.object({
   success: exports_external.boolean().describe("Whether the rate was successfully created"),
   aggregate: exports_external.coerce.string().describe("New aggregate").nullable().nullish(),
@@ -19990,7 +19946,7 @@ var coreRatingAddRatingMutationRequestSchema = exports_external.object({
   aggregation: exports_external.coerce.number().int().default(0).describe("agreggation method").nullable().nullish()
 });
 var coreRatingAddRatingMutationResponseSchema = coreRatingAddRating200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreRatingGetItemRatingsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreRatingGetItemRatingsSchema.js
 var coreRatingGetItemRatings200Schema = exports_external.object({
   ratings: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("rating id"),
@@ -20018,7 +19974,7 @@ var coreRatingGetItemRatingsMutationRequestSchema = exports_external.object({
   sort: exports_external.coerce.string().describe("sort order (firstname, rating or timemodified)")
 });
 var coreRatingGetItemRatingsMutationResponseSchema = coreRatingGetItemRatings200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderAudiencesDeleteSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderAudiencesDeleteSchema.js
 var coreReportbuilderAudiencesDelete200Schema = exports_external.boolean();
 var coreReportbuilderAudiencesDelete400Schema = errorResponseSchema;
 var coreReportbuilderAudiencesDeleteMutationRequestSchema = exports_external.object({
@@ -20026,7 +19982,7 @@ var coreReportbuilderAudiencesDeleteMutationRequestSchema = exports_external.obj
   instanceid: exports_external.coerce.number().int().describe("Audience instance id")
 });
 var coreReportbuilderAudiencesDeleteMutationResponseSchema = coreReportbuilderAudiencesDelete200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderCanViewSystemReportSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderCanViewSystemReportSchema.js
 var coreReportbuilderCanViewSystemReport200Schema = exports_external.boolean();
 var coreReportbuilderCanViewSystemReport400Schema = errorResponseSchema;
 var coreReportbuilderCanViewSystemReportMutationRequestSchema = exports_external.object({
@@ -20045,7 +20001,7 @@ var coreReportbuilderCanViewSystemReportMutationRequestSchema = exports_external
   })).optional()
 });
 var coreReportbuilderCanViewSystemReportMutationResponseSchema = coreReportbuilderCanViewSystemReport200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderColumnsAddSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderColumnsAddSchema.js
 var coreReportbuilderColumnsAdd200Schema = exports_external.object({
   hassortablecolumns: exports_external.boolean().describe("hassortablecolumns"),
   sortablecolumns: exports_external.array(exports_external.object({
@@ -20071,7 +20027,7 @@ var coreReportbuilderColumnsAddMutationRequestSchema = exports_external.object({
   uniqueidentifier: exports_external.coerce.string().describe("Unique identifier of the column")
 });
 var coreReportbuilderColumnsAddMutationResponseSchema = coreReportbuilderColumnsAdd200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderColumnsDeleteSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderColumnsDeleteSchema.js
 var coreReportbuilderColumnsDelete200Schema = exports_external.object({
   hassortablecolumns: exports_external.boolean().describe("hassortablecolumns"),
   sortablecolumns: exports_external.array(exports_external.object({
@@ -20097,7 +20053,7 @@ var coreReportbuilderColumnsDeleteMutationRequestSchema = exports_external.objec
   columnid: exports_external.coerce.number().int().describe("Column ID")
 });
 var coreReportbuilderColumnsDeleteMutationResponseSchema = coreReportbuilderColumnsDelete200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderColumnsReorderSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderColumnsReorderSchema.js
 var coreReportbuilderColumnsReorder200Schema = exports_external.boolean().describe("Success");
 var coreReportbuilderColumnsReorder400Schema = errorResponseSchema;
 var coreReportbuilderColumnsReorderMutationRequestSchema = exports_external.object({
@@ -20106,7 +20062,7 @@ var coreReportbuilderColumnsReorderMutationRequestSchema = exports_external.obje
   position: exports_external.coerce.number().int().describe("New column position")
 });
 var coreReportbuilderColumnsReorderMutationResponseSchema = coreReportbuilderColumnsReorder200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderColumnsSortGetSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderColumnsSortGetSchema.js
 var coreReportbuilderColumnsSortGet200Schema = exports_external.object({
   hassortablecolumns: exports_external.boolean().describe("hassortablecolumns"),
   sortablecolumns: exports_external.array(exports_external.object({
@@ -20131,7 +20087,7 @@ var coreReportbuilderColumnsSortGetMutationRequestSchema = exports_external.obje
   reportid: exports_external.coerce.number().int().describe("Report ID")
 });
 var coreReportbuilderColumnsSortGetMutationResponseSchema = coreReportbuilderColumnsSortGet200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderColumnsSortReorderSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderColumnsSortReorderSchema.js
 var coreReportbuilderColumnsSortReorder200Schema = exports_external.object({
   hassortablecolumns: exports_external.boolean().describe("hassortablecolumns"),
   sortablecolumns: exports_external.array(exports_external.object({
@@ -20158,7 +20114,7 @@ var coreReportbuilderColumnsSortReorderMutationRequestSchema = exports_external.
   position: exports_external.coerce.number().int().describe("New column sort position")
 });
 var coreReportbuilderColumnsSortReorderMutationResponseSchema = coreReportbuilderColumnsSortReorder200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderColumnsSortToggleSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderColumnsSortToggleSchema.js
 var coreReportbuilderColumnsSortToggle200Schema = exports_external.object({
   hassortablecolumns: exports_external.boolean().describe("hassortablecolumns"),
   sortablecolumns: exports_external.array(exports_external.object({
@@ -20186,7 +20142,7 @@ var coreReportbuilderColumnsSortToggleMutationRequestSchema = exports_external.o
   direction: exports_external.coerce.number().int().default(4).describe("Sort direction").nullable().nullish()
 });
 var coreReportbuilderColumnsSortToggleMutationResponseSchema = coreReportbuilderColumnsSortToggle200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderConditionsAddSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderConditionsAddSchema.js
 var coreReportbuilderConditionsAdd200Schema = exports_external.object({
   hasavailableconditions: exports_external.boolean().describe("hasavailableconditions"),
   availableconditions: exports_external.array(exports_external.object({
@@ -20209,7 +20165,7 @@ var coreReportbuilderConditionsAddMutationRequestSchema = exports_external.objec
   uniqueidentifier: exports_external.coerce.string().describe("Unique identifier of the condition")
 });
 var coreReportbuilderConditionsAddMutationResponseSchema = coreReportbuilderConditionsAdd200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderConditionsDeleteSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderConditionsDeleteSchema.js
 var coreReportbuilderConditionsDelete200Schema = exports_external.object({
   hasavailableconditions: exports_external.boolean().describe("hasavailableconditions"),
   availableconditions: exports_external.array(exports_external.object({
@@ -20232,7 +20188,7 @@ var coreReportbuilderConditionsDeleteMutationRequestSchema = exports_external.ob
   conditionid: exports_external.coerce.number().int().describe("Condition ID")
 });
 var coreReportbuilderConditionsDeleteMutationResponseSchema = coreReportbuilderConditionsDelete200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderConditionsReorderSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderConditionsReorderSchema.js
 var coreReportbuilderConditionsReorder200Schema = exports_external.object({
   hasavailableconditions: exports_external.boolean().describe("hasavailableconditions"),
   availableconditions: exports_external.array(exports_external.object({
@@ -20256,7 +20212,7 @@ var coreReportbuilderConditionsReorderMutationRequestSchema = exports_external.o
   position: exports_external.coerce.number().int().describe("New condition position")
 });
 var coreReportbuilderConditionsReorderMutationResponseSchema = coreReportbuilderConditionsReorder200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderConditionsResetSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderConditionsResetSchema.js
 var coreReportbuilderConditionsReset200Schema = exports_external.object({
   hasavailableconditions: exports_external.boolean().describe("hasavailableconditions"),
   availableconditions: exports_external.array(exports_external.object({
@@ -20278,7 +20234,7 @@ var coreReportbuilderConditionsResetMutationRequestSchema = exports_external.obj
   reportid: exports_external.coerce.number().int().describe("Report ID")
 });
 var coreReportbuilderConditionsResetMutationResponseSchema = coreReportbuilderConditionsReset200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderFiltersAddSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderFiltersAddSchema.js
 var coreReportbuilderFiltersAdd200Schema = exports_external.object({
   hasavailablefilters: exports_external.boolean().describe("hasavailablefilters"),
   availablefilters: exports_external.array(exports_external.object({
@@ -20307,7 +20263,7 @@ var coreReportbuilderFiltersAddMutationRequestSchema = exports_external.object({
   uniqueidentifier: exports_external.coerce.string().describe("Unique identifier of the filter")
 });
 var coreReportbuilderFiltersAddMutationResponseSchema = coreReportbuilderFiltersAdd200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderFiltersDeleteSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderFiltersDeleteSchema.js
 var coreReportbuilderFiltersDelete200Schema = exports_external.object({
   hasavailablefilters: exports_external.boolean().describe("hasavailablefilters"),
   availablefilters: exports_external.array(exports_external.object({
@@ -20336,7 +20292,7 @@ var coreReportbuilderFiltersDeleteMutationRequestSchema = exports_external.objec
   filterid: exports_external.coerce.number().int().describe("Filter ID")
 });
 var coreReportbuilderFiltersDeleteMutationResponseSchema = coreReportbuilderFiltersDelete200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderFiltersReorderSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderFiltersReorderSchema.js
 var coreReportbuilderFiltersReorder200Schema = exports_external.object({
   hasavailablefilters: exports_external.boolean().describe("hasavailablefilters"),
   availablefilters: exports_external.array(exports_external.object({
@@ -20366,7 +20322,7 @@ var coreReportbuilderFiltersReorderMutationRequestSchema = exports_external.obje
   position: exports_external.coerce.number().int().describe("New filter position")
 });
 var coreReportbuilderFiltersReorderMutationResponseSchema = coreReportbuilderFiltersReorder200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderFiltersResetSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderFiltersResetSchema.js
 var coreReportbuilderFiltersReset200Schema = exports_external.boolean().describe("Success");
 var coreReportbuilderFiltersReset400Schema = errorResponseSchema;
 var coreReportbuilderFiltersResetMutationRequestSchema = exports_external.object({
@@ -20374,7 +20330,7 @@ var coreReportbuilderFiltersResetMutationRequestSchema = exports_external.object
   parameters: exports_external.coerce.string().default("").describe("JSON encoded report parameters").nullable().nullish()
 });
 var coreReportbuilderFiltersResetMutationResponseSchema = coreReportbuilderFiltersReset200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderListReportsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderListReportsSchema.js
 var coreReportbuilderListReports200Schema = exports_external.object({
   reports: exports_external.array(exports_external.object({
     name: exports_external.coerce.string().describe("name"),
@@ -20434,14 +20390,14 @@ var coreReportbuilderListReportsMutationRequestSchema = exports_external.object(
   perpage: exports_external.coerce.number().int().default(10).describe("Reports per page").nullable().nullish()
 });
 var coreReportbuilderListReportsMutationResponseSchema = coreReportbuilderListReports200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderReportsDeleteSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderReportsDeleteSchema.js
 var coreReportbuilderReportsDelete200Schema = exports_external.boolean().describe("Success");
 var coreReportbuilderReportsDelete400Schema = errorResponseSchema;
 var coreReportbuilderReportsDeleteMutationRequestSchema = exports_external.object({
   reportid: exports_external.coerce.number().int().describe("Report ID")
 });
 var coreReportbuilderReportsDeleteMutationResponseSchema = coreReportbuilderReportsDelete200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderReportsGetSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderReportsGetSchema.js
 var coreReportbuilderReportsGet200Schema = exports_external.object({
   name: exports_external.coerce.string().describe("name"),
   source: exports_external.coerce.string().describe("source"),
@@ -20551,7 +20507,7 @@ var coreReportbuilderReportsGetMutationRequestSchema = exports_external.object({
   pagesize: exports_external.coerce.number().int().default(0).describe("Page size").nullable().nullish()
 });
 var coreReportbuilderReportsGetMutationResponseSchema = coreReportbuilderReportsGet200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderRetrieveReportSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderRetrieveReportSchema.js
 var coreReportbuilderRetrieveReport200Schema = exports_external.object({
   details: exports_external.object({
     name: exports_external.coerce.string().describe("name"),
@@ -20619,7 +20575,7 @@ var coreReportbuilderRetrieveReportMutationRequestSchema = exports_external.obje
   perpage: exports_external.coerce.number().int().default(10).describe("Reports per page").nullable().nullish()
 });
 var coreReportbuilderRetrieveReportMutationResponseSchema = coreReportbuilderRetrieveReport200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderRetrieveSystemReportSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderRetrieveSystemReportSchema.js
 var coreReportbuilderRetrieveSystemReport200Schema = exports_external.object({
   data: exports_external.object({
     headers: exports_external.array(exports_external.coerce.string().describe("headers")),
@@ -20654,7 +20610,7 @@ var coreReportbuilderRetrieveSystemReportMutationRequestSchema = exports_externa
   perpage: exports_external.coerce.number().int().default(10).describe("Reports per page").nullable().nullish()
 });
 var coreReportbuilderRetrieveSystemReportMutationResponseSchema = coreReportbuilderRetrieveSystemReport200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderSchedulesDeleteSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderSchedulesDeleteSchema.js
 var coreReportbuilderSchedulesDelete200Schema = exports_external.boolean();
 var coreReportbuilderSchedulesDelete400Schema = errorResponseSchema;
 var coreReportbuilderSchedulesDeleteMutationRequestSchema = exports_external.object({
@@ -20662,7 +20618,7 @@ var coreReportbuilderSchedulesDeleteMutationRequestSchema = exports_external.obj
   scheduleid: exports_external.coerce.number().int().describe("Schedule ID")
 });
 var coreReportbuilderSchedulesDeleteMutationResponseSchema = coreReportbuilderSchedulesDelete200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderSchedulesSendSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderSchedulesSendSchema.js
 var coreReportbuilderSchedulesSend200Schema = exports_external.boolean();
 var coreReportbuilderSchedulesSend400Schema = errorResponseSchema;
 var coreReportbuilderSchedulesSendMutationRequestSchema = exports_external.object({
@@ -20670,7 +20626,7 @@ var coreReportbuilderSchedulesSendMutationRequestSchema = exports_external.objec
   scheduleid: exports_external.coerce.number().int().describe("Schedule ID")
 });
 var coreReportbuilderSchedulesSendMutationResponseSchema = coreReportbuilderSchedulesSend200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderSchedulesToggleSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderSchedulesToggleSchema.js
 var coreReportbuilderSchedulesToggle200Schema = exports_external.boolean();
 var coreReportbuilderSchedulesToggle400Schema = errorResponseSchema;
 var coreReportbuilderSchedulesToggleMutationRequestSchema = exports_external.object({
@@ -20679,7 +20635,7 @@ var coreReportbuilderSchedulesToggleMutationRequestSchema = exports_external.obj
   enabled: exports_external.boolean().describe("Schedule enabled")
 });
 var coreReportbuilderSchedulesToggleMutationResponseSchema = coreReportbuilderSchedulesToggle200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderSetFiltersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderSetFiltersSchema.js
 var coreReportbuilderSetFilters200Schema = exports_external.boolean().describe("Success");
 var coreReportbuilderSetFilters400Schema = errorResponseSchema;
 var coreReportbuilderSetFiltersMutationRequestSchema = exports_external.object({
@@ -20688,7 +20644,7 @@ var coreReportbuilderSetFiltersMutationRequestSchema = exports_external.object({
   values: exports_external.coerce.string().describe("JSON encoded filter values")
 });
 var coreReportbuilderSetFiltersMutationResponseSchema = coreReportbuilderSetFilters200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderViewReportSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreReportbuilderViewReportSchema.js
 var coreReportbuilderViewReport200Schema = exports_external.object({
   status: exports_external.boolean().describe("Success"),
   warnings: exports_external.array(exports_external.object({
@@ -20703,7 +20659,7 @@ var coreReportbuilderViewReportMutationRequestSchema = exports_external.object({
   reportid: exports_external.coerce.number().int().describe("Report ID")
 });
 var coreReportbuilderViewReportMutationResponseSchema = coreReportbuilderViewReport200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreRoleAssignRolesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreRoleAssignRolesSchema.js
 var coreRoleAssignRoles200Schema = exports_external.null();
 var coreRoleAssignRoles400Schema = errorResponseSchema;
 var coreRoleAssignRolesMutationRequestSchema = exports_external.object({
@@ -20717,7 +20673,7 @@ var coreRoleAssignRolesMutationRequestSchema = exports_external.object({
   }))
 });
 var coreRoleAssignRolesMutationResponseSchema = coreRoleAssignRoles200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreRoleUnassignRolesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreRoleUnassignRolesSchema.js
 var coreRoleUnassignRoles200Schema = exports_external.null();
 var coreRoleUnassignRoles400Schema = errorResponseSchema;
 var coreRoleUnassignRolesMutationRequestSchema = exports_external.object({
@@ -20731,7 +20687,7 @@ var coreRoleUnassignRolesMutationRequestSchema = exports_external.object({
   }))
 });
 var coreRoleUnassignRolesMutationResponseSchema = coreRoleUnassignRoles200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreSearchGetRelevantUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreSearchGetRelevantUsersSchema.js
 var coreSearchGetRelevantUsers200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("User id"),
   fullname: exports_external.coerce.string().describe("Full name as text"),
@@ -20743,7 +20699,7 @@ var coreSearchGetRelevantUsersMutationRequestSchema = exports_external.object({
   courseid: exports_external.coerce.number().int().describe("Course id (0 if none)")
 });
 var coreSearchGetRelevantUsersMutationResponseSchema = coreSearchGetRelevantUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreSearchGetResultsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreSearchGetResultsSchema.js
 var coreSearchGetResults200Schema = exports_external.object({
   totalcount: exports_external.coerce.number().int().describe("Total number of results"),
   results: exports_external.array(exports_external.object({
@@ -20789,7 +20745,7 @@ var coreSearchGetResultsMutationRequestSchema = exports_external.object({
   page: exports_external.coerce.number().int().default(0).describe("results page number starting from 0, defaults to the first page").nullable().nullish()
 });
 var coreSearchGetResultsMutationResponseSchema = coreSearchGetResults200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreSearchGetSearchAreasListSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreSearchGetSearchAreasListSchema.js
 var coreSearchGetSearchAreasList200Schema = exports_external.object({
   areas: exports_external.array(exports_external.object({
     id: exports_external.coerce.string().describe("search area id"),
@@ -20809,7 +20765,7 @@ var coreSearchGetSearchAreasListMutationRequestSchema = exports_external.object(
   cat: exports_external.coerce.string().default("").describe("category to filter areas").nullable().nullish()
 });
 var coreSearchGetSearchAreasListMutationResponseSchema = coreSearchGetSearchAreasList200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreSearchGetTopResultsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreSearchGetTopResultsSchema.js
 var coreSearchGetTopResults200Schema = exports_external.object({
   results: exports_external.array(exports_external.object({
     itemid: exports_external.coerce.number().int().describe("unique id in the search area scope"),
@@ -20853,7 +20809,7 @@ var coreSearchGetTopResultsMutationRequestSchema = exports_external.object({
   }).optional()
 });
 var coreSearchGetTopResultsMutationResponseSchema = coreSearchGetTopResults200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreSearchViewResultsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreSearchViewResultsSchema.js
 var coreSearchViewResults200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -20876,18 +20832,18 @@ var coreSearchViewResultsMutationRequestSchema = exports_external.object({
   page: exports_external.coerce.number().int().default(0).describe("results page number starting from 0, defaults to the first page").nullable().nullish()
 });
 var coreSearchViewResultsMutationResponseSchema = coreSearchViewResults200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreSessionTimeRemainingSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreSessionTimeRemainingSchema.js
 var coreSessionTimeRemaining200Schema = exports_external.object({
   userid: exports_external.coerce.number().int().describe("The current user id."),
   timeremaining: exports_external.coerce.number().int().describe("The number of seconds remaining in this session.")
 });
 var coreSessionTimeRemaining400Schema = errorResponseSchema;
 var coreSessionTimeRemainingMutationResponseSchema = coreSessionTimeRemaining200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreSessionTouchSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreSessionTouchSchema.js
 var coreSessionTouch200Schema = exports_external.boolean().describe("result");
 var coreSessionTouch400Schema = errorResponseSchema;
 var coreSessionTouchMutationResponseSchema = coreSessionTouch200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreSmsSetGatewayStatusSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreSmsSetGatewayStatusSchema.js
 var coreSmsSetGatewayStatus200Schema = exports_external.object({
   result: exports_external.boolean().describe("Whether the status was changed, true or false"),
   message: exports_external.coerce.string().describe("Messages"),
@@ -20899,7 +20855,7 @@ var coreSmsSetGatewayStatusMutationRequestSchema = exports_external.object({
   state: exports_external.coerce.number().int().describe("Enabled or disabled")
 });
 var coreSmsSetGatewayStatusMutationResponseSchema = coreSmsSetGatewayStatus200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreTableGetDynamicTableContentSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreTableGetDynamicTableContentSchema.js
 var coreTableGetDynamicTableContent200Schema = exports_external.object({
   html: exports_external.coerce.string().describe("The raw html of the requested table."),
   warnings: exports_external.array(exports_external.object({
@@ -20936,7 +20892,7 @@ var coreTableGetDynamicTableContentMutationRequestSchema = exports_external.obje
   resetpreferences: exports_external.boolean().describe("Whether the table preferences should be reset")
 });
 var coreTableGetDynamicTableContentMutationResponseSchema = coreTableGetDynamicTableContent200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreTagGetTagAreasSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreTagGetTagAreasSchema.js
 var coreTagGetTagAreas200Schema = exports_external.object({
   areas: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Area id."),
@@ -20959,7 +20915,7 @@ var coreTagGetTagAreas200Schema = exports_external.object({
 });
 var coreTagGetTagAreas400Schema = errorResponseSchema;
 var coreTagGetTagAreasMutationResponseSchema = coreTagGetTagAreas200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreTagGetTagCloudSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreTagGetTagCloudSchema.js
 var coreTagGetTagCloud200Schema = exports_external.object({
   tags: exports_external.array(exports_external.object({
     name: exports_external.coerce.string().describe("Tag name."),
@@ -20991,7 +20947,7 @@ var coreTagGetTagCloudMutationRequestSchema = exports_external.object({
   rec: exports_external.coerce.number().int().default(1).describe("Retrieve tag instances in the $ctx context and it's children.").nullable().nullish()
 });
 var coreTagGetTagCloudMutationResponseSchema = coreTagGetTagCloud200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreTagGetTagCollectionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreTagGetTagCollectionsSchema.js
 var coreTagGetTagCollections200Schema = exports_external.object({
   collections: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Collection id."),
@@ -21011,7 +20967,7 @@ var coreTagGetTagCollections200Schema = exports_external.object({
 });
 var coreTagGetTagCollections400Schema = errorResponseSchema;
 var coreTagGetTagCollectionsMutationResponseSchema = coreTagGetTagCollections200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreTagGetTagindexPerAreaSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreTagGetTagindexPerAreaSchema.js
 var coreTagGetTagindexPerArea200Schema = exports_external.array(exports_external.object({
   tagid: exports_external.coerce.number().int().describe("tag id"),
   ta: exports_external.coerce.number().int().describe("tag area id"),
@@ -21041,7 +20997,7 @@ var coreTagGetTagindexPerAreaMutationRequestSchema = exports_external.object({
   })
 });
 var coreTagGetTagindexPerAreaMutationResponseSchema = coreTagGetTagindexPerArea200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreTagGetTagindexSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreTagGetTagindexSchema.js
 var coreTagGetTagindex200Schema = exports_external.object({
   tagid: exports_external.coerce.number().int().describe("tag id"),
   ta: exports_external.coerce.number().int().describe("tag area id"),
@@ -21070,7 +21026,7 @@ var coreTagGetTagindexMutationRequestSchema = exports_external.object({
   })
 });
 var coreTagGetTagindexMutationResponseSchema = coreTagGetTagindex200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreTagGetTagsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreTagGetTagsSchema.js
 var coreTagGetTags200Schema = exports_external.object({
   tags: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("tag id"),
@@ -21098,7 +21054,7 @@ var coreTagGetTagsMutationRequestSchema = exports_external.object({
   }))
 });
 var coreTagGetTagsMutationResponseSchema = coreTagGetTags200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreTagUpdateTagsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreTagUpdateTagsSchema.js
 var coreTagUpdateTags200Schema = exports_external.object({
   warnings: exports_external.array(exports_external.object({
     item: exports_external.coerce.string().describe("item").nullable().nullish(),
@@ -21120,7 +21076,7 @@ var coreTagUpdateTagsMutationRequestSchema = exports_external.object({
   }))
 });
 var coreTagUpdateTagsMutationResponseSchema = coreTagUpdateTags200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUpdateInplaceEditableSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUpdateInplaceEditableSchema.js
 var coreUpdateInplaceEditable200Schema = exports_external.object({
   displayvalue: exports_external.coerce.string().describe("display value (may contain link or other html tags)"),
   component: exports_external.coerce.string().describe("component responsible for the update").nullable().nullish(),
@@ -21146,7 +21102,7 @@ var coreUpdateInplaceEditableMutationRequestSchema = exports_external.object({
   value: exports_external.coerce.string().describe("new value")
 });
 var coreUpdateInplaceEditableMutationResponseSchema = coreUpdateInplaceEditable200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserAddUserDeviceSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserAddUserDeviceSchema.js
 var coreUserAddUserDevice200Schema = exports_external.array(exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -21165,14 +21121,14 @@ var coreUserAddUserDeviceMutationRequestSchema = exports_external.object({
   publickey: exports_external.coerce.string().describe("the app generated public key").nullable().nullish()
 });
 var coreUserAddUserDeviceMutationResponseSchema = coreUserAddUserDevice200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserAddUserPrivateFilesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserAddUserPrivateFilesSchema.js
 var coreUserAddUserPrivateFiles200Schema = exports_external.null();
 var coreUserAddUserPrivateFiles400Schema = errorResponseSchema;
 var coreUserAddUserPrivateFilesMutationRequestSchema = exports_external.object({
   draftid: exports_external.coerce.number().int().describe("draft area id")
 });
 var coreUserAddUserPrivateFilesMutationResponseSchema = coreUserAddUserPrivateFiles200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserAgreeSitePolicySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserAgreeSitePolicySchema.js
 var coreUserAgreeSitePolicy200Schema = exports_external.object({
   status: exports_external.boolean().describe("Status: true only if we set the policyagreed to 1 for the user"),
   warnings: exports_external.array(exports_external.object({
@@ -21184,7 +21140,7 @@ var coreUserAgreeSitePolicy200Schema = exports_external.object({
 });
 var coreUserAgreeSitePolicy400Schema = errorResponseSchema;
 var coreUserAgreeSitePolicyMutationResponseSchema = coreUserAgreeSitePolicy200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserCreateUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserCreateUsersSchema.js
 var coreUserCreateUsers200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("user id"),
   username: exports_external.coerce.string().describe("user name")
@@ -21230,14 +21186,14 @@ var coreUserCreateUsersMutationRequestSchema = exports_external.object({
   }))
 });
 var coreUserCreateUsersMutationResponseSchema = coreUserCreateUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserDeleteUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserDeleteUsersSchema.js
 var coreUserDeleteUsers200Schema = exports_external.null();
 var coreUserDeleteUsers400Schema = errorResponseSchema;
 var coreUserDeleteUsersMutationRequestSchema = exports_external.object({
   userids: exports_external.array(exports_external.coerce.number().int().describe("user ID"))
 });
 var coreUserDeleteUsersMutationResponseSchema = coreUserDeleteUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserGetCourseUserProfilesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserGetCourseUserProfilesSchema.js
 var coreUserGetCourseUserProfiles200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("ID of the user"),
   username: exports_external.coerce.string().describe("The username").nullable().nullish(),
@@ -21306,7 +21262,7 @@ var coreUserGetCourseUserProfilesMutationRequestSchema = exports_external.object
   }))
 });
 var coreUserGetCourseUserProfilesMutationResponseSchema = coreUserGetCourseUserProfiles200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserGetPrivateFilesInfoSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserGetPrivateFilesInfoSchema.js
 var coreUserGetPrivateFilesInfo200Schema = exports_external.object({
   filecount: exports_external.coerce.number().int().describe("Number of files in the area."),
   foldercount: exports_external.coerce.number().int().describe("Number of folders in the area."),
@@ -21324,7 +21280,7 @@ var coreUserGetPrivateFilesInfoMutationRequestSchema = exports_external.object({
   userid: exports_external.coerce.number().int().default(0).describe("Id of the user, default to current user.").nullable().nullish()
 });
 var coreUserGetPrivateFilesInfoMutationResponseSchema = coreUserGetPrivateFilesInfo200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserGetUserPreferencesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserGetUserPreferencesSchema.js
 var coreUserGetUserPreferences200Schema = exports_external.object({
   preferences: exports_external.array(exports_external.object({
     name: exports_external.coerce.string().describe("The name of the preference"),
@@ -21343,7 +21299,7 @@ var coreUserGetUserPreferencesMutationRequestSchema = exports_external.object({
   userid: exports_external.coerce.number().int().default(0).describe("id of the user, default to current user").nullable().nullish()
 });
 var coreUserGetUserPreferencesMutationResponseSchema = coreUserGetUserPreferences200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserGetUsersByFieldSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserGetUsersByFieldSchema.js
 var coreUserGetUsersByField200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("ID of the user"),
   username: exports_external.coerce.string().describe("The username").nullable().nullish(),
@@ -21394,7 +21350,7 @@ var coreUserGetUsersByFieldMutationRequestSchema = exports_external.object({
   values: exports_external.array(exports_external.coerce.string().describe("the value to match"))
 });
 var coreUserGetUsersByFieldMutationResponseSchema = coreUserGetUsersByField200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserGetUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserGetUsersSchema.js
 var coreUserGetUsers200Schema = exports_external.object({
   users: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("ID of the user"),
@@ -21480,7 +21436,7 @@ var coreUserGetUsersMutationRequestSchema = exports_external.object({
   ])).describe("The allowed keys (value format) are: \n- `id` (int); matching user id\n- `lastname` (string); user last name (Note: you can use % for searching but it may be considerably slower!)\n- `firstname` (string); user first name (Note: you can use % for searching but it may be considerably slower!)\n- `idnumber` (string); matching user idnumber\n- `username` (string); matching user username\n- `email` (string); user email (Note: you can use % for searching but it may be considerably slower!)\n- `auth` (string); matching user auth plugin")
 });
 var coreUserGetUsersMutationResponseSchema = coreUserGetUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserPreparePrivateFilesForEditionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserPreparePrivateFilesForEditionSchema.js
 var coreUserPreparePrivateFilesForEdition200Schema = exports_external.object({
   draftitemid: exports_external.coerce.number().int().describe("Draft item id for the file area."),
   areaoptions: exports_external.array(exports_external.object({
@@ -21496,7 +21452,7 @@ var coreUserPreparePrivateFilesForEdition200Schema = exports_external.object({
 });
 var coreUserPreparePrivateFilesForEdition400Schema = errorResponseSchema;
 var coreUserPreparePrivateFilesForEditionMutationResponseSchema = coreUserPreparePrivateFilesForEdition200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserRemoveUserDeviceSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserRemoveUserDeviceSchema.js
 var coreUserRemoveUserDevice200Schema = exports_external.object({
   removed: exports_external.boolean().describe("True if removed, false if not removed because it doesn't exists"),
   warnings: exports_external.array(exports_external.object({
@@ -21512,7 +21468,7 @@ var coreUserRemoveUserDeviceMutationRequestSchema = exports_external.object({
   appid: exports_external.coerce.string().default("").describe("the app id, if empty devices matching the UUID for the user will be removed").nullable().nullish()
 });
 var coreUserRemoveUserDeviceMutationResponseSchema = coreUserRemoveUserDevice200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserSearchIdentitySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserSearchIdentitySchema.js
 var coreUserSearchIdentity200Schema = exports_external.object({
   list: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("ID of the user"),
@@ -21530,7 +21486,7 @@ var coreUserSearchIdentityMutationRequestSchema = exports_external.object({
   query: exports_external.coerce.string().describe("The search query")
 });
 var coreUserSearchIdentityMutationResponseSchema = coreUserSearchIdentity200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserSetUserPreferencesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserSetUserPreferencesSchema.js
 var coreUserSetUserPreferences200Schema = exports_external.object({
   saved: exports_external.array(exports_external.object({
     name: exports_external.coerce.string().describe("The name of the preference"),
@@ -21552,7 +21508,7 @@ var coreUserSetUserPreferencesMutationRequestSchema = exports_external.object({
   }))
 });
 var coreUserSetUserPreferencesMutationResponseSchema = coreUserSetUserPreferences200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserUpdatePictureSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserUpdatePictureSchema.js
 var coreUserUpdatePicture200Schema = exports_external.object({
   success: exports_external.boolean().describe("True if the image was updated, false otherwise."),
   profileimageurl: exports_external.coerce.string().describe("New profile user image url").nullable().nullish(),
@@ -21570,7 +21526,7 @@ var coreUserUpdatePictureMutationRequestSchema = exports_external.object({
   userid: exports_external.coerce.number().int().default(0).describe("Id of the user, 0 for current user").nullable().nullish()
 });
 var coreUserUpdatePictureMutationResponseSchema = coreUserUpdatePicture200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserUpdatePrivateFilesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserUpdatePrivateFilesSchema.js
 var coreUserUpdatePrivateFiles200Schema = exports_external.object({
   status: exports_external.boolean().describe("The update result, true if everything went well."),
   warnings: exports_external.array(exports_external.object({
@@ -21585,7 +21541,7 @@ var coreUserUpdatePrivateFilesMutationRequestSchema = exports_external.object({
   draftitemid: exports_external.coerce.number().int().describe("The draft item id with the files.")
 });
 var coreUserUpdatePrivateFilesMutationResponseSchema = coreUserUpdatePrivateFiles200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserUpdateUserDevicePublicKeySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserUpdateUserDevicePublicKeySchema.js
 var coreUserUpdateUserDevicePublicKey200Schema = exports_external.object({
   status: exports_external.boolean().describe("Whether the request was successful"),
   warnings: exports_external.array(exports_external.object({
@@ -21602,7 +21558,7 @@ var coreUserUpdateUserDevicePublicKeyMutationRequestSchema = exports_external.ob
   publickey: exports_external.coerce.string().describe("the app generated public key")
 });
 var coreUserUpdateUserDevicePublicKeyMutationResponseSchema = coreUserUpdateUserDevicePublicKey200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserUpdateUserPreferencesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserUpdateUserPreferencesSchema.js
 var coreUserUpdateUserPreferences200Schema = exports_external.null();
 var coreUserUpdateUserPreferences400Schema = errorResponseSchema;
 var coreUserUpdateUserPreferencesMutationRequestSchema = exports_external.object({
@@ -21615,7 +21571,7 @@ var coreUserUpdateUserPreferencesMutationRequestSchema = exports_external.object
   })).optional()
 });
 var coreUserUpdateUserPreferencesMutationResponseSchema = coreUserUpdateUserPreferences200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserUpdateUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserUpdateUsersSchema.js
 var coreUserUpdateUsers200Schema = exports_external.object({
   warnings: exports_external.array(exports_external.object({
     item: exports_external.coerce.string().describe("item").nullable().nullish(),
@@ -21667,7 +21623,7 @@ var coreUserUpdateUsersMutationRequestSchema = exports_external.object({
   }))
 });
 var coreUserUpdateUsersMutationResponseSchema = coreUserUpdateUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserViewUserListSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserViewUserListSchema.js
 var coreUserViewUserList200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -21682,7 +21638,7 @@ var coreUserViewUserListMutationRequestSchema = exports_external.object({
   courseid: exports_external.coerce.number().int().describe("id of the course, 0 for site")
 });
 var coreUserViewUserListMutationResponseSchema = coreUserViewUserList200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserViewUserProfileSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreUserViewUserProfileSchema.js
 var coreUserViewUserProfile200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -21698,7 +21654,7 @@ var coreUserViewUserProfileMutationRequestSchema = exports_external.object({
   courseid: exports_external.coerce.number().int().default(0).describe("id of the course, default site course").nullable().nullish()
 });
 var coreUserViewUserProfileMutationResponseSchema = coreUserViewUserProfile200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreWebserviceGetSiteInfoSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreWebserviceGetSiteInfoSchema.js
 var coreWebserviceGetSiteInfo200Schema = exports_external.object({
   sitename: exports_external.coerce.string().describe("site name"),
   username: exports_external.coerce.string().describe("username"),
@@ -21748,7 +21704,7 @@ var coreWebserviceGetSiteInfoMutationRequestSchema = exports_external.object({
   serviceshortnames: exports_external.array(exports_external.coerce.string().describe("service shortname")).optional()
 });
 var coreWebserviceGetSiteInfoMutationResponseSchema = coreWebserviceGetSiteInfo200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreXapiDeleteStateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreXapiDeleteStateSchema.js
 var coreXapiDeleteState200Schema = exports_external.boolean().describe("If the state data is deleted");
 var coreXapiDeleteState400Schema = errorResponseSchema;
 var coreXapiDeleteStateMutationRequestSchema = exports_external.object({
@@ -21759,7 +21715,7 @@ var coreXapiDeleteStateMutationRequestSchema = exports_external.object({
   registration: exports_external.coerce.string().describe("The xAPI registration UUID").nullable().nullish()
 });
 var coreXapiDeleteStateMutationResponseSchema = coreXapiDeleteState200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreXapiDeleteStatesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreXapiDeleteStatesSchema.js
 var coreXapiDeleteStates200Schema = exports_external.null();
 var coreXapiDeleteStates400Schema = errorResponseSchema;
 var coreXapiDeleteStatesMutationRequestSchema = exports_external.object({
@@ -21769,7 +21725,7 @@ var coreXapiDeleteStatesMutationRequestSchema = exports_external.object({
   registration: exports_external.coerce.string().describe("The xAPI registration UUID").nullable().nullish()
 });
 var coreXapiDeleteStatesMutationResponseSchema = coreXapiDeleteStates200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreXapiGetStateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreXapiGetStateSchema.js
 var coreXapiGetState200Schema = exports_external.coerce.string().describe("The state data json");
 var coreXapiGetState400Schema = errorResponseSchema;
 var coreXapiGetStateMutationRequestSchema = exports_external.object({
@@ -21780,7 +21736,7 @@ var coreXapiGetStateMutationRequestSchema = exports_external.object({
   registration: exports_external.coerce.string().describe("The xAPI registration UUID").nullable().nullish()
 });
 var coreXapiGetStateMutationResponseSchema = coreXapiGetState200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreXapiGetStatesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreXapiGetStatesSchema.js
 var coreXapiGetStates200Schema = exports_external.array(exports_external.coerce.string().describe("State ID"));
 var coreXapiGetStates400Schema = errorResponseSchema;
 var coreXapiGetStatesMutationRequestSchema = exports_external.object({
@@ -21791,7 +21747,7 @@ var coreXapiGetStatesMutationRequestSchema = exports_external.object({
   since: exports_external.coerce.string().describe("Filter ids stored since the timestamp (exclusive)").nullable().nullish()
 });
 var coreXapiGetStatesMutationResponseSchema = coreXapiGetStates200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreXapiPostStateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreXapiPostStateSchema.js
 var coreXapiPostState200Schema = exports_external.boolean().describe("If the state is accepted");
 var coreXapiPostState400Schema = errorResponseSchema;
 var coreXapiPostStateMutationRequestSchema = exports_external.object({
@@ -21803,7 +21759,7 @@ var coreXapiPostStateMutationRequestSchema = exports_external.object({
   registration: exports_external.coerce.string().describe("The xAPI registration UUID").nullable().nullish()
 });
 var coreXapiPostStateMutationResponseSchema = coreXapiPostState200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreXapiStatementPostSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/coreXapiStatementPostSchema.js
 var coreXapiStatementPost200Schema = exports_external.array(exports_external.boolean().describe("If the statement is accepted"));
 var coreXapiStatementPost400Schema = errorResponseSchema;
 var coreXapiStatementPostMutationRequestSchema = exports_external.object({
@@ -21811,7 +21767,7 @@ var coreXapiStatementPostMutationRequestSchema = exports_external.object({
   requestjson: exports_external.coerce.string().describe("json object with all the statements to post")
 });
 var coreXapiStatementPostMutationResponseSchema = coreXapiStatementPost200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/customfieldNumberRecalculateValueSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/customfieldNumberRecalculateValueSchema.js
 var customfieldNumberRecalculateValue200Schema = exports_external.object({
   value: exports_external.coerce.string().describe("Recalculated value (prepared for display)")
 });
@@ -21821,7 +21777,7 @@ var customfieldNumberRecalculateValueMutationRequestSchema = exports_external.ob
   instanceid: exports_external.coerce.number().int().describe("Instance id")
 });
 var customfieldNumberRecalculateValueMutationResponseSchema = customfieldNumberRecalculateValue200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/enrolGuestGetInstanceInfoSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/enrolGuestGetInstanceInfoSchema.js
 var enrolGuestGetInstanceInfo200Schema = exports_external.object({
   instanceinfo: exports_external.object({
     id: exports_external.coerce.number().int().describe("Id of course enrolment instance"),
@@ -21843,7 +21799,7 @@ var enrolGuestGetInstanceInfoMutationRequestSchema = exports_external.object({
   instanceid: exports_external.coerce.number().int().describe("Instance id of guest enrolment plugin.")
 });
 var enrolGuestGetInstanceInfoMutationResponseSchema = enrolGuestGetInstanceInfo200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/enrolGuestValidatePasswordSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/enrolGuestValidatePasswordSchema.js
 var enrolGuestValidatePassword200Schema = exports_external.object({
   validated: exports_external.boolean().describe("Whether the password was successfully validated"),
   hint: exports_external.coerce.string().describe("Password hint (if enabled)").nullable().nullish(),
@@ -21860,7 +21816,7 @@ var enrolGuestValidatePasswordMutationRequestSchema = exports_external.object({
   password: exports_external.coerce.string().describe("the course password")
 });
 var enrolGuestValidatePasswordMutationResponseSchema = enrolGuestValidatePassword200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/enrolManualEnrolUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/enrolManualEnrolUsersSchema.js
 var enrolManualEnrolUsers200Schema = exports_external.null();
 var enrolManualEnrolUsers400Schema = errorResponseSchema;
 var enrolManualEnrolUsersMutationRequestSchema = exports_external.object({
@@ -21874,7 +21830,7 @@ var enrolManualEnrolUsersMutationRequestSchema = exports_external.object({
   }))
 });
 var enrolManualEnrolUsersMutationResponseSchema = enrolManualEnrolUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/enrolManualUnenrolUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/enrolManualUnenrolUsersSchema.js
 var enrolManualUnenrolUsers200Schema = exports_external.null();
 var enrolManualUnenrolUsers400Schema = errorResponseSchema;
 var enrolManualUnenrolUsersMutationRequestSchema = exports_external.object({
@@ -21885,7 +21841,7 @@ var enrolManualUnenrolUsersMutationRequestSchema = exports_external.object({
   }))
 });
 var enrolManualUnenrolUsersMutationResponseSchema = enrolManualUnenrolUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/enrolMetaAddInstancesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/enrolMetaAddInstancesSchema.js
 var enrolMetaAddInstances200Schema = exports_external.array(exports_external.object({
   metacourseid: exports_external.coerce.number().int().describe("ID of the course where meta enrolment is added."),
   courseid: exports_external.coerce.string().describe("ID of the course where meta enrolment is linked to."),
@@ -21900,7 +21856,7 @@ var enrolMetaAddInstancesMutationRequestSchema = exports_external.object({
   })).optional()
 });
 var enrolMetaAddInstancesMutationResponseSchema = enrolMetaAddInstances200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/enrolMetaDeleteInstancesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/enrolMetaDeleteInstancesSchema.js
 var enrolMetaDeleteInstances200Schema = exports_external.array(exports_external.object({
   metacourseid: exports_external.coerce.number().int().describe("ID of the course where meta enrolment is deleted."),
   courseid: exports_external.coerce.string().describe("ID of the course that was meta linked."),
@@ -21914,7 +21870,7 @@ var enrolMetaDeleteInstancesMutationRequestSchema = exports_external.object({
   })).optional()
 });
 var enrolMetaDeleteInstancesMutationResponseSchema = enrolMetaDeleteInstances200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/enrolSelfEnrolUserSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/enrolSelfEnrolUserSchema.js
 var enrolSelfEnrolUser200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if the user is enrolled, false otherwise"),
   warnings: exports_external.array(exports_external.object({
@@ -21931,7 +21887,7 @@ var enrolSelfEnrolUserMutationRequestSchema = exports_external.object({
   instanceid: exports_external.coerce.number().int().default(0).describe("Instance id of self enrolment plugin.").nullable().nullish()
 });
 var enrolSelfEnrolUserMutationResponseSchema = enrolSelfEnrolUser200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/enrolSelfGetInstanceInfoSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/enrolSelfGetInstanceInfoSchema.js
 var enrolSelfGetInstanceInfo200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("id of course enrolment instance"),
   courseid: exports_external.coerce.number().int().describe("id of course"),
@@ -21945,7 +21901,7 @@ var enrolSelfGetInstanceInfoMutationRequestSchema = exports_external.object({
   instanceid: exports_external.coerce.number().int().describe("instance id of self enrolment plugin.")
 });
 var enrolSelfGetInstanceInfoMutationResponseSchema = enrolSelfGetInstanceInfo200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradereportGraderGetUsersInReportSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradereportGraderGetUsersInReportSchema.js
 var gradereportGraderGetUsersInReport200Schema = exports_external.object({
   users: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("ID of the user"),
@@ -22002,7 +21958,7 @@ var gradereportGraderGetUsersInReportMutationRequestSchema = exports_external.ob
   courseid: exports_external.coerce.number().int().describe("Course ID")
 });
 var gradereportGraderGetUsersInReportMutationResponseSchema = gradereportGraderGetUsersInReport200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradereportOverviewGetCourseGradesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradereportOverviewGetCourseGradesSchema.js
 var gradereportOverviewGetCourseGrades200Schema = exports_external.object({
   grades: exports_external.array(exports_external.object({
     courseid: exports_external.coerce.number().int().describe("Course id"),
@@ -22022,7 +21978,7 @@ var gradereportOverviewGetCourseGradesMutationRequestSchema = exports_external.o
   userid: exports_external.coerce.number().int().default(0).describe("Get grades for this user (optional, default current)").nullable().nullish()
 });
 var gradereportOverviewGetCourseGradesMutationResponseSchema = gradereportOverviewGetCourseGrades200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradereportOverviewViewGradeReportSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradereportOverviewViewGradeReportSchema.js
 var gradereportOverviewViewGradeReport200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -22038,7 +21994,7 @@ var gradereportOverviewViewGradeReportMutationRequestSchema = exports_external.o
   userid: exports_external.coerce.number().int().default(0).describe("id of the user, 0 means current user").nullable().nullish()
 });
 var gradereportOverviewViewGradeReportMutationResponseSchema = gradereportOverviewViewGradeReport200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradereportSingleviewGetGradeItemsForSearchWidgetSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradereportSingleviewGetGradeItemsForSearchWidgetSchema.js
 var gradereportSingleviewGetGradeItemsForSearchWidget200Schema = exports_external.object({
   gradeitems: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("ID of the grade item").nullable().nullish(),
@@ -22056,7 +22012,7 @@ var gradereportSingleviewGetGradeItemsForSearchWidgetMutationRequestSchema = exp
   courseid: exports_external.coerce.number().int().describe("Course Id")
 });
 var gradereportSingleviewGetGradeItemsForSearchWidgetMutationResponseSchema = gradereportSingleviewGetGradeItemsForSearchWidget200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradereportUserGetAccessInformationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradereportUserGetAccessInformationSchema.js
 var gradereportUserGetAccessInformation200Schema = exports_external.object({
   canviewusergradereport: exports_external.boolean().describe("Whether the user can view the user grade report."),
   canviewmygrades: exports_external.boolean().describe("Whether the user can view his grades in the course."),
@@ -22073,7 +22029,7 @@ var gradereportUserGetAccessInformationMutationRequestSchema = exports_external.
   courseid: exports_external.coerce.number().int().describe("Course to check.")
 });
 var gradereportUserGetAccessInformationMutationResponseSchema = gradereportUserGetAccessInformation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradereportUserGetGradeItemsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradereportUserGetGradeItemsSchema.js
 var gradereportUserGetGradeItems200Schema = exports_external.object({
   usergrades: exports_external.array(exports_external.object({
     courseid: exports_external.coerce.number().int().describe("course id"),
@@ -22133,7 +22089,7 @@ var gradereportUserGetGradeItemsMutationRequestSchema = exports_external.object(
   groupid: exports_external.coerce.number().int().default(0).describe("Get users from this group only").nullable().nullish()
 });
 var gradereportUserGetGradeItemsMutationResponseSchema = gradereportUserGetGradeItems200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradereportUserGetGradesTableSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradereportUserGetGradesTableSchema.js
 var gradereportUserGetGradesTable200Schema = exports_external.object({
   tables: exports_external.array(exports_external.object({
     courseid: exports_external.coerce.number().int().describe("course id"),
@@ -22213,7 +22169,7 @@ var gradereportUserGetGradesTableMutationRequestSchema = exports_external.object
   groupid: exports_external.coerce.number().int().default(0).describe("Get users from this group only").nullable().nullish()
 });
 var gradereportUserGetGradesTableMutationResponseSchema = gradereportUserGetGradesTable200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradereportUserViewGradeReportSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradereportUserViewGradeReportSchema.js
 var gradereportUserViewGradeReport200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -22229,7 +22185,7 @@ var gradereportUserViewGradeReportMutationRequestSchema = exports_external.objec
   userid: exports_external.coerce.number().int().default(0).describe("id of the user, 0 means current user").nullable().nullish()
 });
 var gradereportUserViewGradeReportMutationResponseSchema = gradereportUserViewGradeReport200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradingformGuideGraderGradingpanelFetchSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradingformGuideGraderGradingpanelFetchSchema.js
 var gradingformGuideGraderGradingpanelFetch200Schema = exports_external.object({
   templatename: exports_external.coerce.string().describe("The template to use when rendering this data"),
   hasgrade: exports_external.boolean().describe("Does the user have a grade?"),
@@ -22271,7 +22227,7 @@ var gradingformGuideGraderGradingpanelFetchMutationRequestSchema = exports_exter
   gradeduserid: exports_external.coerce.number().int().describe("The ID of the user show")
 });
 var gradingformGuideGraderGradingpanelFetchMutationResponseSchema = gradingformGuideGraderGradingpanelFetch200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradingformGuideGraderGradingpanelStoreSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradingformGuideGraderGradingpanelStoreSchema.js
 var gradingformGuideGraderGradingpanelStore200Schema = exports_external.object({
   templatename: exports_external.coerce.string().describe("The template to use when rendering this data"),
   hasgrade: exports_external.boolean().describe("Does the user have a grade?"),
@@ -22315,7 +22271,7 @@ var gradingformGuideGraderGradingpanelStoreMutationRequestSchema = exports_exter
   formdata: exports_external.coerce.string().describe("The serialised form data representing the grade")
 });
 var gradingformGuideGraderGradingpanelStoreMutationResponseSchema = gradingformGuideGraderGradingpanelStore200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradingformRubricGraderGradingpanelFetchSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradingformRubricGraderGradingpanelFetchSchema.js
 var gradingformRubricGraderGradingpanelFetch200Schema = exports_external.object({
   templatename: exports_external.coerce.string().describe("The template to use when rendering this data"),
   hasgrade: exports_external.boolean().describe("Does the user have a grade?"),
@@ -22356,7 +22312,7 @@ var gradingformRubricGraderGradingpanelFetchMutationRequestSchema = exports_exte
   gradeduserid: exports_external.coerce.number().int().describe("The ID of the user show")
 });
 var gradingformRubricGraderGradingpanelFetchMutationResponseSchema = gradingformRubricGraderGradingpanelFetch200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradingformRubricGraderGradingpanelStoreSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/gradingformRubricGraderGradingpanelStoreSchema.js
 var gradingformRubricGraderGradingpanelStore200Schema = exports_external.object({
   templatename: exports_external.coerce.string().describe("The template to use when rendering this data"),
   hasgrade: exports_external.boolean().describe("Does the user have a grade?"),
@@ -22399,14 +22355,14 @@ var gradingformRubricGraderGradingpanelStoreMutationRequestSchema = exports_exte
   formdata: exports_external.coerce.string().describe("The serialised form data representing the grade")
 });
 var gradingformRubricGraderGradingpanelStoreMutationResponseSchema = gradingformRubricGraderGradingpanelStore200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/mediaVideojsGetLanguageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/mediaVideojsGetLanguageSchema.js
 var mediaVideojsGetLanguage200Schema = exports_external.coerce.string().describe("language pack json");
 var mediaVideojsGetLanguage400Schema = errorResponseSchema;
 var mediaVideojsGetLanguageMutationRequestSchema = exports_external.object({
   lang: exports_external.coerce.string().describe("language")
 });
 var mediaVideojsGetLanguageMutationResponseSchema = mediaVideojsGetLanguage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/messageAirnotifierAreNotificationPreferencesConfiguredSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/messageAirnotifierAreNotificationPreferencesConfiguredSchema.js
 var messageAirnotifierAreNotificationPreferencesConfigured200Schema = exports_external.object({
   users: exports_external.array(exports_external.object({
     userid: exports_external.coerce.number().int().describe("userid id"),
@@ -22424,7 +22380,7 @@ var messageAirnotifierAreNotificationPreferencesConfiguredMutationRequestSchema 
   userids: exports_external.array(exports_external.coerce.number().int().describe("user ID"))
 });
 var messageAirnotifierAreNotificationPreferencesConfiguredMutationResponseSchema = messageAirnotifierAreNotificationPreferencesConfigured200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/messageAirnotifierEnableDeviceSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/messageAirnotifierEnableDeviceSchema.js
 var messageAirnotifierEnableDevice200Schema = exports_external.object({
   success: exports_external.boolean().describe("True if success"),
   warnings: exports_external.array(exports_external.object({
@@ -22440,7 +22396,7 @@ var messageAirnotifierEnableDeviceMutationRequestSchema = exports_external.objec
   enable: exports_external.boolean().describe("True for enable the device, false otherwise")
 });
 var messageAirnotifierEnableDeviceMutationResponseSchema = messageAirnotifierEnableDevice200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/messageAirnotifierGetUserDevicesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/messageAirnotifierGetUserDevicesSchema.js
 var messageAirnotifierGetUserDevices200Schema = exports_external.object({
   devices: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Device id (in the message_airnotifier table)"),
@@ -22468,11 +22424,11 @@ var messageAirnotifierGetUserDevicesMutationRequestSchema = exports_external.obj
   userid: exports_external.coerce.number().int().default(0).describe("User id, 0 for current user").nullable().nullish()
 });
 var messageAirnotifierGetUserDevicesMutationResponseSchema = messageAirnotifierGetUserDevices200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/messageAirnotifierIsSystemConfiguredSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/messageAirnotifierIsSystemConfiguredSchema.js
 var messageAirnotifierIsSystemConfigured200Schema = exports_external.coerce.number().int().describe("0 if the system is not configured, 1 otherwise");
 var messageAirnotifierIsSystemConfigured400Schema = errorResponseSchema;
 var messageAirnotifierIsSystemConfiguredMutationResponseSchema = messageAirnotifierIsSystemConfigured200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/messagePopupGetPopupNotificationsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/messagePopupGetPopupNotificationsSchema.js
 var messagePopupGetPopupNotifications200Schema = exports_external.object({
   notifications: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe(`Notification id (this is not guaranteed to be unique
@@ -22510,14 +22466,14 @@ var messagePopupGetPopupNotificationsMutationRequestSchema = exports_external.ob
   offset: exports_external.coerce.number().int().default(0).describe("offset the result set by a given amount").nullable().nullish()
 });
 var messagePopupGetPopupNotificationsMutationResponseSchema = messagePopupGetPopupNotifications200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/messagePopupGetUnreadPopupNotificationCountSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/messagePopupGetUnreadPopupNotificationCountSchema.js
 var messagePopupGetUnreadPopupNotificationCount200Schema = exports_external.coerce.number().int().describe("The count of unread popup notifications");
 var messagePopupGetUnreadPopupNotificationCount400Schema = errorResponseSchema;
 var messagePopupGetUnreadPopupNotificationCountMutationRequestSchema = exports_external.object({
   useridto: exports_external.coerce.number().int().describe("the user id who received the message, 0 for any user")
 });
 var messagePopupGetUnreadPopupNotificationCountMutationResponseSchema = messagePopupGetUnreadPopupNotificationCount200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignCopyPreviousAttemptSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignCopyPreviousAttemptSchema.js
 var modAssignCopyPreviousAttempt200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -22529,7 +22485,7 @@ var modAssignCopyPreviousAttemptMutationRequestSchema = exports_external.object(
   assignmentid: exports_external.coerce.number().int().describe("The assignment id to operate on")
 });
 var modAssignCopyPreviousAttemptMutationResponseSchema = modAssignCopyPreviousAttempt200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignGetAssignmentsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignGetAssignmentsSchema.js
 var modAssignGetAssignments200Schema = exports_external.object({
   courses: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("course id"),
@@ -22633,7 +22589,7 @@ var modAssignGetAssignmentsMutationRequestSchema = exports_external.object({
                                                                     to not be empty.`).nullable().nullish()
 });
 var modAssignGetAssignmentsMutationResponseSchema = modAssignGetAssignments200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignGetGradesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignGetGradesSchema.js
 var modAssignGetGrades200Schema = exports_external.object({
   assignments: exports_external.array(exports_external.object({
     assignmentid: exports_external.coerce.number().int().describe("assignment id"),
@@ -22662,7 +22618,7 @@ var modAssignGetGradesMutationRequestSchema = exports_external.object({
   since: exports_external.coerce.number().int().default(0).describe("timestamp, only return records where timemodified >= since").nullable().nullish()
 });
 var modAssignGetGradesMutationResponseSchema = modAssignGetGrades200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignGetParticipantSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignGetParticipantSchema.js
 var modAssignGetParticipant200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("ID of the user"),
   fullname: exports_external.coerce.string().describe("The fullname of the user"),
@@ -22729,7 +22685,7 @@ var modAssignGetParticipantMutationRequestSchema = exports_external.object({
   embeduser: exports_external.boolean().default(false).describe("user id").nullable().nullish()
 });
 var modAssignGetParticipantMutationResponseSchema = modAssignGetParticipant200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignGetSubmissionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignGetSubmissionsSchema.js
 var modAssignGetSubmissions200Schema = exports_external.object({
   assignments: exports_external.array(exports_external.object({
     assignmentid: exports_external.coerce.number().int().describe("assignment id"),
@@ -22786,7 +22742,7 @@ var modAssignGetSubmissionsMutationRequestSchema = exports_external.object({
   before: exports_external.coerce.number().int().default(0).describe("submitted before").nullable().nullish()
 });
 var modAssignGetSubmissionsMutationResponseSchema = modAssignGetSubmissions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignGetSubmissionStatusSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignGetSubmissionStatusSchema.js
 var modAssignGetSubmissionStatus200Schema = exports_external.object({
   gradingsummary: exports_external.object({
     participantcount: exports_external.coerce.number().int().describe("Number of users who can submit."),
@@ -23045,7 +23001,7 @@ var modAssignGetSubmissionStatusMutationRequestSchema = exports_external.object(
                     0 for all groups information, any other empty value will calculate currrent group.`).nullable().nullish()
 });
 var modAssignGetSubmissionStatusMutationResponseSchema = modAssignGetSubmissionStatus200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignGetUserFlagsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignGetUserFlagsSchema.js
 var modAssignGetUserFlags200Schema = exports_external.object({
   assignments: exports_external.array(exports_external.object({
     assignmentid: exports_external.coerce.number().int().describe("assignment id"),
@@ -23071,7 +23027,7 @@ var modAssignGetUserFlagsMutationRequestSchema = exports_external.object({
   assignmentids: exports_external.array(exports_external.coerce.number().int().describe("assignment id"))
 });
 var modAssignGetUserFlagsMutationResponseSchema = modAssignGetUserFlags200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignGetUserMappingsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignGetUserMappingsSchema.js
 var modAssignGetUserMappings200Schema = exports_external.object({
   assignments: exports_external.array(exports_external.object({
     assignmentid: exports_external.coerce.number().int().describe("assignment id"),
@@ -23092,7 +23048,7 @@ var modAssignGetUserMappingsMutationRequestSchema = exports_external.object({
   assignmentids: exports_external.array(exports_external.coerce.number().int().describe("assignment id"))
 });
 var modAssignGetUserMappingsMutationResponseSchema = modAssignGetUserMappings200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignListParticipantsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignListParticipantsSchema.js
 var modAssignListParticipants200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("ID of the user"),
   username: exports_external.coerce.string().describe("The username").nullable().nullish(),
@@ -23165,7 +23121,7 @@ var modAssignListParticipantsMutationRequestSchema = exports_external.object({
   tablesort: exports_external.boolean().default(false).describe("Apply current user table sorting preferences.").nullable().nullish()
 });
 var modAssignListParticipantsMutationResponseSchema = modAssignListParticipants200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignLockSubmissionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignLockSubmissionsSchema.js
 var modAssignLockSubmissions200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -23178,7 +23134,7 @@ var modAssignLockSubmissionsMutationRequestSchema = exports_external.object({
   userids: exports_external.array(exports_external.coerce.number().int().describe("user id"))
 });
 var modAssignLockSubmissionsMutationResponseSchema = modAssignLockSubmissions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignRemoveSubmissionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignRemoveSubmissionSchema.js
 var modAssignRemoveSubmission200Schema = exports_external.object({
   status: exports_external.boolean().describe("True if the submission was successfully removed and false if was not."),
   warnings: exports_external.array(exports_external.object({
@@ -23194,7 +23150,7 @@ var modAssignRemoveSubmissionMutationRequestSchema = exports_external.object({
   assignid: exports_external.coerce.number().int().describe("Assignment instance id")
 });
 var modAssignRemoveSubmissionMutationResponseSchema = modAssignRemoveSubmission200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignRevealIdentitiesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignRevealIdentitiesSchema.js
 var modAssignRevealIdentities200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -23206,7 +23162,7 @@ var modAssignRevealIdentitiesMutationRequestSchema = exports_external.object({
   assignmentid: exports_external.coerce.number().int().describe("The assignment id to operate on")
 });
 var modAssignRevealIdentitiesMutationResponseSchema = modAssignRevealIdentities200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignRevertSubmissionsToDraftSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignRevertSubmissionsToDraftSchema.js
 var modAssignRevertSubmissionsToDraft200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -23219,7 +23175,7 @@ var modAssignRevertSubmissionsToDraftMutationRequestSchema = exports_external.ob
   userids: exports_external.array(exports_external.coerce.number().int().describe("user id"))
 });
 var modAssignRevertSubmissionsToDraftMutationResponseSchema = modAssignRevertSubmissionsToDraft200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignSaveGradeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignSaveGradeSchema.js
 var modAssignSaveGrade200Schema = exports_external.null();
 var modAssignSaveGrade400Schema = errorResponseSchema;
 var modAssignSaveGradeMutationRequestSchema = exports_external.object({
@@ -23264,7 +23220,7 @@ var modAssignSaveGradeMutationRequestSchema = exports_external.object({
   }).optional()
 });
 var modAssignSaveGradeMutationResponseSchema = modAssignSaveGrade200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignSaveGradesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignSaveGradesSchema.js
 var modAssignSaveGrades200Schema = exports_external.null();
 var modAssignSaveGrades400Schema = errorResponseSchema;
 var modAssignSaveGradesMutationRequestSchema = exports_external.object({
@@ -23311,7 +23267,7 @@ var modAssignSaveGradesMutationRequestSchema = exports_external.object({
   }))
 });
 var modAssignSaveGradesMutationResponseSchema = modAssignSaveGrades200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignSaveSubmissionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignSaveSubmissionSchema.js
 var modAssignSaveSubmission200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -23331,7 +23287,7 @@ var modAssignSaveSubmissionMutationRequestSchema = exports_external.object({
   })
 });
 var modAssignSaveSubmissionMutationResponseSchema = modAssignSaveSubmission200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignSaveUserExtensionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignSaveUserExtensionsSchema.js
 var modAssignSaveUserExtensions200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -23345,7 +23301,7 @@ var modAssignSaveUserExtensionsMutationRequestSchema = exports_external.object({
   dates: exports_external.array(exports_external.coerce.number().int().describe("dates"))
 });
 var modAssignSaveUserExtensionsMutationResponseSchema = modAssignSaveUserExtensions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignSetUserFlagsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignSetUserFlagsSchema.js
 var modAssignSetUserFlags200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("id of record if successful, -1 for failure"),
   userid: exports_external.coerce.number().int().describe("userid of record"),
@@ -23364,7 +23320,7 @@ var modAssignSetUserFlagsMutationRequestSchema = exports_external.object({
   }))
 });
 var modAssignSetUserFlagsMutationResponseSchema = modAssignSetUserFlags200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignStartSubmissionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignStartSubmissionSchema.js
 var modAssignStartSubmission200Schema = exports_external.object({
   submissionid: exports_external.coerce.number().int().describe("New submission ID."),
   warnings: exports_external.array(exports_external.object({
@@ -23379,7 +23335,7 @@ var modAssignStartSubmissionMutationRequestSchema = exports_external.object({
   assignid: exports_external.coerce.number().int().describe("Assignment instance id")
 });
 var modAssignStartSubmissionMutationResponseSchema = modAssignStartSubmission200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignSubmitForGradingSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignSubmitForGradingSchema.js
 var modAssignSubmitForGrading200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -23392,7 +23348,7 @@ var modAssignSubmitForGradingMutationRequestSchema = exports_external.object({
   acceptsubmissionstatement: exports_external.boolean().describe("Accept the assignment submission statement")
 });
 var modAssignSubmitForGradingMutationResponseSchema = modAssignSubmitForGrading200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignSubmitGradingFormSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignSubmitGradingFormSchema.js
 var modAssignSubmitGradingForm200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -23406,7 +23362,7 @@ var modAssignSubmitGradingFormMutationRequestSchema = exports_external.object({
   jsonformdata: exports_external.coerce.string().describe("The data from the grading form, encoded as a json array")
 });
 var modAssignSubmitGradingFormMutationResponseSchema = modAssignSubmitGradingForm200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignUnlockSubmissionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignUnlockSubmissionsSchema.js
 var modAssignUnlockSubmissions200Schema = exports_external.array(exports_external.object({
   item: exports_external.coerce.string().describe("item").nullable().nullish(),
   itemid: exports_external.coerce.number().int().describe("item id").nullable().nullish(),
@@ -23419,7 +23375,7 @@ var modAssignUnlockSubmissionsMutationRequestSchema = exports_external.object({
   userids: exports_external.array(exports_external.coerce.number().int().describe("user id"))
 });
 var modAssignUnlockSubmissionsMutationResponseSchema = modAssignUnlockSubmissions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignViewAssignSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignViewAssignSchema.js
 var modAssignViewAssign200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -23434,7 +23390,7 @@ var modAssignViewAssignMutationRequestSchema = exports_external.object({
   assignid: exports_external.coerce.number().int().describe("assign instance id")
 });
 var modAssignViewAssignMutationResponseSchema = modAssignViewAssign200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignViewGradingTableSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignViewGradingTableSchema.js
 var modAssignViewGradingTable200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -23449,7 +23405,7 @@ var modAssignViewGradingTableMutationRequestSchema = exports_external.object({
   assignid: exports_external.coerce.number().int().describe("assign instance id")
 });
 var modAssignViewGradingTableMutationResponseSchema = modAssignViewGradingTable200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignViewSubmissionStatusSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modAssignViewSubmissionStatusSchema.js
 var modAssignViewSubmissionStatus200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -23464,7 +23420,7 @@ var modAssignViewSubmissionStatusMutationRequestSchema = exports_external.object
   assignid: exports_external.coerce.number().int().describe("assign instance id")
 });
 var modAssignViewSubmissionStatusMutationResponseSchema = modAssignViewSubmissionStatus200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnCanJoinSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnCanJoinSchema.js
 var modBigbluebuttonbnCanJoin200Schema = exports_external.object({
   can_join: exports_external.boolean().describe("Can join session"),
   cmid: exports_external.coerce.number().int().describe("course module id")
@@ -23475,7 +23431,7 @@ var modBigbluebuttonbnCanJoinMutationRequestSchema = exports_external.object({
   groupid: exports_external.coerce.number().int().default(0).describe("bigbluebuttonbn group id").nullable().nullish()
 });
 var modBigbluebuttonbnCanJoinMutationResponseSchema = modBigbluebuttonbnCanJoin200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnCompletionValidateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnCompletionValidateSchema.js
 var modBigbluebuttonbnCompletionValidate200Schema = exports_external.object({
   warnings: exports_external.array(exports_external.object({
     item: exports_external.coerce.string().describe("item").nullable().nullish(),
@@ -23489,7 +23445,7 @@ var modBigbluebuttonbnCompletionValidateMutationRequestSchema = exports_external
   bigbluebuttonbnid: exports_external.coerce.number().int().describe("bigbluebuttonbn instance id")
 });
 var modBigbluebuttonbnCompletionValidateMutationResponseSchema = modBigbluebuttonbnCompletionValidate200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnEndMeetingSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnEndMeetingSchema.js
 var modBigbluebuttonbnEndMeeting200Schema = exports_external.object({
   warnings: exports_external.array(exports_external.object({
     item: exports_external.coerce.string().describe("item").nullable().nullish(),
@@ -23504,7 +23460,7 @@ var modBigbluebuttonbnEndMeetingMutationRequestSchema = exports_external.object(
   groupid: exports_external.coerce.number().int().default(0).describe("bigbluebuttonbn group id").nullable().nullish()
 });
 var modBigbluebuttonbnEndMeetingMutationResponseSchema = modBigbluebuttonbnEndMeeting200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnGetBigbluebuttonbnsByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnGetBigbluebuttonbnsByCoursesSchema.js
 var modBigbluebuttonbnGetBigbluebuttonbnsByCourses200Schema = exports_external.object({
   bigbluebuttonbns: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Activity instance id"),
@@ -23544,7 +23500,7 @@ var modBigbluebuttonbnGetBigbluebuttonbnsByCoursesMutationRequestSchema = export
   courseids: exports_external.array(exports_external.coerce.number().int().describe("Course id")).optional()
 });
 var modBigbluebuttonbnGetBigbluebuttonbnsByCoursesMutationResponseSchema = modBigbluebuttonbnGetBigbluebuttonbnsByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnGetJoinUrlSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnGetJoinUrlSchema.js
 var modBigbluebuttonbnGetJoinUrl200Schema = exports_external.object({
   join_url: exports_external.coerce.string().describe("Can join session").nullable().nullish(),
   warnings: exports_external.array(exports_external.object({
@@ -23560,7 +23516,7 @@ var modBigbluebuttonbnGetJoinUrlMutationRequestSchema = exports_external.object(
   groupid: exports_external.coerce.number().int().default(0).describe("bigbluebuttonbn group id").nullable().nullish()
 });
 var modBigbluebuttonbnGetJoinUrlMutationResponseSchema = modBigbluebuttonbnGetJoinUrl200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnGetRecordingsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnGetRecordingsSchema.js
 var modBigbluebuttonbnGetRecordings200Schema = exports_external.object({
   status: exports_external.boolean().describe("Whether the fetch was successful"),
   tabledata: exports_external.object({
@@ -23593,7 +23549,7 @@ var modBigbluebuttonbnGetRecordingsMutationRequestSchema = exports_external.obje
   groupid: exports_external.coerce.number().int().describe("Group ID").nullable().nullish()
 });
 var modBigbluebuttonbnGetRecordingsMutationResponseSchema = modBigbluebuttonbnGetRecordings200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnGetRecordingsToImportSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnGetRecordingsToImportSchema.js
 var modBigbluebuttonbnGetRecordingsToImport200Schema = exports_external.object({
   status: exports_external.boolean().describe("Whether the fetch was successful"),
   tabledata: exports_external.object({
@@ -23629,7 +23585,7 @@ var modBigbluebuttonbnGetRecordingsToImportMutationRequestSchema = exports_exter
   groupid: exports_external.coerce.number().int().describe("Group ID").nullable().nullish()
 });
 var modBigbluebuttonbnGetRecordingsToImportMutationResponseSchema = modBigbluebuttonbnGetRecordingsToImport200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnMeetingInfoSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnMeetingInfoSchema.js
 var modBigbluebuttonbnMeetingInfo200Schema = exports_external.object({
   cmid: exports_external.coerce.number().int().describe("CM id"),
   userlimit: exports_external.coerce.number().int().describe("User limit"),
@@ -23672,7 +23628,7 @@ var modBigbluebuttonbnMeetingInfoMutationRequestSchema = exports_external.object
   updatecache: exports_external.boolean().default(false).describe("update cache ?").nullable().nullish()
 });
 var modBigbluebuttonbnMeetingInfoMutationResponseSchema = modBigbluebuttonbnMeetingInfo200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnUpdateRecordingSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnUpdateRecordingSchema.js
 var modBigbluebuttonbnUpdateRecording200Schema = exports_external.object({});
 var modBigbluebuttonbnUpdateRecording400Schema = errorResponseSchema;
 var modBigbluebuttonbnUpdateRecordingMutationRequestSchema = exports_external.object({
@@ -23682,7 +23638,7 @@ var modBigbluebuttonbnUpdateRecordingMutationRequestSchema = exports_external.ob
   additionaloptions: exports_external.coerce.string().describe("Additional options")
 });
 var modBigbluebuttonbnUpdateRecordingMutationResponseSchema = modBigbluebuttonbnUpdateRecording200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnViewBigbluebuttonbnSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBigbluebuttonbnViewBigbluebuttonbnSchema.js
 var modBigbluebuttonbnViewBigbluebuttonbn200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -23697,7 +23653,7 @@ var modBigbluebuttonbnViewBigbluebuttonbnMutationRequestSchema = exports_externa
   bigbluebuttonbnid: exports_external.coerce.number().int().describe("bigbluebuttonbn instance id")
 });
 var modBigbluebuttonbnViewBigbluebuttonbnMutationResponseSchema = modBigbluebuttonbnViewBigbluebuttonbn200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBookGetBooksByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBookGetBooksByCoursesSchema.js
 var modBookGetBooksByCourses200Schema = exports_external.object({
   books: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Activity instance id"),
@@ -23741,7 +23697,7 @@ var modBookGetBooksByCoursesMutationRequestSchema = exports_external.object({
   courseids: exports_external.array(exports_external.coerce.number().int().describe("course id")).optional()
 });
 var modBookGetBooksByCoursesMutationResponseSchema = modBookGetBooksByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBookViewBookSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modBookViewBookSchema.js
 var modBookViewBook200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -23757,7 +23713,7 @@ var modBookViewBookMutationRequestSchema = exports_external.object({
   chapterid: exports_external.coerce.number().int().default(0).describe("chapter id").nullable().nullish()
 });
 var modBookViewBookMutationResponseSchema = modBookViewBook200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatGetChatLatestMessagesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatGetChatLatestMessagesSchema.js
 var modChatGetChatLatestMessages200Schema = exports_external.object({
   messages: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("message id"),
@@ -23780,7 +23736,7 @@ var modChatGetChatLatestMessagesMutationRequestSchema = exports_external.object(
   chatlasttime: exports_external.coerce.number().int().default(0).describe("last time messages were retrieved (epoch time)").nullable().nullish()
 });
 var modChatGetChatLatestMessagesMutationResponseSchema = modChatGetChatLatestMessages200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatGetChatsByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatGetChatsByCoursesSchema.js
 var modChatGetChatsByCourses200Schema = exports_external.object({
   chats: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Activity instance id"),
@@ -23824,7 +23780,7 @@ var modChatGetChatsByCoursesMutationRequestSchema = exports_external.object({
   courseids: exports_external.array(exports_external.coerce.number().int().describe("course id")).optional()
 });
 var modChatGetChatsByCoursesMutationResponseSchema = modChatGetChatsByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatGetChatUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatGetChatUsersSchema.js
 var modChatGetChatUsers200Schema = exports_external.object({
   users: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("user id"),
@@ -23843,7 +23799,7 @@ var modChatGetChatUsersMutationRequestSchema = exports_external.object({
   chatsid: exports_external.coerce.string().describe("chat session id (obtained via mod_chat_login_user)")
 });
 var modChatGetChatUsersMutationResponseSchema = modChatGetChatUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatGetSessionMessagesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatGetSessionMessagesSchema.js
 var modChatGetSessionMessages200Schema = exports_external.object({
   messages: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The message record id."),
@@ -23870,7 +23826,7 @@ var modChatGetSessionMessagesMutationRequestSchema = exports_external.object({
                                                 0 means that the function will determine the user group`).nullable().nullish()
 });
 var modChatGetSessionMessagesMutationResponseSchema = modChatGetSessionMessages200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatGetSessionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatGetSessionsSchema.js
 var modChatGetSessions200Schema = exports_external.object({
   sessions: exports_external.array(exports_external.object({
     sessionstart: exports_external.coerce.number().int().describe("Session start time."),
@@ -23896,7 +23852,7 @@ var modChatGetSessionsMutationRequestSchema = exports_external.object({
   showall: exports_external.boolean().default(false).describe("Whether to show completed sessions or not.").nullable().nullish()
 });
 var modChatGetSessionsMutationResponseSchema = modChatGetSessions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatLoginUserSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatLoginUserSchema.js
 var modChatLoginUser200Schema = exports_external.object({
   chatsid: exports_external.coerce.string().describe("unique chat session id"),
   warnings: exports_external.array(exports_external.object({
@@ -23912,7 +23868,7 @@ var modChatLoginUserMutationRequestSchema = exports_external.object({
   groupid: exports_external.coerce.number().int().default(0).describe("group id, 0 means that the function will determine the user group").nullable().nullish()
 });
 var modChatLoginUserMutationResponseSchema = modChatLoginUser200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatSendChatMessageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatSendChatMessageSchema.js
 var modChatSendChatMessage200Schema = exports_external.object({
   messageid: exports_external.coerce.number().int().describe("message sent id"),
   warnings: exports_external.array(exports_external.object({
@@ -23929,7 +23885,7 @@ var modChatSendChatMessageMutationRequestSchema = exports_external.object({
   beepid: exports_external.coerce.string().default("").describe("the beep id").nullable().nullish()
 });
 var modChatSendChatMessageMutationResponseSchema = modChatSendChatMessage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatViewChatSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatViewChatSchema.js
 var modChatViewChat200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -23944,7 +23900,7 @@ var modChatViewChatMutationRequestSchema = exports_external.object({
   chatid: exports_external.coerce.number().int().describe("chat instance id")
 });
 var modChatViewChatMutationResponseSchema = modChatViewChat200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatViewSessionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChatViewSessionsSchema.js
 var modChatViewSessions200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -23961,7 +23917,7 @@ var modChatViewSessionsMutationRequestSchema = exports_external.object({
   end: exports_external.coerce.number().int().default(0).describe("Session end time").nullable().nullish()
 });
 var modChatViewSessionsMutationResponseSchema = modChatViewSessions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChoiceDeleteChoiceResponsesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChoiceDeleteChoiceResponsesSchema.js
 var modChoiceDeleteChoiceResponses200Schema = exports_external.object({
   status: exports_external.boolean().describe("status, true if everything went right"),
   warnings: exports_external.array(exports_external.object({
@@ -23977,7 +23933,7 @@ var modChoiceDeleteChoiceResponsesMutationRequestSchema = exports_external.objec
   responses: exports_external.array(exports_external.coerce.number().int().describe("response id")).optional()
 });
 var modChoiceDeleteChoiceResponsesMutationResponseSchema = modChoiceDeleteChoiceResponses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChoiceGetChoiceOptionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChoiceGetChoiceOptionsSchema.js
 var modChoiceGetChoiceOptions200Schema = exports_external.object({
   options: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("option id"),
@@ -24000,7 +23956,7 @@ var modChoiceGetChoiceOptionsMutationRequestSchema = exports_external.object({
   choiceid: exports_external.coerce.number().int().describe("choice instance id")
 });
 var modChoiceGetChoiceOptionsMutationResponseSchema = modChoiceGetChoiceOptions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChoiceGetChoiceResultsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChoiceGetChoiceResultsSchema.js
 var modChoiceGetChoiceResults200Schema = exports_external.object({
   options: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("choice instance id"),
@@ -24028,7 +23984,7 @@ var modChoiceGetChoiceResultsMutationRequestSchema = exports_external.object({
   choiceid: exports_external.coerce.number().int().describe("choice instance id")
 });
 var modChoiceGetChoiceResultsMutationResponseSchema = modChoiceGetChoiceResults200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChoiceGetChoicesByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChoiceGetChoicesByCoursesSchema.js
 var modChoiceGetChoicesByCourses200Schema = exports_external.object({
   choices: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Activity instance id"),
@@ -24080,7 +24036,7 @@ var modChoiceGetChoicesByCoursesMutationRequestSchema = exports_external.object(
   courseids: exports_external.array(exports_external.coerce.number().int().describe("course id")).optional()
 });
 var modChoiceGetChoicesByCoursesMutationResponseSchema = modChoiceGetChoicesByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChoiceSubmitChoiceResponseSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChoiceSubmitChoiceResponseSchema.js
 var modChoiceSubmitChoiceResponse200Schema = exports_external.object({
   answers: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("answer id"),
@@ -24102,7 +24058,7 @@ var modChoiceSubmitChoiceResponseMutationRequestSchema = exports_external.object
   responses: exports_external.array(exports_external.coerce.number().int().describe("answer id"))
 });
 var modChoiceSubmitChoiceResponseMutationResponseSchema = modChoiceSubmitChoiceResponse200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChoiceViewChoiceSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modChoiceViewChoiceSchema.js
 var modChoiceViewChoice200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -24117,7 +24073,7 @@ var modChoiceViewChoiceMutationRequestSchema = exports_external.object({
   choiceid: exports_external.coerce.number().int().describe("choice instance id")
 });
 var modChoiceViewChoiceMutationResponseSchema = modChoiceViewChoice200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataAddEntrySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataAddEntrySchema.js
 var modDataAddEntry200Schema = exports_external.object({
   newentryid: exports_external.coerce.number().int().describe("True new created entry id. 0 if the entry was not created."),
   generalnotifications: exports_external.array(exports_external.coerce.string().describe("General notifications")),
@@ -24143,7 +24099,7 @@ var modDataAddEntryMutationRequestSchema = exports_external.object({
   }))
 });
 var modDataAddEntryMutationResponseSchema = modDataAddEntry200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataApproveEntrySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataApproveEntrySchema.js
 var modDataApproveEntry200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -24159,7 +24115,7 @@ var modDataApproveEntryMutationRequestSchema = exports_external.object({
   approve: exports_external.boolean().default(true).describe("Whether to approve (true) or unapprove the entry.").nullable().nullish()
 });
 var modDataApproveEntryMutationResponseSchema = modDataApproveEntry200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataDeleteEntrySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataDeleteEntrySchema.js
 var modDataDeleteEntry200Schema = exports_external.object({
   status: exports_external.boolean().describe("Always true. If we see this field it means that the entry was deleted."),
   warnings: exports_external.array(exports_external.object({
@@ -24174,7 +24130,7 @@ var modDataDeleteEntryMutationRequestSchema = exports_external.object({
   entryid: exports_external.coerce.number().int().describe("Record entry id.")
 });
 var modDataDeleteEntryMutationResponseSchema = modDataDeleteEntry200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataDeleteSavedPresetSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataDeleteSavedPresetSchema.js
 var modDataDeleteSavedPreset200Schema = exports_external.object({
   result: exports_external.boolean().describe("The processing result"),
   warnings: exports_external.array(exports_external.object({
@@ -24190,7 +24146,7 @@ var modDataDeleteSavedPresetMutationRequestSchema = exports_external.object({
   presetnames: exports_external.array(exports_external.coerce.string().describe("The preset name to delete"))
 });
 var modDataDeleteSavedPresetMutationResponseSchema = modDataDeleteSavedPreset200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataGetDataAccessInformationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataGetDataAccessInformationSchema.js
 var modDataGetDataAccessInformation200Schema = exports_external.object({
   groupid: exports_external.coerce.number().int().describe("User current group id (calculated)"),
   canaddentry: exports_external.boolean().describe("Whether the user can add entries or not."),
@@ -24214,7 +24170,7 @@ var modDataGetDataAccessInformationMutationRequestSchema = exports_external.obje
   groupid: exports_external.coerce.number().int().default(0).describe("Group id, 0 means that the function will determine the user group.").nullable().nullish()
 });
 var modDataGetDataAccessInformationMutationResponseSchema = modDataGetDataAccessInformation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataGetDatabasesByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataGetDatabasesByCoursesSchema.js
 var modDataGetDatabasesByCourses200Schema = exports_external.object({
   databases: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Database id"),
@@ -24278,7 +24234,7 @@ var modDataGetDatabasesByCoursesMutationRequestSchema = exports_external.object(
   courseids: exports_external.array(exports_external.coerce.number().int().describe("course id")).optional()
 });
 var modDataGetDatabasesByCoursesMutationResponseSchema = modDataGetDatabasesByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataGetEntriesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataGetEntriesSchema.js
 var modDataGetEntries200Schema = exports_external.object({
   entries: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Record id."),
@@ -24354,7 +24310,7 @@ var modDataGetEntriesMutationRequestSchema = exports_external.object({
   perpage: exports_external.coerce.number().int().default(0).describe("The number of records to return per page").nullable().nullish()
 });
 var modDataGetEntriesMutationResponseSchema = modDataGetEntries200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataGetEntrySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataGetEntrySchema.js
 var modDataGetEntry200Schema = exports_external.object({
   entry: exports_external.object({
     id: exports_external.coerce.number().int().describe("Record id."),
@@ -24445,7 +24401,7 @@ var modDataGetEntryMutationRequestSchema = exports_external.object({
   returncontents: exports_external.boolean().default(false).describe("Whether to return contents or not.").nullable().nullish()
 });
 var modDataGetEntryMutationResponseSchema = modDataGetEntry200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataGetFieldsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataGetFieldsSchema.js
 var modDataGetFields200Schema = exports_external.object({
   fields: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Field id."),
@@ -24477,7 +24433,7 @@ var modDataGetFieldsMutationRequestSchema = exports_external.object({
   databaseid: exports_external.coerce.number().int().describe("Database instance id.")
 });
 var modDataGetFieldsMutationResponseSchema = modDataGetFields200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataGetMappingInformationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataGetMappingInformationSchema.js
 var modDataGetMappingInformation200Schema = exports_external.object({
   data: exports_external.object({
     needsmapping: exports_external.boolean().describe("Whether the importing needs mapping or not"),
@@ -24498,7 +24454,7 @@ var modDataGetMappingInformationMutationRequestSchema = exports_external.object(
   importedpreset: exports_external.coerce.string().describe("Preset to be imported")
 });
 var modDataGetMappingInformationMutationResponseSchema = modDataGetMappingInformation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataSearchEntriesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataSearchEntriesSchema.js
 var modDataSearchEntries200Schema = exports_external.object({
   entries: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Record id."),
@@ -24580,7 +24536,7 @@ var modDataSearchEntriesMutationRequestSchema = exports_external.object({
   perpage: exports_external.coerce.number().int().default(0).describe("The number of records to return per page").nullable().nullish()
 });
 var modDataSearchEntriesMutationResponseSchema = modDataSearchEntries200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataUpdateEntrySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataUpdateEntrySchema.js
 var modDataUpdateEntry200Schema = exports_external.object({
   updated: exports_external.boolean().describe("True if the entry was successfully updated, false other wise."),
   generalnotifications: exports_external.array(exports_external.coerce.string().describe("General notifications")),
@@ -24605,7 +24561,7 @@ var modDataUpdateEntryMutationRequestSchema = exports_external.object({
   }))
 });
 var modDataUpdateEntryMutationResponseSchema = modDataUpdateEntry200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataViewDatabaseSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modDataViewDatabaseSchema.js
 var modDataViewDatabase200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -24620,7 +24576,7 @@ var modDataViewDatabaseMutationRequestSchema = exports_external.object({
   databaseid: exports_external.coerce.number().int().describe("data instance id")
 });
 var modDataViewDatabaseMutationResponseSchema = modDataViewDatabase200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetAnalysisSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetAnalysisSchema.js
 var modFeedbackGetAnalysis200Schema = exports_external.object({
   completedcount: exports_external.coerce.number().int().describe("Number of completed submissions."),
   itemscount: exports_external.coerce.number().int().describe("Number of items (questions)."),
@@ -24679,7 +24635,7 @@ var modFeedbackGetAnalysisMutationRequestSchema = exports_external.object({
   courseid: exports_external.coerce.number().int().default(0).describe("Course where user completes the feedback (for site feedbacks only).").nullable().nullish()
 });
 var modFeedbackGetAnalysisMutationResponseSchema = modFeedbackGetAnalysis200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetCurrentCompletedTmpSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetCurrentCompletedTmpSchema.js
 var modFeedbackGetCurrentCompletedTmp200Schema = exports_external.object({
   feedback: exports_external.object({
     id: exports_external.coerce.number().int().describe("The record id."),
@@ -24704,7 +24660,7 @@ var modFeedbackGetCurrentCompletedTmpMutationRequestSchema = exports_external.ob
   courseid: exports_external.coerce.number().int().default(0).describe("Course where user completes the feedback (for site feedbacks only).").nullable().nullish()
 });
 var modFeedbackGetCurrentCompletedTmpMutationResponseSchema = modFeedbackGetCurrentCompletedTmp200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetFeedbackAccessInformationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetFeedbackAccessInformationSchema.js
 var modFeedbackGetFeedbackAccessInformation200Schema = exports_external.object({
   canviewanalysis: exports_external.boolean().describe("Whether the user can view the analysis or not."),
   cancomplete: exports_external.boolean().describe("Whether the user can complete the feedback or not."),
@@ -24729,7 +24685,7 @@ var modFeedbackGetFeedbackAccessInformationMutationRequestSchema = exports_exter
   courseid: exports_external.coerce.number().int().default(0).describe("Course where user completes the feedback (for site feedbacks only).").nullable().nullish()
 });
 var modFeedbackGetFeedbackAccessInformationMutationResponseSchema = modFeedbackGetFeedbackAccessInformation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetFeedbacksByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetFeedbacksByCoursesSchema.js
 var modFeedbackGetFeedbacksByCourses200Schema = exports_external.object({
   feedbacks: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The primary key of the record."),
@@ -24786,7 +24742,7 @@ var modFeedbackGetFeedbacksByCoursesMutationRequestSchema = exports_external.obj
   courseids: exports_external.array(exports_external.coerce.number().int().describe("Course id")).optional()
 });
 var modFeedbackGetFeedbacksByCoursesMutationResponseSchema = modFeedbackGetFeedbacksByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetFinishedResponsesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetFinishedResponsesSchema.js
 var modFeedbackGetFinishedResponses200Schema = exports_external.object({
   responses: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The record id."),
@@ -24809,7 +24765,7 @@ var modFeedbackGetFinishedResponsesMutationRequestSchema = exports_external.obje
   courseid: exports_external.coerce.number().int().default(0).describe("Course where user completes the feedback (for site feedbacks only).").nullable().nullish()
 });
 var modFeedbackGetFinishedResponsesMutationResponseSchema = modFeedbackGetFinishedResponses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetItemsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetItemsSchema.js
 var modFeedbackGetItems200Schema = exports_external.object({
   items: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The record id."),
@@ -24862,7 +24818,7 @@ var modFeedbackGetItemsMutationRequestSchema = exports_external.object({
   courseid: exports_external.coerce.number().int().default(0).describe("Course where user completes the feedback (for site feedbacks only).").nullable().nullish()
 });
 var modFeedbackGetItemsMutationResponseSchema = modFeedbackGetItems200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetLastCompletedSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetLastCompletedSchema.js
 var modFeedbackGetLastCompleted200Schema = exports_external.object({
   completed: exports_external.object({
     id: exports_external.coerce.number().int().describe("The record id."),
@@ -24886,7 +24842,7 @@ var modFeedbackGetLastCompletedMutationRequestSchema = exports_external.object({
   courseid: exports_external.coerce.number().int().default(0).describe("Course where user completes the feedback (for site feedbacks only).").nullable().nullish()
 });
 var modFeedbackGetLastCompletedMutationResponseSchema = modFeedbackGetLastCompleted200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetNonRespondentsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetNonRespondentsSchema.js
 var modFeedbackGetNonRespondents200Schema = exports_external.object({
   users: exports_external.array(exports_external.object({
     courseid: exports_external.coerce.number().int().describe("Course id"),
@@ -24912,7 +24868,7 @@ var modFeedbackGetNonRespondentsMutationRequestSchema = exports_external.object(
   courseid: exports_external.coerce.number().int().default(0).describe("Course where user completes the feedback (for site feedbacks only).").nullable().nullish()
 });
 var modFeedbackGetNonRespondentsMutationResponseSchema = modFeedbackGetNonRespondents200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetPageItemsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetPageItemsSchema.js
 var modFeedbackGetPageItems200Schema = exports_external.object({
   items: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The record id."),
@@ -24968,7 +24924,7 @@ var modFeedbackGetPageItemsMutationRequestSchema = exports_external.object({
   courseid: exports_external.coerce.number().int().default(0).describe("Course where user completes the feedback (for site feedbacks only).").nullable().nullish()
 });
 var modFeedbackGetPageItemsMutationResponseSchema = modFeedbackGetPageItems200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetResponsesAnalysisSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetResponsesAnalysisSchema.js
 var modFeedbackGetResponsesAnalysis200Schema = exports_external.object({
   attempts: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Completed id"),
@@ -25012,7 +24968,7 @@ var modFeedbackGetResponsesAnalysisMutationRequestSchema = exports_external.obje
   courseid: exports_external.coerce.number().int().default(0).describe("Course where user completes the feedback (for site feedbacks only).").nullable().nullish()
 });
 var modFeedbackGetResponsesAnalysisMutationResponseSchema = modFeedbackGetResponsesAnalysis200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetUnfinishedResponsesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackGetUnfinishedResponsesSchema.js
 var modFeedbackGetUnfinishedResponses200Schema = exports_external.object({
   responses: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The record id."),
@@ -25035,7 +24991,7 @@ var modFeedbackGetUnfinishedResponsesMutationRequestSchema = exports_external.ob
   courseid: exports_external.coerce.number().int().default(0).describe("Course where user completes the feedback (for site feedbacks only).").nullable().nullish()
 });
 var modFeedbackGetUnfinishedResponsesMutationResponseSchema = modFeedbackGetUnfinishedResponses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackLaunchFeedbackSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackLaunchFeedbackSchema.js
 var modFeedbackLaunchFeedback200Schema = exports_external.object({
   gopage: exports_external.coerce.number().int().describe("The next page to go (-1 if we were already in the last page). 0 for first page."),
   warnings: exports_external.array(exports_external.object({
@@ -25051,7 +25007,7 @@ var modFeedbackLaunchFeedbackMutationRequestSchema = exports_external.object({
   courseid: exports_external.coerce.number().int().default(0).describe("Course where user completes the feedback (for site feedbacks only).").nullable().nullish()
 });
 var modFeedbackLaunchFeedbackMutationResponseSchema = modFeedbackLaunchFeedback200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackProcessPageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackProcessPageSchema.js
 var modFeedbackProcessPage200Schema = exports_external.object({
   jumpto: exports_external.coerce.number().int().describe("The page to jump to."),
   completed: exports_external.boolean().describe("If the user completed the feedback."),
@@ -25076,7 +25032,7 @@ var modFeedbackProcessPageMutationRequestSchema = exports_external.object({
   courseid: exports_external.coerce.number().int().default(0).describe("Course where user completes the feedback (for site feedbacks only).").nullable().nullish()
 });
 var modFeedbackProcessPageMutationResponseSchema = modFeedbackProcessPage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackViewFeedbackSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFeedbackViewFeedbackSchema.js
 var modFeedbackViewFeedback200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -25093,7 +25049,7 @@ var modFeedbackViewFeedbackMutationRequestSchema = exports_external.object({
   courseid: exports_external.coerce.number().int().default(0).describe("Course where user completes the feedback (for site feedbacks only).").nullable().nullish()
 });
 var modFeedbackViewFeedbackMutationResponseSchema = modFeedbackViewFeedback200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFolderGetFoldersByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFolderGetFoldersByCoursesSchema.js
 var modFolderGetFoldersByCourses200Schema = exports_external.object({
   folders: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Activity instance id"),
@@ -25137,7 +25093,7 @@ var modFolderGetFoldersByCoursesMutationRequestSchema = exports_external.object(
   courseids: exports_external.array(exports_external.coerce.number().int().describe("Course id")).optional()
 });
 var modFolderGetFoldersByCoursesMutationResponseSchema = modFolderGetFoldersByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFolderViewFolderSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modFolderViewFolderSchema.js
 var modFolderViewFolder200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -25152,7 +25108,7 @@ var modFolderViewFolderMutationRequestSchema = exports_external.object({
   folderid: exports_external.coerce.number().int().describe("folder instance id")
 });
 var modFolderViewFolderMutationResponseSchema = modFolderViewFolder200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumAddDiscussionPostSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumAddDiscussionPostSchema.js
 var modForumAddDiscussionPost200Schema = exports_external.object({
   postid: exports_external.coerce.number().int().describe("new post id"),
   warnings: exports_external.array(exports_external.object({
@@ -25318,7 +25274,7 @@ var modForumAddDiscussionPostMutationRequestSchema = exports_external.object({
   messageformat: exports_external.coerce.number().int().default("1").describe("message format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)").nullable().nullish()
 });
 var modForumAddDiscussionPostMutationResponseSchema = modForumAddDiscussionPost200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumAddDiscussionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumAddDiscussionSchema.js
 var modForumAddDiscussion200Schema = exports_external.object({
   discussionid: exports_external.coerce.number().int().describe("New Discussion ID"),
   warnings: exports_external.array(exports_external.object({
@@ -25354,7 +25310,7 @@ var modForumAddDiscussionMutationRequestSchema = exports_external.object({
   ])).describe("The allowed keys (value format) are: \n- `discussionsubscribe` (bool); subscribe to the discussion?, default to true\n- `discussionpinned` (bool); is the discussion pinned, default to false\n- `inlineattachmentsid` (int); the draft file area id for inline attachments\n- `attachmentsid` (int); the draft file area id for attachments").optional()
 });
 var modForumAddDiscussionMutationResponseSchema = modForumAddDiscussion200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumCanAddDiscussionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumCanAddDiscussionSchema.js
 var modForumCanAddDiscussion200Schema = exports_external.object({
   status: exports_external.boolean().describe("True if the user can add discussions, false otherwise."),
   canpindiscussions: exports_external.boolean().describe("True if the user can pin discussions, false otherwise.").nullable().nullish(),
@@ -25373,7 +25329,7 @@ var modForumCanAddDiscussionMutationRequestSchema = exports_external.object({
                                                 Use -1 to check if the user can post in all the groups.`).nullable().nullish()
 });
 var modForumCanAddDiscussionMutationResponseSchema = modForumCanAddDiscussion200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumDeletePostSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumDeletePostSchema.js
 var modForumDeletePost200Schema = exports_external.object({
   status: exports_external.boolean().describe("True if the post/discussion was deleted, false otherwise."),
   warnings: exports_external.array(exports_external.object({
@@ -25388,7 +25344,7 @@ var modForumDeletePostMutationRequestSchema = exports_external.object({
   postid: exports_external.coerce.number().int().describe("Post to be deleted. It can be a discussion topic post.")
 });
 var modForumDeletePostMutationResponseSchema = modForumDeletePost200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumGetDiscussionPostsByUseridSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumGetDiscussionPostsByUseridSchema.js
 var modForumGetDiscussionPostsByUserid200Schema = exports_external.object({
   discussions: exports_external.array(exports_external.object({
     name: exports_external.coerce.string().describe("Name of the discussion"),
@@ -25655,7 +25611,7 @@ var modForumGetDiscussionPostsByUseridMutationRequestSchema = exports_external.o
   sortdirection: exports_external.coerce.string().default("DESC").describe("Sort direction: ASC or DESC").nullable().nullish()
 });
 var modForumGetDiscussionPostsByUseridMutationResponseSchema = modForumGetDiscussionPostsByUserid200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumGetDiscussionPostSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumGetDiscussionPostSchema.js
 var modForumGetDiscussionPost200Schema = exports_external.object({
   post: exports_external.object({
     id: exports_external.coerce.number().int().describe("id"),
@@ -25790,7 +25746,7 @@ var modForumGetDiscussionPostMutationRequestSchema = exports_external.object({
   postid: exports_external.coerce.number().int().describe("Post to fetch.")
 });
 var modForumGetDiscussionPostMutationResponseSchema = modForumGetDiscussionPost200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumGetDiscussionPostsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumGetDiscussionPostsSchema.js
 var modForumGetDiscussionPosts200Schema = exports_external.object({
   posts: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("id"),
@@ -25960,7 +25916,7 @@ var modForumGetDiscussionPostsMutationRequestSchema = exports_external.object({
   includeinlineattachments: exports_external.boolean().default(false).describe("Whether inline attachments should be included or not").nullable().nullish()
 });
 var modForumGetDiscussionPostsMutationResponseSchema = modForumGetDiscussionPosts200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumGetForumAccessInformationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumGetForumAccessInformationSchema.js
 var modForumGetForumAccessInformation200Schema = exports_external.object({
   warnings: exports_external.array(exports_external.object({
     item: exports_external.coerce.string().describe("item").nullable().nullish(),
@@ -26010,7 +25966,7 @@ var modForumGetForumAccessInformationMutationRequestSchema = exports_external.ob
   forumid: exports_external.coerce.number().int().describe("Forum instance id.")
 });
 var modForumGetForumAccessInformationMutationResponseSchema = modForumGetForumAccessInformation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumGetForumDiscussionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumGetForumDiscussionsSchema.js
 var modForumGetForumDiscussions200Schema = exports_external.object({
   discussions: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Post id"),
@@ -26084,7 +26040,7 @@ var modForumGetForumDiscussionsMutationRequestSchema = exports_external.object({
   groupid: exports_external.coerce.number().int().default(0).describe("group id").nullable().nullish()
 });
 var modForumGetForumDiscussionsMutationResponseSchema = modForumGetForumDiscussions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumGetForumsByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumGetForumsByCoursesSchema.js
 var modForumGetForumsByCourses200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("Forum id"),
   course: exports_external.coerce.number().int().describe("Course id"),
@@ -26137,7 +26093,7 @@ var modForumGetForumsByCoursesMutationRequestSchema = exports_external.object({
   courseids: exports_external.array(exports_external.coerce.number().int().describe("course ID")).optional()
 });
 var modForumGetForumsByCoursesMutationResponseSchema = modForumGetForumsByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumPrepareDraftAreaForPostSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumPrepareDraftAreaForPostSchema.js
 var modForumPrepareDraftAreaForPost200Schema = exports_external.object({
   draftitemid: exports_external.coerce.number().int().describe("Draft item id for the file area."),
   files: exports_external.array(exports_external.object({
@@ -26174,7 +26130,7 @@ var modForumPrepareDraftAreaForPostMutationRequestSchema = exports_external.obje
   })).optional()
 });
 var modForumPrepareDraftAreaForPostMutationResponseSchema = modForumPrepareDraftAreaForPost200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumSetLockStateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumSetLockStateSchema.js
 var modForumSetLockState200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("The discussion we are locking."),
   locked: exports_external.boolean().describe("The locked state of the discussion."),
@@ -26189,7 +26145,7 @@ var modForumSetLockStateMutationRequestSchema = exports_external.object({
   targetstate: exports_external.coerce.number().int().describe("The timestamp for the lock state")
 });
 var modForumSetLockStateMutationResponseSchema = modForumSetLockState200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumSetPinStateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumSetPinStateSchema.js
 var modForumSetPinState200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("id"),
   forumid: exports_external.coerce.number().int().describe("forumid"),
@@ -26242,7 +26198,7 @@ var modForumSetPinStateMutationRequestSchema = exports_external.object({
   targetstate: exports_external.coerce.number().int().describe("The target state")
 });
 var modForumSetPinStateMutationResponseSchema = modForumSetPinState200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumSetSubscriptionStateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumSetSubscriptionStateSchema.js
 var modForumSetSubscriptionState200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("id"),
   forumid: exports_external.coerce.number().int().describe("forumid"),
@@ -26296,7 +26252,7 @@ var modForumSetSubscriptionStateMutationRequestSchema = exports_external.object(
   targetstate: exports_external.boolean().describe("The target state")
 });
 var modForumSetSubscriptionStateMutationResponseSchema = modForumSetSubscriptionState200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumToggleFavouriteStateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumToggleFavouriteStateSchema.js
 var modForumToggleFavouriteState200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("id"),
   forumid: exports_external.coerce.number().int().describe("forumid"),
@@ -26349,7 +26305,7 @@ var modForumToggleFavouriteStateMutationRequestSchema = exports_external.object(
   targetstate: exports_external.boolean().describe("The target state")
 });
 var modForumToggleFavouriteStateMutationResponseSchema = modForumToggleFavouriteState200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumUpdateDiscussionPostSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumUpdateDiscussionPostSchema.js
 var modForumUpdateDiscussionPost200Schema = exports_external.object({
   status: exports_external.boolean().describe("True if the post/discussion was updated, false otherwise."),
   warnings: exports_external.array(exports_external.object({
@@ -26385,7 +26341,7 @@ var modForumUpdateDiscussionPostMutationRequestSchema = exports_external.object(
   ])).describe("The allowed keys (value format) are: \n- `pinned` (bool); only for discussions) whether to pin this discussion or not\n- `discussionsubscribe` (bool); whether to subscribe to the post or not\n- `inlineattachmentsid` (int); the draft file area id for inline attachments in the text\n- `attachmentsid` (int); the draft file area id for attachments").optional()
 });
 var modForumUpdateDiscussionPostMutationResponseSchema = modForumUpdateDiscussionPost200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumViewForumDiscussionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumViewForumDiscussionSchema.js
 var modForumViewForumDiscussion200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -26400,7 +26356,7 @@ var modForumViewForumDiscussionMutationRequestSchema = exports_external.object({
   discussionid: exports_external.coerce.number().int().describe("discussion id")
 });
 var modForumViewForumDiscussionMutationResponseSchema = modForumViewForumDiscussion200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumViewForumSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modForumViewForumSchema.js
 var modForumViewForum200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -26415,7 +26371,7 @@ var modForumViewForumMutationRequestSchema = exports_external.object({
   forumid: exports_external.coerce.number().int().describe("forum instance id")
 });
 var modForumViewForumMutationResponseSchema = modForumViewForum200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryAddEntrySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryAddEntrySchema.js
 var modGlossaryAddEntry200Schema = exports_external.object({
   entryid: exports_external.coerce.number().int().describe("New glossary entry ID"),
   warnings: exports_external.array(exports_external.object({
@@ -26463,7 +26419,7 @@ var modGlossaryAddEntryMutationRequestSchema = exports_external.object({
   ])).describe("The allowed keys (value format) are: \n- `inlineattachmentsid` (int); the draft file area id for inline attachments\n- `attachmentsid` (int); the draft file area id for attachments\n- `categories` (comma separated int); comma separated category ids\n- `aliases` (comma separated str); comma separated aliases\n- `usedynalink` (bool); whether the entry should be automatically linked\n- `casesensitive` (bool); whether the entry is case sensitive\n- `fullmatch` (bool); whether to match whole words only").optional()
 });
 var modGlossaryAddEntryMutationResponseSchema = modGlossaryAddEntry200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryDeleteEntrySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryDeleteEntrySchema.js
 var modGlossaryDeleteEntry200Schema = exports_external.object({
   result: exports_external.boolean().describe("The processing result"),
   warnings: exports_external.array(exports_external.object({
@@ -26478,7 +26434,7 @@ var modGlossaryDeleteEntryMutationRequestSchema = exports_external.object({
   entryid: exports_external.coerce.number().int().describe("Glossary entry id to delete")
 });
 var modGlossaryDeleteEntryMutationResponseSchema = modGlossaryDeleteEntry200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetAuthorsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetAuthorsSchema.js
 var modGlossaryGetAuthors200Schema = exports_external.object({
   count: exports_external.coerce.number().int().describe("The total number of records."),
   authors: exports_external.array(exports_external.object({
@@ -26503,7 +26459,7 @@ var modGlossaryGetAuthorsMutationRequestSchema = exports_external.object({
   }).optional()
 });
 var modGlossaryGetAuthorsMutationResponseSchema = modGlossaryGetAuthors200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetCategoriesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetCategoriesSchema.js
 var modGlossaryGetCategories200Schema = exports_external.object({
   count: exports_external.coerce.number().int().describe("The total number of records."),
   categories: exports_external.array(exports_external.object({
@@ -26526,7 +26482,7 @@ var modGlossaryGetCategoriesMutationRequestSchema = exports_external.object({
   limit: exports_external.coerce.number().int().default(20).describe("Number of records to return").nullable().nullish()
 });
 var modGlossaryGetCategoriesMutationResponseSchema = modGlossaryGetCategories200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntriesByAuthorIdSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntriesByAuthorIdSchema.js
 var modGlossaryGetEntriesByAuthorId200Schema = exports_external.object({
   count: exports_external.coerce.number().int().describe("The total number of records matching the request."),
   entries: exports_external.array(exports_external.object({
@@ -26634,7 +26590,7 @@ var modGlossaryGetEntriesByAuthorIdMutationRequestSchema = exports_external.obje
   }).optional()
 });
 var modGlossaryGetEntriesByAuthorIdMutationResponseSchema = modGlossaryGetEntriesByAuthorId200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntriesByAuthorSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntriesByAuthorSchema.js
 var modGlossaryGetEntriesByAuthor200Schema = exports_external.object({
   count: exports_external.coerce.number().int().describe("The total number of records matching the request."),
   entries: exports_external.array(exports_external.object({
@@ -26742,7 +26698,7 @@ var modGlossaryGetEntriesByAuthorMutationRequestSchema = exports_external.object
   }).optional()
 });
 var modGlossaryGetEntriesByAuthorMutationResponseSchema = modGlossaryGetEntriesByAuthor200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntriesByCategorySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntriesByCategorySchema.js
 var modGlossaryGetEntriesByCategory200Schema = exports_external.object({
   count: exports_external.coerce.number().int().describe("The total number of records matching the request."),
   entries: exports_external.array(exports_external.object({
@@ -26850,7 +26806,7 @@ var modGlossaryGetEntriesByCategoryMutationRequestSchema = exports_external.obje
   }).optional()
 });
 var modGlossaryGetEntriesByCategoryMutationResponseSchema = modGlossaryGetEntriesByCategory200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntriesByDateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntriesByDateSchema.js
 var modGlossaryGetEntriesByDate200Schema = exports_external.object({
   count: exports_external.coerce.number().int().describe("The total number of records matching the request."),
   entries: exports_external.array(exports_external.object({
@@ -26957,7 +26913,7 @@ var modGlossaryGetEntriesByDateMutationRequestSchema = exports_external.object({
   }).optional()
 });
 var modGlossaryGetEntriesByDateMutationResponseSchema = modGlossaryGetEntriesByDate200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntriesByLetterSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntriesByLetterSchema.js
 var modGlossaryGetEntriesByLetter200Schema = exports_external.object({
   count: exports_external.coerce.number().int().describe("The total number of records matching the request."),
   entries: exports_external.array(exports_external.object({
@@ -27063,7 +27019,7 @@ var modGlossaryGetEntriesByLetterMutationRequestSchema = exports_external.object
   }).optional()
 });
 var modGlossaryGetEntriesByLetterMutationResponseSchema = modGlossaryGetEntriesByLetter200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntriesBySearchSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntriesBySearchSchema.js
 var modGlossaryGetEntriesBySearch200Schema = exports_external.object({
   count: exports_external.coerce.number().int().describe("The total number of records matching the request."),
   entries: exports_external.array(exports_external.object({
@@ -27172,7 +27128,7 @@ var modGlossaryGetEntriesBySearchMutationRequestSchema = exports_external.object
   }).optional()
 });
 var modGlossaryGetEntriesBySearchMutationResponseSchema = modGlossaryGetEntriesBySearch200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntriesByTermSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntriesByTermSchema.js
 var modGlossaryGetEntriesByTerm200Schema = exports_external.object({
   count: exports_external.coerce.number().int().describe("The total number of records matching the request."),
   entries: exports_external.array(exports_external.object({
@@ -27278,7 +27234,7 @@ var modGlossaryGetEntriesByTermMutationRequestSchema = exports_external.object({
   }).optional()
 });
 var modGlossaryGetEntriesByTermMutationResponseSchema = modGlossaryGetEntriesByTerm200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntriesToApproveSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntriesToApproveSchema.js
 var modGlossaryGetEntriesToApprove200Schema = exports_external.object({
   count: exports_external.coerce.number().int().describe("The total number of records matching the request."),
   entries: exports_external.array(exports_external.object({
@@ -27384,7 +27340,7 @@ var modGlossaryGetEntriesToApproveMutationRequestSchema = exports_external.objec
   options: exports_external.object({}).optional()
 });
 var modGlossaryGetEntriesToApproveMutationResponseSchema = modGlossaryGetEntriesToApprove200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntryByIdSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetEntryByIdSchema.js
 var modGlossaryGetEntryById200Schema = exports_external.object({
   entry: exports_external.object({
     id: exports_external.coerce.number().int().describe("The entry ID"),
@@ -27487,7 +27443,7 @@ var modGlossaryGetEntryByIdMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("Glossary entry ID")
 });
 var modGlossaryGetEntryByIdMutationResponseSchema = modGlossaryGetEntryById200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetGlossariesByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryGetGlossariesByCoursesSchema.js
 var modGlossaryGetGlossariesByCourses200Schema = exports_external.object({
   glossaries: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Activity instance id"),
@@ -27550,7 +27506,7 @@ var modGlossaryGetGlossariesByCoursesMutationRequestSchema = exports_external.ob
   courseids: exports_external.array(exports_external.coerce.number().int().describe("course id")).optional()
 });
 var modGlossaryGetGlossariesByCoursesMutationResponseSchema = modGlossaryGetGlossariesByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryPrepareEntryForEditionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryPrepareEntryForEditionSchema.js
 var modGlossaryPrepareEntryForEdition200Schema = exports_external.object({
   inlineattachmentsid: exports_external.coerce.number().int().describe("Draft item id for the text editor."),
   attachmentsid: exports_external.coerce.number().int().describe("Draft item id for the file manager."),
@@ -27575,7 +27531,7 @@ var modGlossaryPrepareEntryForEditionMutationRequestSchema = exports_external.ob
   entryid: exports_external.coerce.number().int().describe("Glossary entry id to update")
 });
 var modGlossaryPrepareEntryForEditionMutationResponseSchema = modGlossaryPrepareEntryForEdition200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryUpdateEntrySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryUpdateEntrySchema.js
 var modGlossaryUpdateEntry200Schema = exports_external.object({
   result: exports_external.boolean().describe("The update result"),
   warnings: exports_external.array(exports_external.object({
@@ -27623,7 +27579,7 @@ var modGlossaryUpdateEntryMutationRequestSchema = exports_external.object({
   ])).describe("The allowed keys (value format) are: \n- `inlineattachmentsid` (int); the draft file area id for inline attachments\n- `attachmentsid` (int); the draft file area id for attachments\n- `categories` (comma separated int); comma separated category ids\n- `aliases` (comma separated str); comma separated aliases\n- `usedynalink` (bool); whether the entry should be automatically linked\n- `casesensitive` (bool); whether the entry is case sensitive\n- `fullmatch` (bool); whether to match whole words only").optional()
 });
 var modGlossaryUpdateEntryMutationResponseSchema = modGlossaryUpdateEntry200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryViewEntrySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryViewEntrySchema.js
 var modGlossaryViewEntry200Schema = exports_external.object({
   status: exports_external.boolean().describe("True on success"),
   warnings: exports_external.array(exports_external.object({
@@ -27638,7 +27594,7 @@ var modGlossaryViewEntryMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("Glossary entry ID")
 });
 var modGlossaryViewEntryMutationResponseSchema = modGlossaryViewEntry200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryViewGlossarySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modGlossaryViewGlossarySchema.js
 var modGlossaryViewGlossary200Schema = exports_external.object({
   status: exports_external.boolean().describe("True on success"),
   warnings: exports_external.array(exports_external.object({
@@ -27654,7 +27610,7 @@ var modGlossaryViewGlossaryMutationRequestSchema = exports_external.object({
   mode: exports_external.coerce.string().describe("The mode in which the glossary is viewed")
 });
 var modGlossaryViewGlossaryMutationResponseSchema = modGlossaryViewGlossary200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modH5PactivityGetAttemptsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modH5PactivityGetAttemptsSchema.js
 var modH5PactivityGetAttempts200Schema = exports_external.object({
   activityid: exports_external.coerce.number().int().describe("Activity course module ID"),
   usersattempts: exports_external.array(exports_external.object({
@@ -27705,7 +27661,7 @@ var modH5PactivityGetAttemptsMutationRequestSchema = exports_external.object({
   userids: exports_external.array(exports_external.coerce.number().int().describe("The user ids to get attempts (null means only current user)").nullable()).optional()
 });
 var modH5PactivityGetAttemptsMutationResponseSchema = modH5PactivityGetAttempts200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modH5PactivityGetH5PactivitiesByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modH5PactivityGetH5PactivitiesByCoursesSchema.js
 var modH5PactivityGetH5PactivitiesByCourses200Schema = exports_external.object({
   h5pactivities: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The primary key of the record."),
@@ -27769,7 +27725,7 @@ var modH5PactivityGetH5PactivitiesByCoursesMutationRequestSchema = exports_exter
   courseids: exports_external.array(exports_external.coerce.number().int().describe("Course id")).optional()
 });
 var modH5PactivityGetH5PactivitiesByCoursesMutationResponseSchema = modH5PactivityGetH5PactivitiesByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modH5PactivityGetH5PactivityAccessInformationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modH5PactivityGetH5PactivityAccessInformationSchema.js
 var modH5PactivityGetH5PactivityAccessInformation200Schema = exports_external.object({
   warnings: exports_external.array(exports_external.object({
     item: exports_external.coerce.string().describe("item").nullable().nullish(),
@@ -27787,7 +27743,7 @@ var modH5PactivityGetH5PactivityAccessInformationMutationRequestSchema = exports
   h5pactivityid: exports_external.coerce.number().int().describe("h5p activity instance id")
 });
 var modH5PactivityGetH5PactivityAccessInformationMutationResponseSchema = modH5PactivityGetH5PactivityAccessInformation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modH5PactivityGetResultsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modH5PactivityGetResultsSchema.js
 var modH5PactivityGetResults200Schema = exports_external.object({
   activityid: exports_external.coerce.number().int().describe("Activity course module ID"),
   attempts: exports_external.array(exports_external.object({
@@ -27859,7 +27815,7 @@ var modH5PactivityGetResultsMutationRequestSchema = exports_external.object({
   attemptids: exports_external.array(exports_external.coerce.number().int().describe("The attempt id")).optional()
 });
 var modH5PactivityGetResultsMutationResponseSchema = modH5PactivityGetResults200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modH5PactivityGetUserAttemptsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modH5PactivityGetUserAttemptsSchema.js
 var modH5PactivityGetUserAttempts200Schema = exports_external.object({
   activityid: exports_external.coerce.number().int().describe("Activity course module ID"),
   usersattempts: exports_external.array(exports_external.object({
@@ -27914,7 +27870,7 @@ var modH5PactivityGetUserAttemptsMutationRequestSchema = exports_external.object
   lastinitial: exports_external.coerce.string().default("").describe("Users whose last name starts with $lastinitial").nullable().nullish()
 });
 var modH5PactivityGetUserAttemptsMutationResponseSchema = modH5PactivityGetUserAttempts200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modH5PactivityLogReportViewedSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modH5PactivityLogReportViewedSchema.js
 var modH5PactivityLogReportViewed200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -27931,7 +27887,7 @@ var modH5PactivityLogReportViewedMutationRequestSchema = exports_external.object
   attemptid: exports_external.coerce.number().int().describe("The attempt id").nullable().nullish()
 });
 var modH5PactivityLogReportViewedMutationResponseSchema = modH5PactivityLogReportViewed200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modH5PactivityViewH5PactivitySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modH5PactivityViewH5PactivitySchema.js
 var modH5PactivityViewH5Pactivity200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -27946,7 +27902,7 @@ var modH5PactivityViewH5PactivityMutationRequestSchema = exports_external.object
   h5pactivityid: exports_external.coerce.number().int().describe("H5P activity instance id")
 });
 var modH5PactivityViewH5PactivityMutationResponseSchema = modH5PactivityViewH5Pactivity200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modImscpGetImscpsByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modImscpGetImscpsByCoursesSchema.js
 var modImscpGetImscpsByCourses200Schema = exports_external.object({
   imscps: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Activity instance id"),
@@ -27988,7 +27944,7 @@ var modImscpGetImscpsByCoursesMutationRequestSchema = exports_external.object({
   courseids: exports_external.array(exports_external.coerce.number().int().describe("course id")).optional()
 });
 var modImscpGetImscpsByCoursesMutationResponseSchema = modImscpGetImscpsByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modImscpViewImscpSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modImscpViewImscpSchema.js
 var modImscpViewImscp200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -28003,7 +27959,7 @@ var modImscpViewImscpMutationRequestSchema = exports_external.object({
   imscpid: exports_external.coerce.number().int().describe("imscp instance id")
 });
 var modImscpViewImscpMutationResponseSchema = modImscpViewImscp200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLabelGetLabelsByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLabelGetLabelsByCoursesSchema.js
 var modLabelGetLabelsByCourses200Schema = exports_external.object({
   labels: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Activity instance id"),
@@ -28042,7 +27998,7 @@ var modLabelGetLabelsByCoursesMutationRequestSchema = exports_external.object({
   courseids: exports_external.array(exports_external.coerce.number().int().describe("Course id")).optional()
 });
 var modLabelGetLabelsByCoursesMutationResponseSchema = modLabelGetLabelsByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonFinishAttemptSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonFinishAttemptSchema.js
 var modLessonFinishAttempt200Schema = exports_external.object({
   data: exports_external.array(exports_external.object({
     name: exports_external.coerce.string().describe("Data name."),
@@ -28069,7 +28025,7 @@ var modLessonFinishAttemptMutationRequestSchema = exports_external.object({
   review: exports_external.boolean().default(false).describe("If we want to review just after finishing (1 hour margin).").nullable().nullish()
 });
 var modLessonFinishAttemptMutationResponseSchema = modLessonFinishAttempt200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetAttemptsOverviewSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetAttemptsOverviewSchema.js
 var modLessonGetAttemptsOverview200Schema = exports_external.object({
   data: exports_external.object({
     lessonscored: exports_external.boolean().describe("True if the lesson was scored."),
@@ -28106,7 +28062,7 @@ var modLessonGetAttemptsOverviewMutationRequestSchema = exports_external.object(
   groupid: exports_external.coerce.number().int().default(0).describe("group id, 0 means that the function will determine the user group").nullable().nullish()
 });
 var modLessonGetAttemptsOverviewMutationResponseSchema = modLessonGetAttemptsOverview200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetContentPagesViewedSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetContentPagesViewedSchema.js
 var modLessonGetContentPagesViewed200Schema = exports_external.object({
   pages: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The attempt id."),
@@ -28132,7 +28088,7 @@ var modLessonGetContentPagesViewedMutationRequestSchema = exports_external.objec
   userid: exports_external.coerce.number().int().describe("the user id (empty for current user)").nullable().nullish()
 });
 var modLessonGetContentPagesViewedMutationResponseSchema = modLessonGetContentPagesViewed200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetLessonAccessInformationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetLessonAccessInformationSchema.js
 var modLessonGetLessonAccessInformation200Schema = exports_external.object({
   canmanage: exports_external.boolean().describe("Whether the user can manage the lesson or not."),
   cangrade: exports_external.boolean().describe("Whether the user can grade the lesson or not."),
@@ -28159,7 +28115,7 @@ var modLessonGetLessonAccessInformationMutationRequestSchema = exports_external.
   lessonid: exports_external.coerce.number().int().describe("lesson instance id")
 });
 var modLessonGetLessonAccessInformationMutationResponseSchema = modLessonGetLessonAccessInformation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetLessonsByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetLessonsByCoursesSchema.js
 var modLessonGetLessonsByCourses200Schema = exports_external.object({
   lessons: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Standard Moodle primary key."),
@@ -28241,7 +28197,7 @@ var modLessonGetLessonsByCoursesMutationRequestSchema = exports_external.object(
   courseids: exports_external.array(exports_external.coerce.number().int().describe("course id")).optional()
 });
 var modLessonGetLessonsByCoursesMutationResponseSchema = modLessonGetLessonsByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetLessonSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetLessonSchema.js
 var modLessonGetLesson200Schema = exports_external.object({
   lesson: exports_external.object({
     id: exports_external.coerce.number().int().describe("Standard Moodle primary key."),
@@ -28324,7 +28280,7 @@ var modLessonGetLessonMutationRequestSchema = exports_external.object({
   password: exports_external.coerce.string().default("").describe("lesson password").nullable().nullish()
 });
 var modLessonGetLessonMutationResponseSchema = modLessonGetLesson200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetPageDataSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetPageDataSchema.js
 var modLessonGetPageData200Schema = exports_external.object({
   page: exports_external.object({
     id: exports_external.coerce.number().int().describe("The id of this lesson page"),
@@ -28417,7 +28373,7 @@ var modLessonGetPageDataMutationRequestSchema = exports_external.object({
   returncontents: exports_external.boolean().default(false).describe("if we must return the complete page contents once rendered").nullable().nullish()
 });
 var modLessonGetPageDataMutationResponseSchema = modLessonGetPageData200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetPagesPossibleJumpsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetPagesPossibleJumpsSchema.js
 var modLessonGetPagesPossibleJumps200Schema = exports_external.object({
   jumps: exports_external.array(exports_external.object({
     pageid: exports_external.coerce.number().int().describe("The page id"),
@@ -28437,7 +28393,7 @@ var modLessonGetPagesPossibleJumpsMutationRequestSchema = exports_external.objec
   lessonid: exports_external.coerce.number().int().describe("lesson instance id")
 });
 var modLessonGetPagesPossibleJumpsMutationResponseSchema = modLessonGetPagesPossibleJumps200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetPagesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetPagesSchema.js
 var modLessonGetPages200Schema = exports_external.object({
   pages: exports_external.array(exports_external.object({
     page: exports_external.object({
@@ -28477,7 +28433,7 @@ var modLessonGetPagesMutationRequestSchema = exports_external.object({
   password: exports_external.coerce.string().default("").describe("optional password (the lesson may be protected)").nullable().nullish()
 });
 var modLessonGetPagesMutationResponseSchema = modLessonGetPages200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetQuestionsAttemptsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetQuestionsAttemptsSchema.js
 var modLessonGetQuestionsAttempts200Schema = exports_external.object({
   attempts: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The attempt id"),
@@ -28506,7 +28462,7 @@ var modLessonGetQuestionsAttemptsMutationRequestSchema = exports_external.object
   userid: exports_external.coerce.number().int().describe("only fetch attempts of the given user").nullable().nullish()
 });
 var modLessonGetQuestionsAttemptsMutationResponseSchema = modLessonGetQuestionsAttempts200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetUserAttemptGradeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetUserAttemptGradeSchema.js
 var modLessonGetUserAttemptGrade200Schema = exports_external.object({
   grade: exports_external.object({
     nquestions: exports_external.coerce.number().int().describe("Number of questions answered"),
@@ -28531,7 +28487,7 @@ var modLessonGetUserAttemptGradeMutationRequestSchema = exports_external.object(
   userid: exports_external.coerce.number().int().describe("the user id (empty for current user)").nullable().nullish()
 });
 var modLessonGetUserAttemptGradeMutationResponseSchema = modLessonGetUserAttemptGrade200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetUserAttemptSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetUserAttemptSchema.js
 var modLessonGetUserAttempt200Schema = exports_external.object({
   answerpages: exports_external.array(exports_external.object({
     page: exports_external.object({
@@ -28592,7 +28548,7 @@ var modLessonGetUserAttemptMutationRequestSchema = exports_external.object({
   lessonattempt: exports_external.coerce.number().int().describe("The attempt number.")
 });
 var modLessonGetUserAttemptMutationResponseSchema = modLessonGetUserAttempt200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetUserGradeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetUserGradeSchema.js
 var modLessonGetUserGrade200Schema = exports_external.object({
   grade: exports_external.coerce.number().describe("The lesson final raw grade"),
   formattedgrade: exports_external.coerce.string().describe("The lesson final grade formatted"),
@@ -28609,7 +28565,7 @@ var modLessonGetUserGradeMutationRequestSchema = exports_external.object({
   userid: exports_external.coerce.number().int().describe("the user id (empty for current user)").nullable().nullish()
 });
 var modLessonGetUserGradeMutationResponseSchema = modLessonGetUserGrade200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetUserTimersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonGetUserTimersSchema.js
 var modLessonGetUserTimers200Schema = exports_external.object({
   timers: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The attempt id"),
@@ -28633,7 +28589,7 @@ var modLessonGetUserTimersMutationRequestSchema = exports_external.object({
   userid: exports_external.coerce.number().int().describe("the user id (empty for current user)").nullable().nullish()
 });
 var modLessonGetUserTimersMutationResponseSchema = modLessonGetUserTimers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonLaunchAttemptSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonLaunchAttemptSchema.js
 var modLessonLaunchAttempt200Schema = exports_external.object({
   messages: exports_external.array(exports_external.object({
     message: exports_external.coerce.string().describe("Message."),
@@ -28655,7 +28611,7 @@ var modLessonLaunchAttemptMutationRequestSchema = exports_external.object({
   review: exports_external.boolean().default(false).describe("if we want to review just after finishing").nullable().nullish()
 });
 var modLessonLaunchAttemptMutationResponseSchema = modLessonLaunchAttempt200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonProcessPageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonProcessPageSchema.js
 var modLessonProcessPage200Schema = exports_external.object({
   newpageid: exports_external.coerce.number().int().describe("New page id (if a jump was made)."),
   inmediatejump: exports_external.boolean().describe("Whether the page processing redirect directly to anoter page."),
@@ -28697,7 +28653,7 @@ var modLessonProcessPageMutationRequestSchema = exports_external.object({
   review: exports_external.boolean().default(false).describe("if we want to review just after finishing (1 hour margin)").nullable().nullish()
 });
 var modLessonProcessPageMutationResponseSchema = modLessonProcessPage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonViewLessonSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLessonViewLessonSchema.js
 var modLessonViewLesson200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -28713,7 +28669,7 @@ var modLessonViewLessonMutationRequestSchema = exports_external.object({
   password: exports_external.coerce.string().default("").describe("lesson password").nullable().nullish()
 });
 var modLessonViewLessonMutationResponseSchema = modLessonViewLesson200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiCreateToolProxySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiCreateToolProxySchema.js
 var modLtiCreateToolProxy200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("Tool proxy id"),
   name: exports_external.coerce.string().describe("Tool proxy name"),
@@ -28736,7 +28692,7 @@ var modLtiCreateToolProxyMutationRequestSchema = exports_external.object({
   serviceoffered: exports_external.array(exports_external.coerce.string().describe("Tool proxy services offered")).optional()
 });
 var modLtiCreateToolProxyMutationResponseSchema = modLtiCreateToolProxy200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiCreateToolTypeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiCreateToolTypeSchema.js
 var modLtiCreateToolType200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("Tool type id"),
   name: exports_external.coerce.string().describe("Tool type name"),
@@ -28772,14 +28728,14 @@ var modLtiCreateToolTypeMutationRequestSchema = exports_external.object({
   secret: exports_external.coerce.string().default("").describe("Shared secret").nullable().nullish()
 });
 var modLtiCreateToolTypeMutationResponseSchema = modLtiCreateToolType200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiDeleteCourseToolTypeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiDeleteCourseToolTypeSchema.js
 var modLtiDeleteCourseToolType200Schema = exports_external.boolean().describe("Success");
 var modLtiDeleteCourseToolType400Schema = errorResponseSchema;
 var modLtiDeleteCourseToolTypeMutationRequestSchema = exports_external.object({
   tooltypeid: exports_external.coerce.number().int().describe("Tool type ID")
 });
 var modLtiDeleteCourseToolTypeMutationResponseSchema = modLtiDeleteCourseToolType200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiDeleteToolProxySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiDeleteToolProxySchema.js
 var modLtiDeleteToolProxy200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("Tool proxy id"),
   name: exports_external.coerce.string().describe("Tool proxy name"),
@@ -28799,7 +28755,7 @@ var modLtiDeleteToolProxyMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("Tool proxy id")
 });
 var modLtiDeleteToolProxyMutationResponseSchema = modLtiDeleteToolProxy200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiDeleteToolTypeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiDeleteToolTypeSchema.js
 var modLtiDeleteToolType200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("Tool type id")
 });
@@ -28808,7 +28764,7 @@ var modLtiDeleteToolTypeMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int().describe("Tool type id")
 });
 var modLtiDeleteToolTypeMutationResponseSchema = modLtiDeleteToolType200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiGetLtisByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiGetLtisByCoursesSchema.js
 var modLtiGetLtisByCourses200Schema = exports_external.object({
   ltis: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Activity instance id"),
@@ -28867,7 +28823,7 @@ var modLtiGetLtisByCoursesMutationRequestSchema = exports_external.object({
   courseids: exports_external.array(exports_external.coerce.number().int().describe("course id")).optional()
 });
 var modLtiGetLtisByCoursesMutationResponseSchema = modLtiGetLtisByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiGetToolLaunchDataSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiGetToolLaunchDataSchema.js
 var modLtiGetToolLaunchData200Schema = exports_external.object({
   endpoint: exports_external.coerce.string().describe("Endpoint URL"),
   parameters: exports_external.array(exports_external.object({
@@ -28886,7 +28842,7 @@ var modLtiGetToolLaunchDataMutationRequestSchema = exports_external.object({
   toolid: exports_external.coerce.number().int().describe("external tool instance id")
 });
 var modLtiGetToolLaunchDataMutationResponseSchema = modLtiGetToolLaunchData200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiGetToolProxiesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiGetToolProxiesSchema.js
 var modLtiGetToolProxies200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("Tool proxy id"),
   name: exports_external.coerce.string().describe("Tool proxy name"),
@@ -28906,7 +28862,7 @@ var modLtiGetToolProxiesMutationRequestSchema = exports_external.object({
   orphanedonly: exports_external.boolean().default(0).describe("Orphaned tool types only").nullable().nullish()
 });
 var modLtiGetToolProxiesMutationResponseSchema = modLtiGetToolProxies200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiGetToolProxyRegistrationRequestSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiGetToolProxyRegistrationRequestSchema.js
 var modLtiGetToolProxyRegistrationRequest200Schema = exports_external.object({
   lti_message_type: exports_external.coerce.string().describe("LTI message type"),
   lti_version: exports_external.coerce.string().describe("LTI version"),
@@ -28921,7 +28877,7 @@ var modLtiGetToolProxyRegistrationRequestMutationRequestSchema = exports_externa
   id: exports_external.coerce.number().int().describe("Tool proxy id")
 });
 var modLtiGetToolProxyRegistrationRequestMutationResponseSchema = modLtiGetToolProxyRegistrationRequest200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiGetToolTypesAndProxiesCountSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiGetToolTypesAndProxiesCountSchema.js
 var modLtiGetToolTypesAndProxiesCount200Schema = exports_external.object({
   count: exports_external.coerce.number().int().describe("Total number of tool types and proxies")
 });
@@ -28931,7 +28887,7 @@ var modLtiGetToolTypesAndProxiesCountMutationRequestSchema = exports_external.ob
   orphanedonly: exports_external.boolean().default(0).describe("Orphaned tool types only").nullable().nullish()
 });
 var modLtiGetToolTypesAndProxiesCountMutationResponseSchema = modLtiGetToolTypesAndProxiesCount200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiGetToolTypesAndProxiesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiGetToolTypesAndProxiesSchema.js
 var modLtiGetToolTypesAndProxies200Schema = exports_external.object({
   types: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Tool type id"),
@@ -28986,7 +28942,7 @@ var modLtiGetToolTypesAndProxiesMutationRequestSchema = exports_external.object(
   offset: exports_external.coerce.number().int().default(0).describe("Current offset of tool elements")
 });
 var modLtiGetToolTypesAndProxiesMutationResponseSchema = modLtiGetToolTypesAndProxies200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiGetToolTypesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiGetToolTypesSchema.js
 var modLtiGetToolTypes200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("Tool type id"),
   name: exports_external.coerce.string().describe("Tool type name"),
@@ -29020,7 +28976,7 @@ var modLtiGetToolTypesMutationRequestSchema = exports_external.object({
   toolproxyid: exports_external.coerce.number().int().default(0).describe("Tool proxy id").nullable().nullish()
 });
 var modLtiGetToolTypesMutationResponseSchema = modLtiGetToolTypes200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiIsCartridgeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiIsCartridgeSchema.js
 var modLtiIsCartridge200Schema = exports_external.object({
   iscartridge: exports_external.boolean().describe("True if the URL is a cartridge")
 });
@@ -29029,7 +28985,7 @@ var modLtiIsCartridgeMutationRequestSchema = exports_external.object({
   url: exports_external.coerce.string().describe("Tool url")
 });
 var modLtiIsCartridgeMutationResponseSchema = modLtiIsCartridge200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiToggleShowinactivitychooserSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiToggleShowinactivitychooserSchema.js
 var modLtiToggleShowinactivitychooser200Schema = exports_external.boolean().describe("Success");
 var modLtiToggleShowinactivitychooser400Schema = errorResponseSchema;
 var modLtiToggleShowinactivitychooserMutationRequestSchema = exports_external.object({
@@ -29038,7 +28994,7 @@ var modLtiToggleShowinactivitychooserMutationRequestSchema = exports_external.ob
   showinactivitychooser: exports_external.boolean().describe("Show in activity chooser")
 });
 var modLtiToggleShowinactivitychooserMutationResponseSchema = modLtiToggleShowinactivitychooser200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiUpdateToolTypeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiUpdateToolTypeSchema.js
 var modLtiUpdateToolType200Schema = exports_external.object({
   id: exports_external.coerce.number().int().describe("Tool type id"),
   name: exports_external.coerce.string().describe("Tool type name"),
@@ -29075,7 +29031,7 @@ var modLtiUpdateToolTypeMutationRequestSchema = exports_external.object({
   state: exports_external.coerce.number().int().describe("Tool type state").nullable().nullish()
 });
 var modLtiUpdateToolTypeMutationResponseSchema = modLtiUpdateToolType200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiViewLtiSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modLtiViewLtiSchema.js
 var modLtiViewLti200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -29090,7 +29046,7 @@ var modLtiViewLtiMutationRequestSchema = exports_external.object({
   ltiid: exports_external.coerce.number().int().describe("lti instance id")
 });
 var modLtiViewLtiMutationResponseSchema = modLtiViewLti200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modPageGetPagesByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modPageGetPagesByCoursesSchema.js
 var modPageGetPagesByCourses200Schema = exports_external.object({
   pages: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Activity instance id"),
@@ -29147,7 +29103,7 @@ var modPageGetPagesByCoursesMutationRequestSchema = exports_external.object({
   courseids: exports_external.array(exports_external.coerce.number().int().describe("Course id")).optional()
 });
 var modPageGetPagesByCoursesMutationResponseSchema = modPageGetPagesByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modPageViewPageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modPageViewPageSchema.js
 var modPageViewPage200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -29162,7 +29118,7 @@ var modPageViewPageMutationRequestSchema = exports_external.object({
   pageid: exports_external.coerce.number().int().describe("page instance id")
 });
 var modPageViewPageMutationResponseSchema = modPageViewPage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizAddRandomQuestionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizAddRandomQuestionsSchema.js
 var modQuizAddRandomQuestions200Schema = exports_external.object({
   message: exports_external.coerce.string().describe("Message").nullable().nullish()
 });
@@ -29177,14 +29133,14 @@ var modQuizAddRandomQuestionsMutationRequestSchema = exports_external.object({
   parentcategory: exports_external.coerce.string().default(0).describe("(Optional) The parent of the new question category, if creating one.").nullable().nullish()
 });
 var modQuizAddRandomQuestionsMutationResponseSchema = modQuizAddRandomQuestions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizCreateGradeItemPerSectionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizCreateGradeItemPerSectionSchema.js
 var modQuizCreateGradeItemPerSection200Schema = exports_external.null();
 var modQuizCreateGradeItemPerSection400Schema = errorResponseSchema;
 var modQuizCreateGradeItemPerSectionMutationRequestSchema = exports_external.object({
   quizid: exports_external.coerce.number().int().describe("The quiz to update slots for.")
 });
 var modQuizCreateGradeItemPerSectionMutationResponseSchema = modQuizCreateGradeItemPerSection200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizCreateGradeItemsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizCreateGradeItemsSchema.js
 var modQuizCreateGradeItems200Schema = exports_external.null();
 var modQuizCreateGradeItems400Schema = errorResponseSchema;
 var modQuizCreateGradeItemsMutationRequestSchema = exports_external.object({
@@ -29194,7 +29150,7 @@ var modQuizCreateGradeItemsMutationRequestSchema = exports_external.object({
   }))
 });
 var modQuizCreateGradeItemsMutationResponseSchema = modQuizCreateGradeItems200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizDeleteGradeItemsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizDeleteGradeItemsSchema.js
 var modQuizDeleteGradeItems200Schema = exports_external.null();
 var modQuizDeleteGradeItems400Schema = errorResponseSchema;
 var modQuizDeleteGradeItemsMutationRequestSchema = exports_external.object({
@@ -29204,7 +29160,7 @@ var modQuizDeleteGradeItemsMutationRequestSchema = exports_external.object({
   }))
 });
 var modQuizDeleteGradeItemsMutationResponseSchema = modQuizDeleteGradeItems200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizDeleteOverridesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizDeleteOverridesSchema.js
 var modQuizDeleteOverrides200Schema = exports_external.object({
   ids: exports_external.array(exports_external.coerce.number().int().describe("ID of deleted override"))
 });
@@ -29216,7 +29172,7 @@ var modQuizDeleteOverridesMutationRequestSchema = exports_external.object({
   })
 });
 var modQuizDeleteOverridesMutationResponseSchema = modQuizDeleteOverrides200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetAttemptAccessInformationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetAttemptAccessInformationSchema.js
 var modQuizGetAttemptAccessInformation200Schema = exports_external.object({
   endtime: exports_external.coerce.number().int().describe("When the attempt must be submitted (determined by rules).").nullable().nullish(),
   isfinished: exports_external.boolean().describe("Whether there is no way the user will ever be allowed to attempt."),
@@ -29236,7 +29192,7 @@ var modQuizGetAttemptAccessInformationMutationRequestSchema = exports_external.o
   attemptid: exports_external.coerce.number().int().default(0).describe("attempt id, 0 for the user last attempt if exists").nullable().nullish()
 });
 var modQuizGetAttemptAccessInformationMutationResponseSchema = modQuizGetAttemptAccessInformation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetAttemptDataSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetAttemptDataSchema.js
 var modQuizGetAttemptData200Schema = exports_external.object({
   attempt: exports_external.object({
     id: exports_external.coerce.number().int().describe("Attempt id.").nullable().nullish(),
@@ -29322,7 +29278,7 @@ var modQuizGetAttemptDataMutationRequestSchema = exports_external.object({
   })).optional()
 });
 var modQuizGetAttemptDataMutationResponseSchema = modQuizGetAttemptData200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetAttemptReviewSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetAttemptReviewSchema.js
 var modQuizGetAttemptReview200Schema = exports_external.object({
   grade: exports_external.coerce.string().describe('grade for the quiz (or empty or "notyetgraded")'),
   attempt: exports_external.object({
@@ -29408,7 +29364,7 @@ var modQuizGetAttemptReviewMutationRequestSchema = exports_external.object({
   page: exports_external.coerce.number().int().default(-1).describe("page number, empty for all the questions in all the pages").nullable().nullish()
 });
 var modQuizGetAttemptReviewMutationResponseSchema = modQuizGetAttemptReview200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetAttemptSummarySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetAttemptSummarySchema.js
 var modQuizGetAttemptSummary200Schema = exports_external.object({
   questions: exports_external.array(exports_external.object({
     slot: exports_external.coerce.number().int().describe("slot number"),
@@ -29464,7 +29420,7 @@ var modQuizGetAttemptSummaryMutationRequestSchema = exports_external.object({
   })).optional()
 });
 var modQuizGetAttemptSummaryMutationResponseSchema = modQuizGetAttemptSummary200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetCombinedReviewOptionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetCombinedReviewOptionsSchema.js
 var modQuizGetCombinedReviewOptions200Schema = exports_external.object({
   someoptions: exports_external.array(exports_external.object({
     name: exports_external.coerce.string().describe("option name"),
@@ -29487,14 +29443,14 @@ var modQuizGetCombinedReviewOptionsMutationRequestSchema = exports_external.obje
   userid: exports_external.coerce.number().int().default(0).describe("user id (empty for current user)").nullable().nullish()
 });
 var modQuizGetCombinedReviewOptionsMutationResponseSchema = modQuizGetCombinedReviewOptions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetEditGradingPageDataSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetEditGradingPageDataSchema.js
 var modQuizGetEditGradingPageData200Schema = exports_external.coerce.string().describe("JSON-encoded data required to render the mod_quiz/edit_grading_page template.");
 var modQuizGetEditGradingPageData400Schema = errorResponseSchema;
 var modQuizGetEditGradingPageDataMutationRequestSchema = exports_external.object({
   quizid: exports_external.coerce.number().int().describe("The quiz for which to return the data.")
 });
 var modQuizGetEditGradingPageDataMutationResponseSchema = modQuizGetEditGradingPageData200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetOverridesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetOverridesSchema.js
 var modQuizGetOverrides200Schema = exports_external.object({
   overrides: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Override ID"),
@@ -29513,7 +29469,7 @@ var modQuizGetOverridesMutationRequestSchema = exports_external.object({
   quizid: exports_external.coerce.number().int().describe("ID of quiz to get overrides for")
 });
 var modQuizGetOverridesMutationResponseSchema = modQuizGetOverrides200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetQuizAccessInformationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetQuizAccessInformationSchema.js
 var modQuizGetQuizAccessInformation200Schema = exports_external.object({
   canattempt: exports_external.boolean().describe("Whether the user can do the quiz or not."),
   canmanage: exports_external.boolean().describe("Whether the user can edit the quiz settings or not."),
@@ -29536,7 +29492,7 @@ var modQuizGetQuizAccessInformationMutationRequestSchema = exports_external.obje
   quizid: exports_external.coerce.number().int().describe("quiz instance id")
 });
 var modQuizGetQuizAccessInformationMutationResponseSchema = modQuizGetQuizAccessInformation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetQuizFeedbackForGradeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetQuizFeedbackForGradeSchema.js
 var modQuizGetQuizFeedbackForGrade200Schema = exports_external.object({
   feedbacktext: exports_external.coerce.string().describe("the comment that corresponds to this grade (empty for none)"),
   feedbacktextformat: exports_external.coerce.number().int().describe("feedbacktext format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)").nullable().nullish(),
@@ -29564,7 +29520,7 @@ var modQuizGetQuizFeedbackForGradeMutationRequestSchema = exports_external.objec
   grade: exports_external.coerce.number().describe("the grade to check")
 });
 var modQuizGetQuizFeedbackForGradeMutationResponseSchema = modQuizGetQuizFeedbackForGrade200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetQuizRequiredQtypesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetQuizRequiredQtypesSchema.js
 var modQuizGetQuizRequiredQtypes200Schema = exports_external.object({
   questiontypes: exports_external.array(exports_external.coerce.string().describe("question type")),
   warnings: exports_external.array(exports_external.object({
@@ -29579,7 +29535,7 @@ var modQuizGetQuizRequiredQtypesMutationRequestSchema = exports_external.object(
   quizid: exports_external.coerce.number().int().describe("quiz instance id")
 });
 var modQuizGetQuizRequiredQtypesMutationResponseSchema = modQuizGetQuizRequiredQtypes200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetQuizzesByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetQuizzesByCoursesSchema.js
 var modQuizGetQuizzesByCourses200Schema = exports_external.object({
   quizzes: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Activity instance id"),
@@ -29695,14 +29651,14 @@ var modQuizGetQuizzesByCoursesMutationRequestSchema = exports_external.object({
   courseids: exports_external.array(exports_external.coerce.number().int().describe("course id")).optional()
 });
 var modQuizGetQuizzesByCoursesMutationResponseSchema = modQuizGetQuizzesByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetReopenAttemptConfirmationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetReopenAttemptConfirmationSchema.js
 var modQuizGetReopenAttemptConfirmation200Schema = exports_external.coerce.string().describe("Confirmation to show the user before the attempt is reopened.");
 var modQuizGetReopenAttemptConfirmation400Schema = errorResponseSchema;
 var modQuizGetReopenAttemptConfirmationMutationRequestSchema = exports_external.object({
   attemptid: exports_external.coerce.number().int().describe("The id of the attempt to reopen")
 });
 var modQuizGetReopenAttemptConfirmationMutationResponseSchema = modQuizGetReopenAttemptConfirmation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetUserAttemptsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetUserAttemptsSchema.js
 var modQuizGetUserAttempts200Schema = exports_external.object({
   attempts: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Attempt id.").nullable().nullish(),
@@ -29747,7 +29703,7 @@ var modQuizGetUserAttemptsMutationRequestSchema = exports_external.object({
   includepreviews: exports_external.boolean().default(false).describe("whether to include previews or not").nullable().nullish()
 });
 var modQuizGetUserAttemptsMutationResponseSchema = modQuizGetUserAttempts200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetUserBestGradeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizGetUserBestGradeSchema.js
 var modQuizGetUserBestGrade200Schema = exports_external.object({
   hasgrade: exports_external.boolean().describe("Whether the user has a grade on the given quiz."),
   grade: exports_external.coerce.number().describe("The grade (only if the user has a grade).").nullable().nullish(),
@@ -29765,7 +29721,7 @@ var modQuizGetUserBestGradeMutationRequestSchema = exports_external.object({
   userid: exports_external.coerce.number().int().default(0).describe("user id").nullable().nullish()
 });
 var modQuizGetUserBestGradeMutationResponseSchema = modQuizGetUserBestGrade200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizProcessAttemptSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizProcessAttemptSchema.js
 var modQuizProcessAttempt200Schema = exports_external.object({
   state: exports_external.coerce.string().describe(`state: the new attempt state:
                                                                     inprogress, finished, overdue, abandoned`),
@@ -29791,14 +29747,14 @@ var modQuizProcessAttemptMutationRequestSchema = exports_external.object({
   })).optional()
 });
 var modQuizProcessAttemptMutationResponseSchema = modQuizProcessAttempt200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizReopenAttemptSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizReopenAttemptSchema.js
 var modQuizReopenAttempt200Schema = exports_external.null();
 var modQuizReopenAttempt400Schema = errorResponseSchema;
 var modQuizReopenAttemptMutationRequestSchema = exports_external.object({
   attemptid: exports_external.coerce.number().int().describe("The id of the attempt to reopen")
 });
 var modQuizReopenAttemptMutationResponseSchema = modQuizReopenAttempt200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizSaveAttemptSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizSaveAttemptSchema.js
 var modQuizSaveAttempt200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -29821,7 +29777,7 @@ var modQuizSaveAttemptMutationRequestSchema = exports_external.object({
   })).optional()
 });
 var modQuizSaveAttemptMutationResponseSchema = modQuizSaveAttempt200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizSaveOverridesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizSaveOverridesSchema.js
 var modQuizSaveOverrides200Schema = exports_external.object({
   ids: exports_external.array(exports_external.coerce.number().int().describe("ID of created/updated override"))
 });
@@ -29842,7 +29798,7 @@ var modQuizSaveOverridesMutationRequestSchema = exports_external.object({
   })
 });
 var modQuizSaveOverridesMutationResponseSchema = modQuizSaveOverrides200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizSetQuestionVersionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizSetQuestionVersionSchema.js
 var modQuizSetQuestionVersion200Schema = exports_external.object({
   result: exports_external.boolean()
 });
@@ -29852,7 +29808,7 @@ var modQuizSetQuestionVersionMutationRequestSchema = exports_external.object({
   newversion: exports_external.coerce.number().int()
 });
 var modQuizSetQuestionVersionMutationResponseSchema = modQuizSetQuestionVersion200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizStartAttemptSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizStartAttemptSchema.js
 var modQuizStartAttempt200Schema = exports_external.object({
   attempt: exports_external.object({
     id: exports_external.coerce.number().int().describe("Attempt id.").nullable().nullish(),
@@ -29899,7 +29855,7 @@ var modQuizStartAttemptMutationRequestSchema = exports_external.object({
   forcenew: exports_external.boolean().default(false).describe("Whether to force a new attempt or not.").nullable().nullish()
 });
 var modQuizStartAttemptMutationResponseSchema = modQuizStartAttempt200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizUpdateFilterConditionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizUpdateFilterConditionSchema.js
 var modQuizUpdateFilterCondition200Schema = exports_external.object({
   message: exports_external.coerce.string().describe("Message").nullable().nullish()
 });
@@ -29910,7 +29866,7 @@ var modQuizUpdateFilterConditionMutationRequestSchema = exports_external.object(
   filtercondition: exports_external.coerce.string().describe("Filter condition")
 });
 var modQuizUpdateFilterConditionMutationResponseSchema = modQuizUpdateFilterCondition200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizUpdateGradeItemsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizUpdateGradeItemsSchema.js
 var modQuizUpdateGradeItems200Schema = exports_external.null();
 var modQuizUpdateGradeItems400Schema = errorResponseSchema;
 var modQuizUpdateGradeItemsMutationRequestSchema = exports_external.object({
@@ -29921,7 +29877,7 @@ var modQuizUpdateGradeItemsMutationRequestSchema = exports_external.object({
   }))
 });
 var modQuizUpdateGradeItemsMutationResponseSchema = modQuizUpdateGradeItems200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizUpdateSlotsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizUpdateSlotsSchema.js
 var modQuizUpdateSlots200Schema = exports_external.null();
 var modQuizUpdateSlots400Schema = errorResponseSchema;
 var modQuizUpdateSlotsMutationRequestSchema = exports_external.object({
@@ -29935,7 +29891,7 @@ var modQuizUpdateSlotsMutationRequestSchema = exports_external.object({
   }))
 });
 var modQuizUpdateSlotsMutationResponseSchema = modQuizUpdateSlots200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizViewAttemptReviewSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizViewAttemptReviewSchema.js
 var modQuizViewAttemptReview200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -29950,7 +29906,7 @@ var modQuizViewAttemptReviewMutationRequestSchema = exports_external.object({
   attemptid: exports_external.coerce.number().int().describe("attempt id")
 });
 var modQuizViewAttemptReviewMutationResponseSchema = modQuizViewAttemptReview200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizViewAttemptSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizViewAttemptSchema.js
 var modQuizViewAttempt200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -29970,7 +29926,7 @@ var modQuizViewAttemptMutationRequestSchema = exports_external.object({
   })).optional()
 });
 var modQuizViewAttemptMutationResponseSchema = modQuizViewAttempt200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizViewAttemptSummarySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizViewAttemptSummarySchema.js
 var modQuizViewAttemptSummary200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -29989,7 +29945,7 @@ var modQuizViewAttemptSummaryMutationRequestSchema = exports_external.object({
   })).optional()
 });
 var modQuizViewAttemptSummaryMutationResponseSchema = modQuizViewAttemptSummary200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizViewQuizSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modQuizViewQuizSchema.js
 var modQuizViewQuiz200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -30004,7 +29960,7 @@ var modQuizViewQuizMutationRequestSchema = exports_external.object({
   quizid: exports_external.coerce.number().int().describe("quiz instance id")
 });
 var modQuizViewQuizMutationResponseSchema = modQuizViewQuiz200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modResourceGetResourcesByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modResourceGetResourcesByCoursesSchema.js
 var modResourceGetResourcesByCourses200Schema = exports_external.object({
   resources: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Activity instance id"),
@@ -30061,7 +30017,7 @@ var modResourceGetResourcesByCoursesMutationRequestSchema = exports_external.obj
   courseids: exports_external.array(exports_external.coerce.number().int().describe("Course id")).optional()
 });
 var modResourceGetResourcesByCoursesMutationResponseSchema = modResourceGetResourcesByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modResourceViewResourceSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modResourceViewResourceSchema.js
 var modResourceViewResource200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -30076,7 +30032,7 @@ var modResourceViewResourceMutationRequestSchema = exports_external.object({
   resourceid: exports_external.coerce.number().int().describe("resource instance id")
 });
 var modResourceViewResourceMutationResponseSchema = modResourceViewResource200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormGetScormAccessInformationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormGetScormAccessInformationSchema.js
 var modScormGetScormAccessInformation200Schema = exports_external.object({
   warnings: exports_external.array(exports_external.object({
     item: exports_external.coerce.string().describe("item").nullable().nullish(),
@@ -30097,7 +30053,7 @@ var modScormGetScormAccessInformationMutationRequestSchema = exports_external.ob
   scormid: exports_external.coerce.number().int().describe("scorm instance id.")
 });
 var modScormGetScormAccessInformationMutationResponseSchema = modScormGetScormAccessInformation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormGetScormAttemptCountSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormGetScormAttemptCountSchema.js
 var modScormGetScormAttemptCount200Schema = exports_external.object({
   attemptscount: exports_external.coerce.number().int().describe("Attempts count"),
   warnings: exports_external.array(exports_external.object({
@@ -30114,7 +30070,7 @@ var modScormGetScormAttemptCountMutationRequestSchema = exports_external.object(
   ignoremissingcompletion: exports_external.boolean().default(false).describe("Ignores attempts that haven't reported a grade/completion").nullable().nullish()
 });
 var modScormGetScormAttemptCountMutationResponseSchema = modScormGetScormAttemptCount200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormGetScormsByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormGetScormsByCoursesSchema.js
 var modScormGetScormsByCourses200Schema = exports_external.object({
   scorms: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Activity instance id"),
@@ -30194,7 +30150,7 @@ var modScormGetScormsByCoursesMutationRequestSchema = exports_external.object({
   courseids: exports_external.array(exports_external.coerce.number().int().describe("course id")).optional()
 });
 var modScormGetScormsByCoursesMutationResponseSchema = modScormGetScormsByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormGetScormScoesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormGetScormScoesSchema.js
 var modScormGetScormScoes200Schema = exports_external.object({
   scoes: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("sco id"),
@@ -30225,7 +30181,7 @@ var modScormGetScormScoesMutationRequestSchema = exports_external.object({
   organization: exports_external.coerce.string().default("").describe("organization id").nullable().nullish()
 });
 var modScormGetScormScoesMutationResponseSchema = modScormGetScormScoes200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormGetScormScoTracksSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormGetScormScoTracksSchema.js
 var modScormGetScormScoTracks200Schema = exports_external.object({
   data: exports_external.object({
     attempt: exports_external.coerce.number().int().describe("Attempt number"),
@@ -30248,7 +30204,7 @@ var modScormGetScormScoTracksMutationRequestSchema = exports_external.object({
   attempt: exports_external.coerce.number().int().default(0).describe("attempt number (0 for last attempt)").nullable().nullish()
 });
 var modScormGetScormScoTracksMutationResponseSchema = modScormGetScormScoTracks200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormGetScormUserDataSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormGetScormUserDataSchema.js
 var modScormGetScormUserData200Schema = exports_external.object({
   data: exports_external.array(exports_external.object({
     scoid: exports_external.coerce.number().int().describe("sco id"),
@@ -30274,7 +30230,7 @@ var modScormGetScormUserDataMutationRequestSchema = exports_external.object({
   attempt: exports_external.coerce.number().int().describe("attempt number")
 });
 var modScormGetScormUserDataMutationResponseSchema = modScormGetScormUserData200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormInsertScormTracksSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormInsertScormTracksSchema.js
 var modScormInsertScormTracks200Schema = exports_external.object({
   trackids: exports_external.array(exports_external.coerce.number().int().describe("track id")),
   warnings: exports_external.array(exports_external.object({
@@ -30294,7 +30250,7 @@ var modScormInsertScormTracksMutationRequestSchema = exports_external.object({
   }))
 });
 var modScormInsertScormTracksMutationResponseSchema = modScormInsertScormTracks200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormLaunchScoSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormLaunchScoSchema.js
 var modScormLaunchSco200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -30310,7 +30266,7 @@ var modScormLaunchScoMutationRequestSchema = exports_external.object({
   scoid: exports_external.coerce.number().int().default(0).describe("SCO id (empty for launching the first SCO)").nullable().nullish()
 });
 var modScormLaunchScoMutationResponseSchema = modScormLaunchSco200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormViewScormSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modScormViewScormSchema.js
 var modScormViewScorm200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -30325,7 +30281,7 @@ var modScormViewScormMutationRequestSchema = exports_external.object({
   scormid: exports_external.coerce.number().int().describe("scorm instance id")
 });
 var modScormViewScormMutationResponseSchema = modScormViewScorm200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modSurveyGetQuestionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modSurveyGetQuestionsSchema.js
 var modSurveyGetQuestions200Schema = exports_external.object({
   questions: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Question id"),
@@ -30349,7 +30305,7 @@ var modSurveyGetQuestionsMutationRequestSchema = exports_external.object({
   surveyid: exports_external.coerce.number().int().describe("survey instance id")
 });
 var modSurveyGetQuestionsMutationResponseSchema = modSurveyGetQuestions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modSurveyGetSurveysByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modSurveyGetSurveysByCoursesSchema.js
 var modSurveyGetSurveysByCourses200Schema = exports_external.object({
   surveys: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Activity instance id"),
@@ -30393,7 +30349,7 @@ var modSurveyGetSurveysByCoursesMutationRequestSchema = exports_external.object(
   courseids: exports_external.array(exports_external.coerce.number().int().describe("course id")).optional()
 });
 var modSurveyGetSurveysByCoursesMutationResponseSchema = modSurveyGetSurveysByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modSurveySubmitAnswersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modSurveySubmitAnswersSchema.js
 var modSurveySubmitAnswers200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -30412,7 +30368,7 @@ var modSurveySubmitAnswersMutationRequestSchema = exports_external.object({
   }))
 });
 var modSurveySubmitAnswersMutationResponseSchema = modSurveySubmitAnswers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modSurveyViewSurveySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modSurveyViewSurveySchema.js
 var modSurveyViewSurvey200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -30427,7 +30383,7 @@ var modSurveyViewSurveyMutationRequestSchema = exports_external.object({
   surveyid: exports_external.coerce.number().int().describe("survey instance id")
 });
 var modSurveyViewSurveyMutationResponseSchema = modSurveyViewSurvey200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modUrlGetUrlsByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modUrlGetUrlsByCoursesSchema.js
 var modUrlGetUrlsByCourses200Schema = exports_external.object({
   urls: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Activity instance id"),
@@ -30470,7 +30426,7 @@ var modUrlGetUrlsByCoursesMutationRequestSchema = exports_external.object({
   courseids: exports_external.array(exports_external.coerce.number().int().describe("Course id")).optional()
 });
 var modUrlGetUrlsByCoursesMutationResponseSchema = modUrlGetUrlsByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modUrlViewUrlSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modUrlViewUrlSchema.js
 var modUrlViewUrl200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -30485,7 +30441,7 @@ var modUrlViewUrlMutationRequestSchema = exports_external.object({
   urlid: exports_external.coerce.number().int().describe("url instance id")
 });
 var modUrlViewUrlMutationResponseSchema = modUrlViewUrl200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiEditPageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiEditPageSchema.js
 var modWikiEditPage200Schema = exports_external.object({
   pageid: exports_external.coerce.number().int().describe("Edited page id."),
   warnings: exports_external.array(exports_external.object({
@@ -30502,7 +30458,7 @@ var modWikiEditPageMutationRequestSchema = exports_external.object({
   section: exports_external.coerce.string().describe("Section page title.").nullable().nullish()
 });
 var modWikiEditPageMutationResponseSchema = modWikiEditPage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiGetPageContentsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiGetPageContentsSchema.js
 var modWikiGetPageContents200Schema = exports_external.object({
   page: exports_external.object({
     id: exports_external.coerce.number().int().describe("Page ID."),
@@ -30541,7 +30497,7 @@ var modWikiGetPageContentsMutationRequestSchema = exports_external.object({
   pageid: exports_external.coerce.number().int().describe("Page ID.")
 });
 var modWikiGetPageContentsMutationResponseSchema = modWikiGetPageContents200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiGetPageForEditingSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiGetPageForEditingSchema.js
 var modWikiGetPageForEditing200Schema = exports_external.object({
   pagesection: exports_external.object({
     content: exports_external.coerce.string().describe("The contents of the page-section to be edited.").nullable().nullish(),
@@ -30562,7 +30518,7 @@ var modWikiGetPageForEditingMutationRequestSchema = exports_external.object({
   lockonly: exports_external.boolean().default(false).describe("Just renew lock and not return content.").nullable().nullish()
 });
 var modWikiGetPageForEditingMutationResponseSchema = modWikiGetPageForEditing200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiGetSubwikiFilesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiGetSubwikiFilesSchema.js
 var modWikiGetSubwikiFiles200Schema = exports_external.object({
   files: exports_external.array(exports_external.object({
     filename: exports_external.coerce.string().describe("File name.").nullable().nullish(),
@@ -30589,7 +30545,7 @@ var modWikiGetSubwikiFilesMutationRequestSchema = exports_external.object({
   userid: exports_external.coerce.number().int().default(0).describe("Subwiki's user ID, 0 means current user. It will be ignored in collaborative wikis.").nullable().nullish()
 });
 var modWikiGetSubwikiFilesMutationResponseSchema = modWikiGetSubwikiFiles200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiGetSubwikiPagesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiGetSubwikiPagesSchema.js
 var modWikiGetSubwikiPages200Schema = exports_external.object({
   pages: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Page ID."),
@@ -30639,7 +30595,7 @@ var modWikiGetSubwikiPagesMutationRequestSchema = exports_external.object({
   }).optional()
 });
 var modWikiGetSubwikiPagesMutationResponseSchema = modWikiGetSubwikiPages200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiGetSubwikisSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiGetSubwikisSchema.js
 var modWikiGetSubwikis200Schema = exports_external.object({
   subwikis: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Subwiki ID."),
@@ -30660,7 +30616,7 @@ var modWikiGetSubwikisMutationRequestSchema = exports_external.object({
   wikiid: exports_external.coerce.number().int().describe("Wiki instance ID.")
 });
 var modWikiGetSubwikisMutationResponseSchema = modWikiGetSubwikis200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiGetWikisByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiGetWikisByCoursesSchema.js
 var modWikiGetWikisByCourses200Schema = exports_external.object({
   wikis: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("Activity instance id"),
@@ -30707,7 +30663,7 @@ var modWikiGetWikisByCoursesMutationRequestSchema = exports_external.object({
   courseids: exports_external.array(exports_external.coerce.number().int().describe("Course ID")).optional()
 });
 var modWikiGetWikisByCoursesMutationResponseSchema = modWikiGetWikisByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiNewPageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiNewPageSchema.js
 var modWikiNewPage200Schema = exports_external.object({
   pageid: exports_external.coerce.number().int().describe("New page id."),
   warnings: exports_external.array(exports_external.object({
@@ -30729,7 +30685,7 @@ var modWikiNewPageMutationRequestSchema = exports_external.object({
   groupid: exports_external.coerce.number().int().describe("Subwiki's group ID. Used if subwiki does not exists.").nullable().nullish()
 });
 var modWikiNewPageMutationResponseSchema = modWikiNewPage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiViewPageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiViewPageSchema.js
 var modWikiViewPage200Schema = exports_external.object({
   status: exports_external.boolean().describe("Status: true if success."),
   warnings: exports_external.array(exports_external.object({
@@ -30744,7 +30700,7 @@ var modWikiViewPageMutationRequestSchema = exports_external.object({
   pageid: exports_external.coerce.number().int().describe("Wiki page ID.")
 });
 var modWikiViewPageMutationResponseSchema = modWikiViewPage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiViewWikiSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWikiViewWikiSchema.js
 var modWikiViewWiki200Schema = exports_external.object({
   status: exports_external.boolean().describe("Status: true if success."),
   warnings: exports_external.array(exports_external.object({
@@ -30759,7 +30715,7 @@ var modWikiViewWikiMutationRequestSchema = exports_external.object({
   wikiid: exports_external.coerce.number().int().describe("Wiki instance ID.")
 });
 var modWikiViewWikiMutationResponseSchema = modWikiViewWiki200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopAddSubmissionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopAddSubmissionSchema.js
 var modWorkshopAddSubmission200Schema = exports_external.object({
   status: exports_external.boolean().describe("True if the submission was created false otherwise."),
   submissionid: exports_external.coerce.number().int().describe("New workshop submission id.").nullable().nullish(),
@@ -30780,7 +30736,7 @@ var modWorkshopAddSubmissionMutationRequestSchema = exports_external.object({
   attachmentsid: exports_external.coerce.number().int().default(0).describe("The draft file area id for attachments").nullable().nullish()
 });
 var modWorkshopAddSubmissionMutationResponseSchema = modWorkshopAddSubmission200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopDeleteSubmissionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopDeleteSubmissionSchema.js
 var modWorkshopDeleteSubmission200Schema = exports_external.object({
   status: exports_external.boolean().describe("True if the submission was deleted."),
   warnings: exports_external.array(exports_external.object({
@@ -30795,7 +30751,7 @@ var modWorkshopDeleteSubmissionMutationRequestSchema = exports_external.object({
   submissionid: exports_external.coerce.number().int().describe("Submission id")
 });
 var modWorkshopDeleteSubmissionMutationResponseSchema = modWorkshopDeleteSubmission200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopEvaluateAssessmentSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopEvaluateAssessmentSchema.js
 var modWorkshopEvaluateAssessment200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if the assessment was evaluated, false otherwise."),
   warnings: exports_external.array(exports_external.object({
@@ -30814,7 +30770,7 @@ var modWorkshopEvaluateAssessmentMutationRequestSchema = exports_external.object
   gradinggradeover: exports_external.coerce.string().default("").describe("The new grading grade.").nullable().nullish()
 });
 var modWorkshopEvaluateAssessmentMutationResponseSchema = modWorkshopEvaluateAssessment200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopEvaluateSubmissionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopEvaluateSubmissionSchema.js
 var modWorkshopEvaluateSubmission200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if the submission was evaluated, false otherwise."),
   warnings: exports_external.array(exports_external.object({
@@ -30833,7 +30789,7 @@ var modWorkshopEvaluateSubmissionMutationRequestSchema = exports_external.object
   gradeover: exports_external.coerce.string().default("").describe("The new submission grade.").nullable().nullish()
 });
 var modWorkshopEvaluateSubmissionMutationResponseSchema = modWorkshopEvaluateSubmission200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetAssessmentFormDefinitionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetAssessmentFormDefinitionSchema.js
 var modWorkshopGetAssessmentFormDefinition200Schema = exports_external.object({
   dimenssionscount: exports_external.coerce.number().int().describe("The number of dimenssions used by the form."),
   descriptionfiles: exports_external.array(exports_external.object({
@@ -30879,7 +30835,7 @@ var modWorkshopGetAssessmentFormDefinitionMutationRequestSchema = exports_extern
   mode: exports_external.coerce.string().default("assessment").describe("The form mode (assessment or preview)").nullable().nullish()
 });
 var modWorkshopGetAssessmentFormDefinitionMutationResponseSchema = modWorkshopGetAssessmentFormDefinition200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetAssessmentSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetAssessmentSchema.js
 var modWorkshopGetAssessment200Schema = exports_external.object({
   assessment: exports_external.object({
     id: exports_external.coerce.number().int().describe("The primary key of the record."),
@@ -30938,7 +30894,7 @@ var modWorkshopGetAssessmentMutationRequestSchema = exports_external.object({
   assessmentid: exports_external.coerce.number().int().describe("Assessment id")
 });
 var modWorkshopGetAssessmentMutationResponseSchema = modWorkshopGetAssessment200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetGradesReportSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetGradesReportSchema.js
 var modWorkshopGetGradesReport200Schema = exports_external.object({
   report: exports_external.object({
     grades: exports_external.array(exports_external.object({
@@ -30992,7 +30948,7 @@ var modWorkshopGetGradesReportMutationRequestSchema = exports_external.object({
   perpage: exports_external.coerce.number().int().default(0).describe("The number of records to return per page.").nullable().nullish()
 });
 var modWorkshopGetGradesReportMutationResponseSchema = modWorkshopGetGradesReport200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetGradesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetGradesSchema.js
 var modWorkshopGetGrades200Schema = exports_external.object({
   assessmentrawgrade: exports_external.coerce.number().describe("The assessment raw (numeric) grade.").nullable().nullish(),
   assessmentlongstrgrade: exports_external.coerce.string().describe("The assessment string grade.").nullable().nullish(),
@@ -31013,7 +30969,7 @@ var modWorkshopGetGradesMutationRequestSchema = exports_external.object({
   userid: exports_external.coerce.number().int().default(0).describe("User id (empty or 0 for current user).").nullable().nullish()
 });
 var modWorkshopGetGradesMutationResponseSchema = modWorkshopGetGrades200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetReviewerAssessmentsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetReviewerAssessmentsSchema.js
 var modWorkshopGetReviewerAssessments200Schema = exports_external.object({
   assessments: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The primary key of the record."),
@@ -31073,7 +31029,7 @@ var modWorkshopGetReviewerAssessmentsMutationRequestSchema = exports_external.ob
   userid: exports_external.coerce.number().int().default(0).describe("User id who did the assessment review (empty or 0 for current user).").nullable().nullish()
 });
 var modWorkshopGetReviewerAssessmentsMutationResponseSchema = modWorkshopGetReviewerAssessments200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetSubmissionAssessmentsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetSubmissionAssessmentsSchema.js
 var modWorkshopGetSubmissionAssessments200Schema = exports_external.object({
   assessments: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The primary key of the record."),
@@ -31132,7 +31088,7 @@ var modWorkshopGetSubmissionAssessmentsMutationRequestSchema = exports_external.
   submissionid: exports_external.coerce.number().int().describe("Submission id")
 });
 var modWorkshopGetSubmissionAssessmentsMutationResponseSchema = modWorkshopGetSubmissionAssessments200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetSubmissionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetSubmissionSchema.js
 var modWorkshopGetSubmission200Schema = exports_external.object({
   submission: exports_external.object({
     id: exports_external.coerce.number().int().describe("The primary key of the record."),
@@ -31192,7 +31148,7 @@ var modWorkshopGetSubmissionMutationRequestSchema = exports_external.object({
   submissionid: exports_external.coerce.number().int().describe("Submission id")
 });
 var modWorkshopGetSubmissionMutationResponseSchema = modWorkshopGetSubmission200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetSubmissionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetSubmissionsSchema.js
 var modWorkshopGetSubmissions200Schema = exports_external.object({
   submissions: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The primary key of the record."),
@@ -31260,7 +31216,7 @@ var modWorkshopGetSubmissionsMutationRequestSchema = exports_external.object({
   perpage: exports_external.coerce.number().int().default(0).describe("The number of records to return per page.").nullable().nullish()
 });
 var modWorkshopGetSubmissionsMutationResponseSchema = modWorkshopGetSubmissions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetUserPlanSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetUserPlanSchema.js
 var modWorkshopGetUserPlan200Schema = exports_external.object({
   userplan: exports_external.object({
     phases: exports_external.array(exports_external.object({
@@ -31302,7 +31258,7 @@ var modWorkshopGetUserPlanMutationRequestSchema = exports_external.object({
   userid: exports_external.coerce.number().int().default(0).describe("User id (empty or 0 for current user).").nullable().nullish()
 });
 var modWorkshopGetUserPlanMutationResponseSchema = modWorkshopGetUserPlan200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetWorkshopAccessInformationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetWorkshopAccessInformationSchema.js
 var modWorkshopGetWorkshopAccessInformation200Schema = exports_external.object({
   creatingsubmissionallowed: exports_external.boolean().describe("Is the given user allowed to create their submission?"),
   modifyingsubmissionallowed: exports_external.boolean().describe("Is the user allowed to modify his existing submission?"),
@@ -31343,7 +31299,7 @@ var modWorkshopGetWorkshopAccessInformationMutationRequestSchema = exports_exter
   workshopid: exports_external.coerce.number().int().describe("Workshop instance id.")
 });
 var modWorkshopGetWorkshopAccessInformationMutationResponseSchema = modWorkshopGetWorkshopAccessInformation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetWorkshopsByCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopGetWorkshopsByCoursesSchema.js
 var modWorkshopGetWorkshopsByCourses200Schema = exports_external.object({
   workshops: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The primary key of the record."),
@@ -31443,7 +31399,7 @@ var modWorkshopGetWorkshopsByCoursesMutationRequestSchema = exports_external.obj
   courseids: exports_external.array(exports_external.coerce.number().int().describe("Course id")).optional()
 });
 var modWorkshopGetWorkshopsByCoursesMutationResponseSchema = modWorkshopGetWorkshopsByCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopUpdateAssessmentSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopUpdateAssessmentSchema.js
 var modWorkshopUpdateAssessment200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if the assessment was added or updated false otherwise."),
   rawgrade: exports_external.coerce.number().describe("Raw percentual grade (0.00000 to 100.00000) for submission.").nullable().nullish(),
@@ -31468,7 +31424,7 @@ var modWorkshopUpdateAssessmentMutationRequestSchema = exports_external.object({
   }))
 });
 var modWorkshopUpdateAssessmentMutationResponseSchema = modWorkshopUpdateAssessment200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopUpdateSubmissionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopUpdateSubmissionSchema.js
 var modWorkshopUpdateSubmission200Schema = exports_external.object({
   status: exports_external.boolean().describe("True if the submission was updated false otherwise."),
   warnings: exports_external.array(exports_external.object({
@@ -31488,7 +31444,7 @@ var modWorkshopUpdateSubmissionMutationRequestSchema = exports_external.object({
   attachmentsid: exports_external.coerce.number().int().default(0).describe("The draft file area id for attachments").nullable().nullish()
 });
 var modWorkshopUpdateSubmissionMutationResponseSchema = modWorkshopUpdateSubmission200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopViewSubmissionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopViewSubmissionSchema.js
 var modWorkshopViewSubmission200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -31503,7 +31459,7 @@ var modWorkshopViewSubmissionMutationRequestSchema = exports_external.object({
   submissionid: exports_external.coerce.number().int().describe("Submission id")
 });
 var modWorkshopViewSubmissionMutationResponseSchema = modWorkshopViewSubmission200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopViewWorkshopSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/modWorkshopViewWorkshopSchema.js
 var modWorkshopViewWorkshop200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   warnings: exports_external.array(exports_external.object({
@@ -31518,7 +31474,7 @@ var modWorkshopViewWorkshopMutationRequestSchema = exports_external.object({
   workshopid: exports_external.coerce.number().int().describe("Workshop instance id")
 });
 var modWorkshopViewWorkshopMutationResponseSchema = modWorkshopViewWorkshop200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/paygwPaypalCreateTransactionCompleteSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/paygwPaypalCreateTransactionCompleteSchema.js
 var paygwPaypalCreateTransactionComplete200Schema = exports_external.object({
   success: exports_external.boolean().describe("Whether everything was successful or not."),
   message: exports_external.coerce.string().describe("Message (usually the error message).")
@@ -31531,7 +31487,7 @@ var paygwPaypalCreateTransactionCompleteMutationRequestSchema = exports_external
   orderid: exports_external.coerce.string().describe("The order id coming back from PayPal")
 });
 var paygwPaypalCreateTransactionCompleteMutationResponseSchema = paygwPaypalCreateTransactionComplete200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/paygwPaypalGetConfigForJsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/paygwPaypalGetConfigForJsSchema.js
 var paygwPaypalGetConfigForJs200Schema = exports_external.object({
   clientid: exports_external.coerce.string().describe("PayPal client ID"),
   brandname: exports_external.coerce.string().describe("Brand name"),
@@ -31545,7 +31501,7 @@ var paygwPaypalGetConfigForJsMutationRequestSchema = exports_external.object({
   itemid: exports_external.coerce.number().int().describe("An identifier for payment area in the component")
 });
 var paygwPaypalGetConfigForJsMutationResponseSchema = paygwPaypalGetConfigForJs200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/qbankColumnsortorderSetColumnbankOrderSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/qbankColumnsortorderSetColumnbankOrderSchema.js
 var qbankColumnsortorderSetColumnbankOrder200Schema = exports_external.null();
 var qbankColumnsortorderSetColumnbankOrder400Schema = errorResponseSchema;
 var qbankColumnsortorderSetColumnbankOrderMutationRequestSchema = exports_external.object({
@@ -31553,7 +31509,7 @@ var qbankColumnsortorderSetColumnbankOrderMutationRequestSchema = exports_extern
   global: exports_external.boolean().default(false).describe("Set global config setting, rather than user preference").nullable().nullish()
 });
 var qbankColumnsortorderSetColumnbankOrderMutationResponseSchema = qbankColumnsortorderSetColumnbankOrder200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/qbankColumnsortorderSetColumnSizeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/qbankColumnsortorderSetColumnSizeSchema.js
 var qbankColumnsortorderSetColumnSize200Schema = exports_external.null();
 var qbankColumnsortorderSetColumnSize400Schema = errorResponseSchema;
 var qbankColumnsortorderSetColumnSizeMutationRequestSchema = exports_external.object({
@@ -31561,7 +31517,7 @@ var qbankColumnsortorderSetColumnSizeMutationRequestSchema = exports_external.ob
   global: exports_external.boolean().default(false).describe("Set global config setting, rather than user preference").nullable().nullish()
 });
 var qbankColumnsortorderSetColumnSizeMutationResponseSchema = qbankColumnsortorderSetColumnSize200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/qbankColumnsortorderSetHiddenColumnsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/qbankColumnsortorderSetHiddenColumnsSchema.js
 var qbankColumnsortorderSetHiddenColumns200Schema = exports_external.null();
 var qbankColumnsortorderSetHiddenColumns400Schema = errorResponseSchema;
 var qbankColumnsortorderSetHiddenColumnsMutationRequestSchema = exports_external.object({
@@ -31569,7 +31525,7 @@ var qbankColumnsortorderSetHiddenColumnsMutationRequestSchema = exports_external
   global: exports_external.boolean().default(false).describe("Set global config setting, rather than user preference").nullable().nullish()
 });
 var qbankColumnsortorderSetHiddenColumnsMutationResponseSchema = qbankColumnsortorderSetHiddenColumns200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/qbankEditquestionSetStatusSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/qbankEditquestionSetStatusSchema.js
 var qbankEditquestionSetStatus200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success"),
   statusname: exports_external.coerce.string().describe("statusname: name of the status"),
@@ -31581,7 +31537,7 @@ var qbankEditquestionSetStatusMutationRequestSchema = exports_external.object({
   status: exports_external.coerce.string().describe("The updated question status")
 });
 var qbankEditquestionSetStatusMutationResponseSchema = qbankEditquestionSetStatus200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/qbankManagecategoriesMoveCategorySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/qbankManagecategoriesMoveCategorySchema.js
 var qbankManagecategoriesMoveCategory200Schema = exports_external.array(exports_external.object({
   name: exports_external.coerce.string().describe('State object name (always "categories" from this function).'),
   action: exports_external.coerce.string().describe('State update type (always "put" from this function).'),
@@ -31601,7 +31557,7 @@ var qbankManagecategoriesMoveCategoryMutationRequestSchema = exports_external.ob
   precedingsiblingid: exports_external.coerce.number().int().describe("The ID of the preceding category. Null if this is being moved to top of its parent")
 });
 var qbankManagecategoriesMoveCategoryMutationResponseSchema = qbankManagecategoriesMoveCategory200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/qbankTagquestionSubmitTagsFormSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/qbankTagquestionSubmitTagsFormSchema.js
 var qbankTagquestionSubmitTagsForm200Schema = exports_external.object({
   status: exports_external.boolean().describe("status: true if success")
 });
@@ -31612,14 +31568,14 @@ var qbankTagquestionSubmitTagsFormMutationRequestSchema = exports_external.objec
   formdata: exports_external.coerce.string().describe("The data from the tag form")
 });
 var qbankTagquestionSubmitTagsFormMutationResponseSchema = qbankTagquestionSubmitTagsForm200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/qbankViewquestiontextSetQuestionTextFormatSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/qbankViewquestiontextSetQuestionTextFormatSchema.js
 var qbankViewquestiontextSetQuestionTextFormat200Schema = exports_external.null();
 var qbankViewquestiontextSetQuestionTextFormat400Schema = errorResponseSchema;
 var qbankViewquestiontextSetQuestionTextFormatMutationRequestSchema = exports_external.object({
   format: exports_external.coerce.number().int().describe("Format for the question text")
 });
 var qbankViewquestiontextSetQuestionTextFormatMutationResponseSchema = qbankViewquestiontextSetQuestionTextFormat200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/quizaccessSebValidateQuizKeysSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/quizaccessSebValidateQuizKeysSchema.js
 var quizaccessSebValidateQuizKeys200Schema = exports_external.object({
   configkey: exports_external.boolean().describe("Is a provided config key valid?"),
   browserexamkey: exports_external.boolean().describe("Is a provided browser exam key valid?")
@@ -31632,7 +31588,7 @@ var quizaccessSebValidateQuizKeysMutationRequestSchema = exports_external.object
   browserexamkey: exports_external.coerce.string().describe("SEB browser exam key").nullable().nullish()
 });
 var quizaccessSebValidateQuizKeysMutationResponseSchema = quizaccessSebValidateQuizKeys200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/reportCompetencyDataForReportSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/reportCompetencyDataForReportSchema.js
 var reportCompetencyDataForReport200Schema = exports_external.object({
   courseid: exports_external.coerce.number().int().describe("Course id"),
   user: exports_external.object({
@@ -31805,7 +31761,7 @@ var reportCompetencyDataForReportMutationRequestSchema = exports_external.object
   moduleid: exports_external.coerce.number().int().describe("The module id")
 });
 var reportCompetencyDataForReportMutationResponseSchema = reportCompetencyDataForReport200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/reportInsightsActionExecutedSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/reportInsightsActionExecutedSchema.js
 var reportInsightsActionExecuted200Schema = exports_external.object({
   warnings: exports_external.array(exports_external.object({
     item: exports_external.coerce.string().describe("item").nullable().nullish(),
@@ -31820,7 +31776,7 @@ var reportInsightsActionExecutedMutationRequestSchema = exports_external.object(
   predictionids: exports_external.array(exports_external.coerce.number().int().describe("Prediction id"))
 });
 var reportInsightsActionExecutedMutationResponseSchema = reportInsightsActionExecuted200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/reportInsightsSetFixedPredictionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/reportInsightsSetFixedPredictionSchema.js
 var reportInsightsSetFixedPrediction200Schema = exports_external.object({
   success: exports_external.boolean().describe("True if the prediction was successfully flagged as fixed."),
   warnings: exports_external.array(exports_external.object({
@@ -31835,7 +31791,7 @@ var reportInsightsSetFixedPredictionMutationRequestSchema = exports_external.obj
   predictionid: exports_external.coerce.number().int().describe("The prediction id")
 });
 var reportInsightsSetFixedPredictionMutationResponseSchema = reportInsightsSetFixedPrediction200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/reportInsightsSetNotusefulPredictionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/reportInsightsSetNotusefulPredictionSchema.js
 var reportInsightsSetNotusefulPrediction200Schema = exports_external.object({
   success: exports_external.boolean().describe("True if the prediction was successfully flagged as not useful."),
   warnings: exports_external.array(exports_external.object({
@@ -31850,7 +31806,7 @@ var reportInsightsSetNotusefulPredictionMutationRequestSchema = exports_external
   predictionid: exports_external.coerce.number().int().describe("The prediction id")
 });
 var reportInsightsSetNotusefulPredictionMutationResponseSchema = reportInsightsSetNotusefulPrediction200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/tinyAutosaveResetSessionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/tinyAutosaveResetSessionSchema.js
 var tinyAutosaveResetSession200Schema = exports_external.object({});
 var tinyAutosaveResetSession400Schema = errorResponseSchema;
 var tinyAutosaveResetSessionMutationRequestSchema = exports_external.object({
@@ -31860,7 +31816,7 @@ var tinyAutosaveResetSessionMutationRequestSchema = exports_external.object({
   elementid: exports_external.coerce.string().describe("The ID of the element")
 });
 var tinyAutosaveResetSessionMutationResponseSchema = tinyAutosaveResetSession200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/tinyAutosaveResumeSessionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/tinyAutosaveResumeSessionSchema.js
 var tinyAutosaveResumeSession200Schema = exports_external.object({
   drafttext: exports_external.coerce.string().describe("The draft text")
 });
@@ -31873,7 +31829,7 @@ var tinyAutosaveResumeSessionMutationRequestSchema = exports_external.object({
   draftid: exports_external.coerce.number().int().describe("The new draft item id to resume files to")
 });
 var tinyAutosaveResumeSessionMutationResponseSchema = tinyAutosaveResumeSession200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/tinyAutosaveUpdateSessionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/tinyAutosaveUpdateSessionSchema.js
 var tinyAutosaveUpdateSession200Schema = exports_external.object({});
 var tinyAutosaveUpdateSession400Schema = errorResponseSchema;
 var tinyAutosaveUpdateSessionMutationRequestSchema = exports_external.object({
@@ -31884,7 +31840,7 @@ var tinyAutosaveUpdateSessionMutationRequestSchema = exports_external.object({
   drafttext: exports_external.coerce.string().describe("The draft text")
 });
 var tinyAutosaveUpdateSessionMutationResponseSchema = tinyAutosaveUpdateSession200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/tinyEquationFilterSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/tinyEquationFilterSchema.js
 var tinyEquationFilter200Schema = exports_external.object({
   content: exports_external.coerce.string().describe("Filtered content")
 });
@@ -31894,7 +31850,7 @@ var tinyEquationFilterMutationRequestSchema = exports_external.object({
   content: exports_external.coerce.string().describe("The equation content")
 });
 var tinyEquationFilterMutationResponseSchema = tinyEquationFilter200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/tinyPremiumGetApiKeySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/tinyPremiumGetApiKeySchema.js
 var tinyPremiumGetApiKey200Schema = exports_external.object({
   apikey: exports_external.coerce.string().describe("The API key for Tiny Premium")
 });
@@ -31903,14 +31859,14 @@ var tinyPremiumGetApiKeyMutationRequestSchema = exports_external.object({
   contextid: exports_external.coerce.number().int().describe("The current context ID.")
 });
 var tinyPremiumGetApiKeyMutationResponseSchema = tinyPremiumGetApiKey200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolAdminPresetsDeletePresetSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolAdminPresetsDeletePresetSchema.js
 var toolAdminPresetsDeletePreset200Schema = exports_external.null();
 var toolAdminPresetsDeletePreset400Schema = errorResponseSchema;
 var toolAdminPresetsDeletePresetMutationRequestSchema = exports_external.object({
   id: exports_external.coerce.number().int()
 });
 var toolAdminPresetsDeletePresetMutationResponseSchema = toolAdminPresetsDeletePreset200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolAnalyticsPotentialContextsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolAnalyticsPotentialContextsSchema.js
 var toolAnalyticsPotentialContexts200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("ID of the context"),
   name: exports_external.coerce.string().describe("The context name")
@@ -31921,7 +31877,7 @@ var toolAnalyticsPotentialContextsMutationRequestSchema = exports_external.objec
   modelid: exports_external.coerce.number().int().describe("The model id").nullable().nullish()
 });
 var toolAnalyticsPotentialContextsMutationResponseSchema = toolAnalyticsPotentialContexts200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolBehatGetEntityGeneratorSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolBehatGetEntityGeneratorSchema.js
 var toolBehatGetEntityGenerator200Schema = exports_external.object({
   required: exports_external.array(exports_external.coerce.string().describe("Required field")).optional()
 });
@@ -31930,7 +31886,7 @@ var toolBehatGetEntityGeneratorMutationRequestSchema = exports_external.object({
   entitytype: exports_external.coerce.string().describe("Entity type that can be created by a generator.")
 });
 var toolBehatGetEntityGeneratorMutationResponseSchema = toolBehatGetEntityGenerator200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyApproveDataRequestSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyApproveDataRequestSchema.js
 var toolDataprivacyApproveDataRequest200Schema = exports_external.object({
   result: exports_external.boolean().describe("The processing result"),
   warnings: exports_external.array(exports_external.object({
@@ -31945,7 +31901,7 @@ var toolDataprivacyApproveDataRequestMutationRequestSchema = exports_external.ob
   requestid: exports_external.coerce.number().int().describe("The request ID")
 });
 var toolDataprivacyApproveDataRequestMutationResponseSchema = toolDataprivacyApproveDataRequest200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyBulkApproveDataRequestsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyBulkApproveDataRequestsSchema.js
 var toolDataprivacyBulkApproveDataRequests200Schema = exports_external.object({
   result: exports_external.boolean().describe("The processing result"),
   warnings: exports_external.array(exports_external.object({
@@ -31960,7 +31916,7 @@ var toolDataprivacyBulkApproveDataRequestsMutationRequestSchema = exports_extern
   requestids: exports_external.array(exports_external.coerce.number().int().describe("The request ID"))
 });
 var toolDataprivacyBulkApproveDataRequestsMutationResponseSchema = toolDataprivacyBulkApproveDataRequests200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyBulkDenyDataRequestsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyBulkDenyDataRequestsSchema.js
 var toolDataprivacyBulkDenyDataRequests200Schema = exports_external.object({
   result: exports_external.boolean().describe("The processing result"),
   warnings: exports_external.array(exports_external.object({
@@ -31975,7 +31931,7 @@ var toolDataprivacyBulkDenyDataRequestsMutationRequestSchema = exports_external.
   requestids: exports_external.array(exports_external.coerce.number().int().describe("The request ID"))
 });
 var toolDataprivacyBulkDenyDataRequestsMutationResponseSchema = toolDataprivacyBulkDenyDataRequests200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyCancelDataRequestSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyCancelDataRequestSchema.js
 var toolDataprivacyCancelDataRequest200Schema = exports_external.object({
   result: exports_external.boolean().describe("The processing result"),
   warnings: exports_external.array(exports_external.object({
@@ -31990,7 +31946,7 @@ var toolDataprivacyCancelDataRequestMutationRequestSchema = exports_external.obj
   requestid: exports_external.coerce.number().int().describe("The request ID")
 });
 var toolDataprivacyCancelDataRequestMutationResponseSchema = toolDataprivacyCancelDataRequest200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyConfirmContextsForDeletionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyConfirmContextsForDeletionSchema.js
 var toolDataprivacyConfirmContextsForDeletion200Schema = exports_external.object({
   result: exports_external.boolean().describe("Whether the record was properly marked for deletion or not"),
   warnings: exports_external.array(exports_external.object({
@@ -32005,7 +31961,7 @@ var toolDataprivacyConfirmContextsForDeletionMutationRequestSchema = exports_ext
   ids: exports_external.array(exports_external.coerce.number().int().describe("Expired context record ID")).optional()
 });
 var toolDataprivacyConfirmContextsForDeletionMutationResponseSchema = toolDataprivacyConfirmContextsForDeletion200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyContactDpoSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyContactDpoSchema.js
 var toolDataprivacyContactDpo200Schema = exports_external.object({
   result: exports_external.boolean().describe("The processing result"),
   warnings: exports_external.array(exports_external.object({
@@ -32020,7 +31976,7 @@ var toolDataprivacyContactDpoMutationRequestSchema = exports_external.object({
   message: exports_external.coerce.string().describe("The user's message to the Data Protection Officer(s)")
 });
 var toolDataprivacyContactDpoMutationResponseSchema = toolDataprivacyContactDpo200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyCreateCategoryFormSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyCreateCategoryFormSchema.js
 var toolDataprivacyCreateCategoryForm200Schema = exports_external.object({
   category: exports_external.object({
     name: exports_external.coerce.string().describe("The category name."),
@@ -32044,7 +32000,7 @@ var toolDataprivacyCreateCategoryFormMutationRequestSchema = exports_external.ob
   jsonformdata: exports_external.coerce.string().describe("The data to create the category, encoded as a json array")
 });
 var toolDataprivacyCreateCategoryFormMutationResponseSchema = toolDataprivacyCreateCategoryForm200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyCreateDataRequestSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyCreateDataRequestSchema.js
 var toolDataprivacyCreateDataRequest200Schema = exports_external.object({
   datarequestid: exports_external.coerce.number().int().describe("The id of the created data request."),
   warnings: exports_external.array(exports_external.object({
@@ -32061,7 +32017,7 @@ var toolDataprivacyCreateDataRequestMutationRequestSchema = exports_external.obj
   foruserid: exports_external.coerce.number().int().default(0).describe("The id of the user to create the data request for. Empty for current user.").nullable().nullish()
 });
 var toolDataprivacyCreateDataRequestMutationResponseSchema = toolDataprivacyCreateDataRequest200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyCreatePurposeFormSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyCreatePurposeFormSchema.js
 var toolDataprivacyCreatePurposeForm200Schema = exports_external.object({
   purpose: exports_external.object({
     name: exports_external.coerce.string().describe("The purpose name."),
@@ -32099,7 +32055,7 @@ var toolDataprivacyCreatePurposeFormMutationRequestSchema = exports_external.obj
   jsonformdata: exports_external.coerce.string().describe("The data to create the purpose, encoded as a json array")
 });
 var toolDataprivacyCreatePurposeFormMutationResponseSchema = toolDataprivacyCreatePurposeForm200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyDeleteCategorySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyDeleteCategorySchema.js
 var toolDataprivacyDeleteCategory200Schema = exports_external.object({
   result: exports_external.boolean().describe("The processing result"),
   warnings: exports_external.array(exports_external.object({
@@ -32114,7 +32070,7 @@ var toolDataprivacyDeleteCategoryMutationRequestSchema = exports_external.object
   id: exports_external.coerce.number().int().describe("The category ID")
 });
 var toolDataprivacyDeleteCategoryMutationResponseSchema = toolDataprivacyDeleteCategory200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyDeletePurposeSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyDeletePurposeSchema.js
 var toolDataprivacyDeletePurpose200Schema = exports_external.object({
   result: exports_external.boolean().describe("The processing result"),
   warnings: exports_external.array(exports_external.object({
@@ -32129,7 +32085,7 @@ var toolDataprivacyDeletePurposeMutationRequestSchema = exports_external.object(
   id: exports_external.coerce.number().int().describe("The purpose ID")
 });
 var toolDataprivacyDeletePurposeMutationResponseSchema = toolDataprivacyDeletePurpose200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyDenyDataRequestSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyDenyDataRequestSchema.js
 var toolDataprivacyDenyDataRequest200Schema = exports_external.object({
   result: exports_external.boolean().describe("The processing result"),
   warnings: exports_external.array(exports_external.object({
@@ -32144,7 +32100,7 @@ var toolDataprivacyDenyDataRequestMutationRequestSchema = exports_external.objec
   requestid: exports_external.coerce.number().int().describe("The request ID")
 });
 var toolDataprivacyDenyDataRequestMutationResponseSchema = toolDataprivacyDenyDataRequest200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyGetAccessInformationSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyGetAccessInformationSchema.js
 var toolDataprivacyGetAccessInformation200Schema = exports_external.object({
   cancontactdpo: exports_external.boolean().describe("Can contact dpo."),
   canmanagedatarequests: exports_external.boolean().describe("Can manage data requests."),
@@ -32161,7 +32117,7 @@ var toolDataprivacyGetAccessInformation200Schema = exports_external.object({
 });
 var toolDataprivacyGetAccessInformation400Schema = errorResponseSchema;
 var toolDataprivacyGetAccessInformationMutationResponseSchema = toolDataprivacyGetAccessInformation200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyGetActivityOptionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyGetActivityOptionsSchema.js
 var toolDataprivacyGetActivityOptions200Schema = exports_external.object({
   options: exports_external.array(exports_external.object({
     name: exports_external.coerce.string().describe("The plugin name of the activity"),
@@ -32179,7 +32135,7 @@ var toolDataprivacyGetActivityOptionsMutationRequestSchema = exports_external.ob
   nodefaults: exports_external.boolean().default(false).describe("Whether to fetch all activities or only those without defaults").nullable().nullish()
 });
 var toolDataprivacyGetActivityOptionsMutationResponseSchema = toolDataprivacyGetActivityOptions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyGetCategoryOptionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyGetCategoryOptionsSchema.js
 var toolDataprivacyGetCategoryOptions200Schema = exports_external.object({
   options: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The category ID"),
@@ -32198,7 +32154,7 @@ var toolDataprivacyGetCategoryOptionsMutationRequestSchema = exports_external.ob
   includenotset: exports_external.boolean().default(false).describe('Include option "Not set"').nullable().nullish()
 });
 var toolDataprivacyGetCategoryOptionsMutationResponseSchema = toolDataprivacyGetCategoryOptions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyGetDataRequestSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyGetDataRequestSchema.js
 var toolDataprivacyGetDataRequest200Schema = exports_external.object({
   result: exports_external.object({
     type: exports_external.coerce.number().int().describe("type"),
@@ -32281,7 +32237,7 @@ var toolDataprivacyGetDataRequestMutationRequestSchema = exports_external.object
   requestid: exports_external.coerce.number().int().describe("The request ID")
 });
 var toolDataprivacyGetDataRequestMutationResponseSchema = toolDataprivacyGetDataRequest200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyGetDataRequestsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyGetDataRequestsSchema.js
 var toolDataprivacyGetDataRequests200Schema = exports_external.object({
   requests: exports_external.array(exports_external.object({
     type: exports_external.coerce.number().int().describe("type"),
@@ -32370,7 +32326,7 @@ var toolDataprivacyGetDataRequestsMutationRequestSchema = exports_external.objec
   limitnum: exports_external.coerce.number().int().default(0).describe("The number of data requests to get.").nullable().nullish()
 });
 var toolDataprivacyGetDataRequestsMutationResponseSchema = toolDataprivacyGetDataRequests200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyGetPurposeOptionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyGetPurposeOptionsSchema.js
 var toolDataprivacyGetPurposeOptions200Schema = exports_external.object({
   options: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("The purpose ID"),
@@ -32389,7 +32345,7 @@ var toolDataprivacyGetPurposeOptionsMutationRequestSchema = exports_external.obj
   includenotset: exports_external.boolean().default(false).describe('Include option "Not set"').nullable().nullish()
 });
 var toolDataprivacyGetPurposeOptionsMutationResponseSchema = toolDataprivacyGetPurposeOptions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyGetUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyGetUsersSchema.js
 var toolDataprivacyGetUsers200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("ID of the user"),
   fullname: exports_external.coerce.string().describe("The fullname of the user"),
@@ -32403,7 +32359,7 @@ var toolDataprivacyGetUsersMutationRequestSchema = exports_external.object({
   query: exports_external.coerce.string().describe("The search query")
 });
 var toolDataprivacyGetUsersMutationResponseSchema = toolDataprivacyGetUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyMarkCompleteSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyMarkCompleteSchema.js
 var toolDataprivacyMarkComplete200Schema = exports_external.object({
   result: exports_external.boolean().describe("The processing result"),
   warnings: exports_external.array(exports_external.object({
@@ -32418,7 +32374,7 @@ var toolDataprivacyMarkCompleteMutationRequestSchema = exports_external.object({
   requestid: exports_external.coerce.number().int().describe("The request ID")
 });
 var toolDataprivacyMarkCompleteMutationResponseSchema = toolDataprivacyMarkComplete200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacySetContextDefaultsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacySetContextDefaultsSchema.js
 var toolDataprivacySetContextDefaults200Schema = exports_external.object({
   result: exports_external.boolean().describe("Whether the context defaults were successfully set or not"),
   warnings: exports_external.array(exports_external.object({
@@ -32437,7 +32393,7 @@ var toolDataprivacySetContextDefaultsMutationRequestSchema = exports_external.ob
   override: exports_external.boolean().default(false).describe("Whether to override existing instances with the defaults").nullable().nullish()
 });
 var toolDataprivacySetContextDefaultsMutationResponseSchema = toolDataprivacySetContextDefaults200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacySetContextFormSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacySetContextFormSchema.js
 var toolDataprivacySetContextForm200Schema = exports_external.object({
   result: exports_external.boolean().describe("Whether the data was properly set or not"),
   warnings: exports_external.array(exports_external.object({
@@ -32452,7 +32408,7 @@ var toolDataprivacySetContextFormMutationRequestSchema = exports_external.object
   jsonformdata: exports_external.coerce.string().describe("The context level data, encoded as a json array")
 });
 var toolDataprivacySetContextFormMutationResponseSchema = toolDataprivacySetContextForm200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacySetContextlevelFormSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacySetContextlevelFormSchema.js
 var toolDataprivacySetContextlevelForm200Schema = exports_external.object({
   result: exports_external.boolean().describe("Whether the data was properly set or not"),
   warnings: exports_external.array(exports_external.object({
@@ -32467,7 +32423,7 @@ var toolDataprivacySetContextlevelFormMutationRequestSchema = exports_external.o
   jsonformdata: exports_external.coerce.string().describe("The context level data, encoded as a json array")
 });
 var toolDataprivacySetContextlevelFormMutationResponseSchema = toolDataprivacySetContextlevelForm200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacySubmitSelectedCoursesFormSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacySubmitSelectedCoursesFormSchema.js
 var toolDataprivacySubmitSelectedCoursesForm200Schema = exports_external.object({
   result: exports_external.boolean().describe("The processing result"),
   warnings: exports_external.array(exports_external.object({
@@ -32483,7 +32439,7 @@ var toolDataprivacySubmitSelectedCoursesFormMutationRequestSchema = exports_exte
   jsonformdata: exports_external.coerce.string().describe("The data of selected courses form, encoded as a json array")
 });
 var toolDataprivacySubmitSelectedCoursesFormMutationResponseSchema = toolDataprivacySubmitSelectedCoursesForm200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyTreeExtraBranchesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolDataprivacyTreeExtraBranchesSchema.js
 var toolDataprivacyTreeExtraBranches200Schema = exports_external.object({
   branches: exports_external.array(exports_external.object({
     text: exports_external.coerce.string().describe("The node text"),
@@ -32515,7 +32471,7 @@ var toolDataprivacyTreeExtraBranchesMutationRequestSchema = exports_external.obj
   element: exports_external.coerce.string().describe("The element we are interested on")
 });
 var toolDataprivacyTreeExtraBranchesMutationResponseSchema = toolDataprivacyTreeExtraBranches200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForCompetenciesManagePageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForCompetenciesManagePageSchema.js
 var toolLpDataForCompetenciesManagePage200Schema = exports_external.object({
   framework: exports_external.object({
     shortname: exports_external.coerce.string().describe("shortname"),
@@ -32548,7 +32504,7 @@ var toolLpDataForCompetenciesManagePageMutationRequestSchema = exports_external.
   search: exports_external.coerce.string().default("").describe("A search string").nullable().nullish()
 });
 var toolLpDataForCompetenciesManagePageMutationResponseSchema = toolLpDataForCompetenciesManagePage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForCompetencyFrameworksManagePageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForCompetencyFrameworksManagePageSchema.js
 var toolLpDataForCompetencyFrameworksManagePage200Schema = exports_external.object({
   competencyframeworks: exports_external.array(exports_external.object({
     shortname: exports_external.coerce.string().describe("shortname"),
@@ -32582,7 +32538,7 @@ var toolLpDataForCompetencyFrameworksManagePageMutationRequestSchema = exports_e
   })
 });
 var toolLpDataForCompetencyFrameworksManagePageMutationResponseSchema = toolLpDataForCompetencyFrameworksManagePage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForCompetencySummarySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForCompetencySummarySchema.js
 var toolLpDataForCompetencySummary200Schema = exports_external.object({
   linkedcourses: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("id"),
@@ -32698,7 +32654,7 @@ var toolLpDataForCompetencySummaryMutationRequestSchema = exports_external.objec
   includecourses: exports_external.boolean().default(false).describe("Include or not competency courses").nullable().nullish()
 });
 var toolLpDataForCompetencySummaryMutationResponseSchema = toolLpDataForCompetencySummary200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForCourseCompetenciesPageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForCourseCompetenciesPageSchema.js
 var toolLpDataForCourseCompetenciesPage200Schema = exports_external.object({
   courseid: exports_external.coerce.number().int().describe("The current course id"),
   pagecontextid: exports_external.coerce.number().int().describe("The current page context ID."),
@@ -32916,7 +32872,7 @@ var toolLpDataForCourseCompetenciesPageMutationRequestSchema = exports_external.
   moduleid: exports_external.coerce.number().int().default(0).describe("The module id").nullable().nullish()
 });
 var toolLpDataForCourseCompetenciesPageMutationResponseSchema = toolLpDataForCourseCompetenciesPage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForPlanPageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForPlanPageSchema.js
 var toolLpDataForPlanPage200Schema = exports_external.object({
   plan: exports_external.object({
     name: exports_external.coerce.string().describe("name"),
@@ -33113,7 +33069,7 @@ var toolLpDataForPlanPageMutationRequestSchema = exports_external.object({
   planid: exports_external.coerce.number().int().describe("The plan id")
 });
 var toolLpDataForPlanPageMutationResponseSchema = toolLpDataForPlanPage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForPlansPageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForPlansPageSchema.js
 var toolLpDataForPlansPage200Schema = exports_external.object({
   userid: exports_external.coerce.number().int().describe("The learning plan user id"),
   plans: exports_external.array(exports_external.object({
@@ -33216,7 +33172,7 @@ var toolLpDataForPlansPageMutationRequestSchema = exports_external.object({
   userid: exports_external.coerce.number().int().describe("The user id")
 });
 var toolLpDataForPlansPageMutationResponseSchema = toolLpDataForPlansPage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForRelatedCompetenciesSectionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForRelatedCompetenciesSectionSchema.js
 var toolLpDataForRelatedCompetenciesSection200Schema = exports_external.object({
   relatedcompetencies: exports_external.array(exports_external.object({
     shortname: exports_external.coerce.string().describe("shortname"),
@@ -33244,7 +33200,7 @@ var toolLpDataForRelatedCompetenciesSectionMutationRequestSchema = exports_exter
   competencyid: exports_external.coerce.number().int().describe("The competency id")
 });
 var toolLpDataForRelatedCompetenciesSectionMutationResponseSchema = toolLpDataForRelatedCompetenciesSection200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForTemplateCompetenciesPageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForTemplateCompetenciesPageSchema.js
 var toolLpDataForTemplateCompetenciesPage200Schema = exports_external.object({
   template: exports_external.object({
     shortname: exports_external.coerce.string().describe("shortname"),
@@ -33424,7 +33380,7 @@ var toolLpDataForTemplateCompetenciesPageMutationRequestSchema = exports_externa
   })
 });
 var toolLpDataForTemplateCompetenciesPageMutationResponseSchema = toolLpDataForTemplateCompetenciesPage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForTemplatesManagePageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForTemplatesManagePageSchema.js
 var toolLpDataForTemplatesManagePage200Schema = exports_external.object({
   templates: exports_external.array(exports_external.object({
     shortname: exports_external.coerce.string().describe("shortname"),
@@ -33459,7 +33415,7 @@ var toolLpDataForTemplatesManagePageMutationRequestSchema = exports_external.obj
   })
 });
 var toolLpDataForTemplatesManagePageMutationResponseSchema = toolLpDataForTemplatesManagePage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForUserCompetencySummaryInCourseSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForUserCompetencySummaryInCourseSchema.js
 var toolLpDataForUserCompetencySummaryInCourse200Schema = exports_external.object({
   usercompetencysummary: exports_external.object({
     showrelatedcompetencies: exports_external.boolean().describe("showrelatedcompetencies"),
@@ -33836,7 +33792,7 @@ var toolLpDataForUserCompetencySummaryInCourseMutationRequestSchema = exports_ex
   courseid: exports_external.coerce.number().int().describe("Data base record id for the course")
 });
 var toolLpDataForUserCompetencySummaryInCourseMutationResponseSchema = toolLpDataForUserCompetencySummaryInCourse200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForUserCompetencySummaryInPlanSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForUserCompetencySummaryInPlanSchema.js
 var toolLpDataForUserCompetencySummaryInPlan200Schema = exports_external.object({
   usercompetencysummary: exports_external.object({
     showrelatedcompetencies: exports_external.boolean().describe("showrelatedcompetencies"),
@@ -34181,7 +34137,7 @@ var toolLpDataForUserCompetencySummaryInPlanMutationRequestSchema = exports_exte
   planid: exports_external.coerce.number().int().describe("Data base record id for the plan")
 });
 var toolLpDataForUserCompetencySummaryInPlanMutationResponseSchema = toolLpDataForUserCompetencySummaryInPlan200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForUserCompetencySummarySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForUserCompetencySummarySchema.js
 var toolLpDataForUserCompetencySummary200Schema = exports_external.object({
   showrelatedcompetencies: exports_external.boolean().describe("showrelatedcompetencies"),
   cangrade: exports_external.boolean().describe("cangrade"),
@@ -34434,7 +34390,7 @@ var toolLpDataForUserCompetencySummaryMutationRequestSchema = exports_external.o
   competencyid: exports_external.coerce.number().int().describe("Data base record id for the competency")
 });
 var toolLpDataForUserCompetencySummaryMutationResponseSchema = toolLpDataForUserCompetencySummary200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForUserEvidenceListPageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForUserEvidenceListPageSchema.js
 var toolLpDataForUserEvidenceListPage200Schema = exports_external.object({
   canmanage: exports_external.boolean().describe("Can the current user manage the user's evidence"),
   userid: exports_external.coerce.number().int().describe("The user ID"),
@@ -34544,7 +34500,7 @@ var toolLpDataForUserEvidenceListPageMutationRequestSchema = exports_external.ob
   userid: exports_external.coerce.number().int().describe("The user ID")
 });
 var toolLpDataForUserEvidenceListPageMutationResponseSchema = toolLpDataForUserEvidenceListPage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForUserEvidencePageSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpDataForUserEvidencePageSchema.js
 var toolLpDataForUserEvidencePage200Schema = exports_external.object({
   userevidence: exports_external.object({
     userid: exports_external.coerce.number().int().describe("userid"),
@@ -34651,7 +34607,7 @@ var toolLpDataForUserEvidencePageMutationRequestSchema = exports_external.object
   id: exports_external.coerce.number().int().describe("The user evidence ID")
 });
 var toolLpDataForUserEvidencePageMutationResponseSchema = toolLpDataForUserEvidencePage200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpListCoursesUsingCompetencySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpListCoursesUsingCompetencySchema.js
 var toolLpListCoursesUsingCompetency200Schema = exports_external.array(exports_external.object({
   id: exports_external.coerce.number().int().describe("id"),
   fullname: exports_external.coerce.string().describe("fullname"),
@@ -34681,7 +34637,7 @@ var toolLpListCoursesUsingCompetencyMutationRequestSchema = exports_external.obj
   id: exports_external.coerce.number().int().describe("The competency id")
 });
 var toolLpListCoursesUsingCompetencyMutationResponseSchema = toolLpListCoursesUsingCompetency200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpSearchCohortsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpSearchCohortsSchema.js
 var toolLpSearchCohorts200Schema = exports_external.object({
   cohorts: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("ID of the cohort"),
@@ -34713,7 +34669,7 @@ var toolLpSearchCohortsMutationRequestSchema = exports_external.object({
   limitnum: exports_external.coerce.number().int().default(25).describe("Number of records to fetch").nullable().nullish()
 });
 var toolLpSearchCohortsMutationResponseSchema = toolLpSearchCohorts200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpSearchUsersSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolLpSearchUsersSchema.js
 var toolLpSearchUsers200Schema = exports_external.object({
   users: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("id"),
@@ -34739,7 +34695,7 @@ var toolLpSearchUsersMutationRequestSchema = exports_external.object({
   limitnum: exports_external.coerce.string().default(100).describe("Number of records to fetch").nullable().nullish()
 });
 var toolLpSearchUsersMutationResponseSchema = toolLpSearchUsers200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMobileCallExternalFunctionsSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMobileCallExternalFunctionsSchema.js
 var toolMobileCallExternalFunctions200Schema = exports_external.object({
   responses: exports_external.array(exports_external.object({
     error: exports_external.boolean().describe("Whether an exception was thrown."),
@@ -34759,7 +34715,7 @@ var toolMobileCallExternalFunctionsMutationRequestSchema = exports_external.obje
   }))
 });
 var toolMobileCallExternalFunctionsMutationResponseSchema = toolMobileCallExternalFunctions200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMobileGetAutologinKeySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMobileGetAutologinKeySchema.js
 var toolMobileGetAutologinKey200Schema = exports_external.object({
   key: exports_external.coerce.string().describe("Auto-login key for a single usage with time expiration."),
   autologinurl: exports_external.coerce.string().describe("Auto-login URL."),
@@ -34775,7 +34731,7 @@ var toolMobileGetAutologinKeyMutationRequestSchema = exports_external.object({
   privatetoken: exports_external.coerce.string().describe("Private token, usually generated by login/token.php")
 });
 var toolMobileGetAutologinKeyMutationResponseSchema = toolMobileGetAutologinKey200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMobileGetConfigSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMobileGetConfigSchema.js
 var toolMobileGetConfig200Schema = exports_external.object({
   settings: exports_external.array(exports_external.object({
     name: exports_external.coerce.string().describe("The name of the setting"),
@@ -34793,7 +34749,7 @@ var toolMobileGetConfigMutationRequestSchema = exports_external.object({
   section: exports_external.coerce.string().default("").describe("Settings section name.").nullable().nullish()
 });
 var toolMobileGetConfigMutationResponseSchema = toolMobileGetConfig200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMobileGetContentSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMobileGetContentSchema.js
 var toolMobileGetContent200Schema = exports_external.object({
   templates: exports_external.array(exports_external.object({
     id: exports_external.coerce.string().describe("ID of the template."),
@@ -34831,7 +34787,7 @@ var toolMobileGetContentMutationRequestSchema = exports_external.object({
   })).optional()
 });
 var toolMobileGetContentMutationResponseSchema = toolMobileGetContent200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMobileGetPluginsSupportingMobileSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMobileGetPluginsSupportingMobileSchema.js
 var toolMobileGetPluginsSupportingMobile200Schema = exports_external.object({
   plugins: exports_external.array(exports_external.object({
     component: exports_external.coerce.string().describe("The plugin component name."),
@@ -34854,7 +34810,7 @@ var toolMobileGetPluginsSupportingMobile200Schema = exports_external.object({
 });
 var toolMobileGetPluginsSupportingMobile400Schema = errorResponseSchema;
 var toolMobileGetPluginsSupportingMobileMutationResponseSchema = toolMobileGetPluginsSupportingMobile200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMobileGetPublicConfigSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMobileGetPublicConfigSchema.js
 var toolMobileGetPublicConfig200Schema = exports_external.object({
   wwwroot: exports_external.coerce.string().describe("Site URL."),
   httpswwwroot: exports_external.coerce.string().describe("Site https URL (if httpslogin is enabled)."),
@@ -34911,7 +34867,7 @@ var toolMobileGetPublicConfig200Schema = exports_external.object({
 });
 var toolMobileGetPublicConfig400Schema = errorResponseSchema;
 var toolMobileGetPublicConfigMutationResponseSchema = toolMobileGetPublicConfig200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMobileGetTokensForQrLoginSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMobileGetTokensForQrLoginSchema.js
 var toolMobileGetTokensForQrLogin200Schema = exports_external.object({
   token: exports_external.coerce.string().describe("A valid WebService token for the official mobile app service."),
   privatetoken: exports_external.coerce.string().describe("Private token used for auto-login processes."),
@@ -34928,7 +34884,7 @@ var toolMobileGetTokensForQrLoginMutationRequestSchema = exports_external.object
   userid: exports_external.coerce.number().int().describe("The user the key belongs to.")
 });
 var toolMobileGetTokensForQrLoginMutationResponseSchema = toolMobileGetTokensForQrLogin200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMobileValidateSubscriptionKeySchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMobileValidateSubscriptionKeySchema.js
 var toolMobileValidateSubscriptionKey200Schema = exports_external.object({
   validated: exports_external.boolean().describe("Whether the key is validated or not."),
   warnings: exports_external.array(exports_external.object({
@@ -34943,7 +34899,7 @@ var toolMobileValidateSubscriptionKeyMutationRequestSchema = exports_external.ob
   key: exports_external.coerce.string().describe("Site subscription temporary key.")
 });
 var toolMobileValidateSubscriptionKeyMutationResponseSchema = toolMobileValidateSubscriptionKey200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMoodlenetSearchCoursesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMoodlenetSearchCoursesSchema.js
 var toolMoodlenetSearchCourses200Schema = exports_external.object({
   courses: exports_external.array(exports_external.object({
     id: exports_external.coerce.number().int().describe("course id"),
@@ -34959,7 +34915,7 @@ var toolMoodlenetSearchCoursesMutationRequestSchema = exports_external.object({
   searchvalue: exports_external.coerce.string().describe("search value")
 });
 var toolMoodlenetSearchCoursesMutationResponseSchema = toolMoodlenetSearchCourses200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMoodlenetVerifyWebfingerSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolMoodlenetVerifyWebfingerSchema.js
 var toolMoodlenetVerifyWebfinger200Schema = exports_external.object({
   result: exports_external.boolean().describe("Was the passed content a valid WebFinger?"),
   message: exports_external.coerce.string().describe("Our message for the user"),
@@ -34972,7 +34928,7 @@ var toolMoodlenetVerifyWebfingerMutationRequestSchema = exports_external.object(
   section: exports_external.coerce.number().int().describe("The section within the course we are adding to")
 });
 var toolMoodlenetVerifyWebfingerMutationResponseSchema = toolMoodlenetVerifyWebfinger200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolPolicyGetPolicyVersionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolPolicyGetPolicyVersionSchema.js
 var toolPolicyGetPolicyVersion200Schema = exports_external.object({
   result: exports_external.object({
     policy: exports_external.object({
@@ -34994,7 +34950,7 @@ var toolPolicyGetPolicyVersionMutationRequestSchema = exports_external.object({
   behalfid: exports_external.coerce.number().int().default(0).describe("The id of user on whose behalf the user is viewing the policy").nullable().nullish()
 });
 var toolPolicyGetPolicyVersionMutationResponseSchema = toolPolicyGetPolicyVersion200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolPolicyGetUserAcceptancesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolPolicyGetUserAcceptancesSchema.js
 var toolPolicyGetUserAcceptances200Schema = exports_external.object({
   policies: exports_external.array(exports_external.object({
     policyid: exports_external.coerce.number().int().describe("The policy id."),
@@ -35032,7 +34988,7 @@ var toolPolicyGetUserAcceptancesMutationRequestSchema = exports_external.object(
   userid: exports_external.coerce.number().int().default(0).describe("The user id we want to retrieve the acceptances.").nullable().nullish()
 });
 var toolPolicyGetUserAcceptancesMutationResponseSchema = toolPolicyGetUserAcceptances200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolPolicySetAcceptancesStatusSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolPolicySetAcceptancesStatusSchema.js
 var toolPolicySetAcceptancesStatus200Schema = exports_external.object({
   policyagreed: exports_external.coerce.number().int().describe("Whether the user has provided acceptance to all current site policies. 1 if yes, 0 if not"),
   warnings: exports_external.array(exports_external.object({
@@ -35052,14 +35008,14 @@ var toolPolicySetAcceptancesStatusMutationRequestSchema = exports_external.objec
   userid: exports_external.coerce.number().int().default(0).describe("The user id we want to set the acceptances. Default is the current user.").nullable().nullish()
 });
 var toolPolicySetAcceptancesStatusMutationResponseSchema = toolPolicySetAcceptancesStatus200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolPolicySubmitAcceptOnBehalfSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolPolicySubmitAcceptOnBehalfSchema.js
 var toolPolicySubmitAcceptOnBehalf200Schema = exports_external.boolean().describe("success");
 var toolPolicySubmitAcceptOnBehalf400Schema = errorResponseSchema;
 var toolPolicySubmitAcceptOnBehalfMutationRequestSchema = exports_external.object({
   jsonformdata: exports_external.coerce.string().describe("The data from the create group form, encoded as a json array")
 });
 var toolPolicySubmitAcceptOnBehalfMutationResponseSchema = toolPolicySubmitAcceptOnBehalf200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolTemplatelibraryListTemplatesSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolTemplatelibraryListTemplatesSchema.js
 var toolTemplatelibraryListTemplates200Schema = exports_external.array(exports_external.coerce.string().describe("The template name (format is component/templatename)"));
 var toolTemplatelibraryListTemplates400Schema = errorResponseSchema;
 var toolTemplatelibraryListTemplatesMutationRequestSchema = exports_external.object({
@@ -35068,7 +35024,7 @@ var toolTemplatelibraryListTemplatesMutationRequestSchema = exports_external.obj
   themename: exports_external.coerce.string().default("").describe("The current theme").nullable().nullish()
 });
 var toolTemplatelibraryListTemplatesMutationResponseSchema = toolTemplatelibraryListTemplates200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolTemplatelibraryLoadCanonicalTemplateSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolTemplatelibraryLoadCanonicalTemplateSchema.js
 var toolTemplatelibraryLoadCanonicalTemplate200Schema = exports_external.coerce.string().describe("template");
 var toolTemplatelibraryLoadCanonicalTemplate400Schema = errorResponseSchema;
 var toolTemplatelibraryLoadCanonicalTemplateMutationRequestSchema = exports_external.object({
@@ -35076,7 +35032,7 @@ var toolTemplatelibraryLoadCanonicalTemplateMutationRequestSchema = exports_exte
   template: exports_external.coerce.string().describe("name of the template")
 });
 var toolTemplatelibraryLoadCanonicalTemplateMutationResponseSchema = toolTemplatelibraryLoadCanonicalTemplate200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolUsertoursCompleteTourSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolUsertoursCompleteTourSchema.js
 var toolUsertoursCompleteTour200Schema = exports_external.object({});
 var toolUsertoursCompleteTour400Schema = errorResponseSchema;
 var toolUsertoursCompleteTourMutationRequestSchema = exports_external.object({
@@ -35087,7 +35043,7 @@ var toolUsertoursCompleteTourMutationRequestSchema = exports_external.object({
   stepindex: exports_external.coerce.number().int().describe("Step Number")
 });
 var toolUsertoursCompleteTourMutationResponseSchema = toolUsertoursCompleteTour200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolUsertoursFetchAndStartTourSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolUsertoursFetchAndStartTourSchema.js
 var toolUsertoursFetchAndStartTour200Schema = exports_external.object({
   tourconfig: exports_external.object({
     name: exports_external.coerce.string().describe("Tour Name"),
@@ -35113,7 +35069,7 @@ var toolUsertoursFetchAndStartTourMutationRequestSchema = exports_external.objec
   pageurl: exports_external.coerce.string().describe("Page URL")
 });
 var toolUsertoursFetchAndStartTourMutationResponseSchema = toolUsertoursFetchAndStartTour200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolUsertoursResetTourSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolUsertoursResetTourSchema.js
 var toolUsertoursResetTour200Schema = exports_external.object({
   startTour: exports_external.coerce.number().int().describe("Tour ID").nullable().nullish()
 });
@@ -35124,7 +35080,7 @@ var toolUsertoursResetTourMutationRequestSchema = exports_external.object({
   pageurl: exports_external.coerce.string().describe("Current page location")
 });
 var toolUsertoursResetTourMutationResponseSchema = toolUsertoursResetTour200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolUsertoursStepShownSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolUsertoursStepShownSchema.js
 var toolUsertoursStepShown200Schema = exports_external.object({});
 var toolUsertoursStepShown400Schema = errorResponseSchema;
 var toolUsertoursStepShownMutationRequestSchema = exports_external.object({
@@ -35135,7 +35091,7 @@ var toolUsertoursStepShownMutationRequestSchema = exports_external.object({
   stepindex: exports_external.coerce.number().int().describe("Step Number")
 });
 var toolUsertoursStepShownMutationResponseSchema = toolUsertoursStepShown200Schema;
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolXmldbInvokeMoveActionSchema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/gen/zod/toolXmldbInvokeMoveActionSchema.js
 var toolXmldbInvokeMoveAction200Schema = exports_external.null();
 var toolXmldbInvokeMoveAction400Schema = errorResponseSchema;
 var toolXmldbInvokeMoveActionMutationRequestSchema = exports_external.object({
@@ -35216,7 +35172,7 @@ function camelCase(str) {
   return uncapitalize(pascalCase(removeApostrophe(str)));
 }
 
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/schema.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/schema.js
 var moodleSchema = Object.fromEntries(moodleWebservices.map((ws) => {
   const q = `${camelCase(ws)}MutationRequestSchema`;
   const o = `${camelCase(ws)}200Schema`;
@@ -35229,11 +35185,11 @@ var moodleSchema = Object.fromEntries(moodleWebservices.map((ws) => {
   ];
 }));
 
-// node_modules/.pnpm/zod-openapi@4.2.4_zod@3.25.56/node_modules/zod-openapi/dist/extendZodSymbols.chunk.mjs
+// node_modules/.pnpm/zod-openapi@4.2.4_zod@3.25.76/node_modules/zod-openapi/dist/extendZodSymbols.chunk.mjs
 var currentSymbol = Symbol("current");
 var previousSymbol = Symbol("previous");
 
-// node_modules/.pnpm/zod-openapi@4.2.4_zod@3.25.56/node_modules/zod-openapi/dist/extendZod.chunk.mjs
+// node_modules/.pnpm/zod-openapi@4.2.4_zod@3.25.76/node_modules/zod-openapi/dist/extendZod.chunk.mjs
 var mergeOpenApi = (openapi, {
   ref: _ref,
   refType: _refType,
@@ -35324,10 +35280,10 @@ function extendZodWithOpenApi(zod) {
   };
 }
 
-// node_modules/.pnpm/zod-openapi@4.2.4_zod@3.25.56/node_modules/zod-openapi/dist/extend.mjs
+// node_modules/.pnpm/zod-openapi@4.2.4_zod@3.25.76/node_modules/zod-openapi/dist/extend.mjs
 extendZodWithOpenApi(exports_external);
 
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/usecase-schemas.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/usecase-schemas.js
 var unenrolSuspendedUsersInput = exports_external.object({
   courseid: exports_external.number().openapi({ description: "Course ID" })
 });
@@ -35348,10 +35304,10 @@ var enrolUsersByUsernameOutput = exports_external.object({
   url: exports_external.string()
 });
 
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/moodle.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/moodle.js
 var import_qs = __toESM(require_lib(), 1);
 
-// node_modules/.pnpm/ky@1.8.1/node_modules/ky/distribution/errors/HTTPError.js
+// node_modules/.pnpm/ky@1.8.2/node_modules/ky/distribution/errors/HTTPError.js
 class HTTPError extends Error {
   response;
   request;
@@ -35369,7 +35325,7 @@ class HTTPError extends Error {
   }
 }
 
-// node_modules/.pnpm/ky@1.8.1/node_modules/ky/distribution/errors/TimeoutError.js
+// node_modules/.pnpm/ky@1.8.2/node_modules/ky/distribution/errors/TimeoutError.js
 class TimeoutError extends Error {
   request;
   constructor(request) {
@@ -35379,7 +35335,7 @@ class TimeoutError extends Error {
   }
 }
 
-// node_modules/.pnpm/ky@1.8.1/node_modules/ky/distribution/core/constants.js
+// node_modules/.pnpm/ky@1.8.2/node_modules/ky/distribution/core/constants.js
 var supportsRequestStreams = (() => {
   let duplexAccessed = false;
   let hasContentType = false;
@@ -35405,6 +35361,7 @@ var supportsRequestStreams = (() => {
   return duplexAccessed && !hasContentType;
 })();
 var supportsAbortController = typeof globalThis.AbortController === "function";
+var supportsAbortSignal = typeof globalThis.AbortSignal === "function" && typeof globalThis.AbortSignal.any === "function";
 var supportsResponseStreams = typeof globalThis.ReadableStream === "function";
 var supportsFormData = typeof globalThis.FormData === "function";
 var requestMethods = ["get", "post", "put", "patch", "head", "delete"];
@@ -35455,7 +35412,7 @@ var requestOptionsRegistry = {
   priority: true
 };
 
-// node_modules/.pnpm/ky@1.8.1/node_modules/ky/distribution/utils/body.js
+// node_modules/.pnpm/ky@1.8.2/node_modules/ky/distribution/utils/body.js
 var getBodySize = (body) => {
   if (!body) {
     return 0;
@@ -35569,10 +35526,10 @@ var streamRequest = (request, onUploadProgress) => {
   });
 };
 
-// node_modules/.pnpm/ky@1.8.1/node_modules/ky/distribution/utils/is.js
+// node_modules/.pnpm/ky@1.8.2/node_modules/ky/distribution/utils/is.js
 var isObject = (value) => value !== null && typeof value === "object";
 
-// node_modules/.pnpm/ky@1.8.1/node_modules/ky/distribution/utils/merge.js
+// node_modules/.pnpm/ky@1.8.2/node_modules/ky/distribution/utils/merge.js
 var validateAndMerge = (...sources) => {
   for (const source of sources) {
     if ((!isObject(source) || Array.isArray(source)) && source !== undefined) {
@@ -35633,7 +35590,7 @@ var deepMerge = (...sources) => {
   return returnValue;
 };
 
-// node_modules/.pnpm/ky@1.8.1/node_modules/ky/distribution/utils/normalize.js
+// node_modules/.pnpm/ky@1.8.2/node_modules/ky/distribution/utils/normalize.js
 var normalizeRequestMethod = (input) => requestMethods.includes(input) ? input.toUpperCase() : input;
 var retryMethods = ["get", "put", "head", "delete", "options", "trace"];
 var retryStatusCodes = [408, 413, 429, 500, 502, 503, 504];
@@ -35666,7 +35623,7 @@ var normalizeRetryOptions = (retry = {}) => {
   };
 };
 
-// node_modules/.pnpm/ky@1.8.1/node_modules/ky/distribution/utils/timeout.js
+// node_modules/.pnpm/ky@1.8.2/node_modules/ky/distribution/utils/timeout.js
 async function timeout(request, init, abortController, options) {
   return new Promise((resolve, reject) => {
     const timeoutId = setTimeout(() => {
@@ -35681,7 +35638,7 @@ async function timeout(request, init, abortController, options) {
   });
 }
 
-// node_modules/.pnpm/ky@1.8.1/node_modules/ky/distribution/utils/delay.js
+// node_modules/.pnpm/ky@1.8.2/node_modules/ky/distribution/utils/delay.js
 async function delay(ms, { signal }) {
   return new Promise((resolve, reject) => {
     if (signal) {
@@ -35699,7 +35656,7 @@ async function delay(ms, { signal }) {
   });
 }
 
-// node_modules/.pnpm/ky@1.8.1/node_modules/ky/distribution/utils/options.js
+// node_modules/.pnpm/ky@1.8.2/node_modules/ky/distribution/utils/options.js
 var findUnknownOptions = (request, options) => {
   const unknownOptions = {};
   for (const key in options) {
@@ -35710,7 +35667,7 @@ var findUnknownOptions = (request, options) => {
   return unknownOptions;
 };
 
-// node_modules/.pnpm/ky@1.8.1/node_modules/ky/distribution/core/Ky.js
+// node_modules/.pnpm/ky@1.8.2/node_modules/ky/distribution/core/Ky.js
 class Ky {
   static create(input, options) {
     const ky = new Ky(input, options);
@@ -35808,7 +35765,7 @@ class Ky {
       }
       this._input = this._options.prefixUrl + this._input;
     }
-    if (supportsAbortController) {
+    if (supportsAbortController && supportsAbortSignal) {
       const originalSignal = this._options.signal ?? this._input.signal;
       this.abortController = new globalThis.AbortController;
       this._options.signal = originalSignal ? AbortSignal.any([originalSignal, this.abortController.signal]) : this.abortController.signal;
@@ -35920,7 +35877,7 @@ class Ky {
   }
 }
 
-// node_modules/.pnpm/ky@1.8.1/node_modules/ky/distribution/index.js
+// node_modules/.pnpm/ky@1.8.2/node_modules/ky/distribution/index.js
 /*! MIT License © Sindre Sorhus */
 var createInstance = (defaults) => {
   const ky = (input, options) => Ky.create(input, validateAndMerge(defaults, options));
@@ -36147,7 +36104,7 @@ g.win32 = y.win32 = y;
 g.posix = g;
 var q = g;
 
-// node_modules/.pnpm/zod-validation-error@3.4.1_zod@3.25.56/node_modules/zod-validation-error/dist/index.mjs
+// node_modules/.pnpm/zod-validation-error@3.5.3_zod@3.25.76/node_modules/zod-validation-error/v3/index.mjs
 function isZodErrorLike(err) {
   return err instanceof Error && err.name === "ZodError" && "issues" in err && Array.isArray(err.issues);
 }
@@ -36175,23 +36132,33 @@ function getIssuesFromErrorOptions(options) {
 function isNonEmptyArray(value) {
   return value.length !== 0;
 }
+function stringifySymbol(symbol) {
+  return symbol.description ?? "";
+}
 var identifierRegex = /[$_\p{ID_Start}][$\u200c\u200d\p{ID_Continue}]*/u;
 function joinPath(path) {
   if (path.length === 1) {
-    return path[0].toString();
+    let propertyKey = path[0];
+    if (typeof propertyKey === "symbol") {
+      propertyKey = stringifySymbol(propertyKey);
+    }
+    return propertyKey.toString() || '""';
   }
-  return path.reduce((acc, item) => {
-    if (typeof item === "number") {
-      return acc + "[" + item.toString() + "]";
+  return path.reduce((acc, propertyKey) => {
+    if (typeof propertyKey === "number") {
+      return acc + "[" + propertyKey.toString() + "]";
     }
-    if (item.includes('"')) {
-      return acc + '["' + escapeQuotes(item) + '"]';
+    if (typeof propertyKey === "symbol") {
+      propertyKey = stringifySymbol(propertyKey);
     }
-    if (!identifierRegex.test(item)) {
-      return acc + '["' + item + '"]';
+    if (propertyKey.includes('"')) {
+      return acc + '["' + escapeQuotes(propertyKey) + '"]';
+    }
+    if (!identifierRegex.test(propertyKey)) {
+      return acc + '["' + propertyKey + '"]';
     }
     const separator = acc.length === 0 ? "" : ".";
-    return acc + separator + item;
+    return acc + separator + propertyKey;
   }, "");
 }
 function escapeQuotes(str) {
@@ -36312,7 +36279,7 @@ function fromError(err, options = {}) {
   return toValidationError(options)(err);
 }
 
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/utils/remove-query-params.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/utils/remove-query-params.js
 function removeQueryParams(url) {
   const _url = new URL(url);
   return {
@@ -36321,7 +36288,7 @@ function removeQueryParams(url) {
   };
 }
 
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/swagger_2.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/swagger_2.js
 var swagger2 = [
   {
     swagger: "2.0",
@@ -167789,7 +167756,7 @@ Segment 10 of 10. Paths 683-757 of 757.`,
   }
 ];
 
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/openapi_3_1.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/openapi_3_1.js
 var openapi31 = {
   openapi: "3.1.0",
   info: {
@@ -301875,7 +301842,7 @@ var usecaseOpenapi = {
   }
 };
 
-// node_modules/.pnpm/@toptiertools+moodle-client@1.0.12_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.56/node_modules/@toptiertools/moodle-client/dist/src/moodle.js
+// node_modules/.pnpm/@toptiertools+moodle-client@1.0.13_@typescript+native-preview@7.0.0-dev.20250606.1_typescript@5.8.3_zod@3.25.76/node_modules/@toptiertools/moodle-client/dist/src/moodle.js
 class MoodleServer {
   wstoken;
   baseURL;
@@ -301916,10 +301883,11 @@ class MoodleServer {
     const raw2 = await response.json();
     const result = moodleSchema[wsfunction].output.safeParse(raw2);
     const rawIsError = typeof raw2 === "object" && raw2 && "exception" in raw2;
+    const error = rawIsError ? raw2 : fromError(result.error).toString();
     return {
       ...result,
       url,
-      error: rawIsError ? raw2 : fromError(result.error).toString(),
+      error: error === "Unknown error" && result.success ? undefined : error,
       raw: rawIsError || result.success ? undefined : raw2
     };
   }
@@ -301946,31 +301914,7 @@ class MoodleServer {
             courseid
           }))
         });
-        const maxRetries = 3;
-        for (let i = 0;i < maxRetries; i++) {
-          console.log(`Checking if users are unenrolled: ${i + 1}/${maxRetries}`);
-          const result3 = await self.request.core_enrol_get_enrolled_users({
-            courseid,
-            options: [{ value: "1", name: "onlysuspended" }]
-          });
-          if (!result3.success)
-            return result3;
-          if (result3.data.length > 0) {
-            continue;
-          }
-          if (result.data.length === 0)
-            break;
-          if (i === maxRetries - 1) {
-            return {
-              success: false,
-              message: "Some users are still suspended"
-            };
-          }
-        }
-        return {
-          success: true,
-          message: "Users unenrolled successfully"
-        };
+        return result2;
       },
       async enrolUsersByUsername(props) {
         const { courseid, names, roleId } = props;
@@ -301994,7 +301938,7 @@ class MoodleServer {
   }
 }
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/http-exception.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/http-exception.js
 var HTTPException = class extends Error {
   res;
   status;
@@ -302017,7 +301961,7 @@ var HTTPException = class extends Error {
   }
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/utils/encode.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/utils/encode.js
 var decodeBase64 = (str) => {
   const binary = atob(str);
   const bytes = new Uint8Array(new ArrayBuffer(binary.length));
@@ -302029,7 +301973,7 @@ var decodeBase64 = (str) => {
   return bytes;
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/utils/basic-auth.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/utils/basic-auth.js
 var CREDENTIALS_REGEXP = /^ *(?:[Bb][Aa][Ss][Ii][Cc]) +([A-Za-z0-9._~+/-]+=*) *$/;
 var USER_PASS_REGEXP = /^([^:]*):(.*)$/;
 var utf8Decoder = new TextDecoder;
@@ -302049,7 +301993,7 @@ var auth = (req) => {
   return { username: userPass[1], password: userPass[2] };
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/utils/crypto.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/utils/crypto.js
 var sha256 = async (data) => {
   const algorithm = { name: "SHA-256", alias: "sha256" };
   const hash = await createHash(data, algorithm);
@@ -302075,7 +302019,7 @@ var createHash = async (data, algorithm) => {
   return null;
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/utils/buffer.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/utils/buffer.js
 var timingSafeEqual = async (a, b, hashFunction) => {
   if (!hashFunction) {
     hashFunction = sha256;
@@ -302087,7 +302031,7 @@ var timingSafeEqual = async (a, b, hashFunction) => {
   return sa === sb && a === b;
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/middleware/basic-auth/index.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/middleware/basic-auth/index.js
 var basicAuth = (options, ...users) => {
   const usernamePasswordInOptions = "username" in options && "password" in options;
   const verifyUserInOptions = "verifyUser" in options;
@@ -302154,7 +302098,7 @@ var parseUsers = (users) => {
   });
 };
 
-// node_modules/.pnpm/hono@4.7.11/node_modules/hono/dist/helper/html/index.js
+// node_modules/.pnpm/hono@4.8.5/node_modules/hono/dist/helper/html/index.js
 var html = (strings, ...values) => {
   const buffer = [""];
   for (let i = 0, len = strings.length - 1;i < len; i++) {

@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { cors } from "hono/cors";
-import { MoodleServer, moodleWebservices, swagger2, openapi31, usecaseOpenapi, } from "@toptiertools/moodle-client";
+import { MoodleServer, moodleWebservices, openapi31, usecaseOpenapi, } from "@toptiertools/moodle-client";
 import { HTTPException } from "hono/http-exception";
 import { basicAuth } from "hono/basic-auth";
 import { parseUsers } from "./parse-users.js";
@@ -16,10 +16,11 @@ if (!process.env.USERS) {
     throw new Error("USERS environment variable is not set");
 }
 const users = parseUsers(process.env.USERS);
-console.log({
-    baseURL,
-    users,
-});
+console.log("Moodle base url: ", baseURL);
+for (const user of users) {
+    console.log("username: ", user.username);
+    console.log("password: ", user.password);
+}
 // Middleware to check for required headers and create MoodleServer instance
 const moodleAuth = async (c, next) => {
     // get the wstoken from the Authorization header
@@ -112,15 +113,12 @@ const Layout = (props) => html `<!doctype html>
 			</body>
 		</html>`;
 app.get("/docs", (c) => {
-    const swaggerLinks = swagger2.map((doc, i) => html `<li><a href="/docs/swagger/${i}">${doc.info?.title || `Swagger Doc ${i + 1}`}</a></li>`);
     const openapi31Docs = [openapi31, usecaseOpenapi].filter(Boolean);
     const openapi31Links = openapi31Docs.map((doc, i) => html `<li><a href="/docs/openapi_3_1/${i}">${doc.info?.title || `OpenAPI 3.1 Doc ${i + 1}`}</a></li>`);
     return c.html(Layout({
         title: "API Docs Links",
         children: html `
 				<h1>API Docs</h1>
-				<h2>Swagger 2.0 Docs</h2>
-				<ol>${swaggerLinks}</ol>
 				<h2>OpenAPI 3.1 Docs</h2>
 				<ol>${openapi31Links}</ol>
 			`,
@@ -131,41 +129,6 @@ app.get("/meta", async (c) => {
     return c.json({
         version: packageJson.version,
     }, { status: 200 });
-});
-// swagger 2.0 docs
-app.get("/docs/swagger/:id", (c) => {
-    const id = c.req.param("id");
-    const domainUrl = c.get("domainUrl");
-    const swaggerDocs = swagger2.filter(Boolean);
-    const doc = swaggerDocs[Number(id)];
-    if (!doc) {
-        return c.json({ error: true, message: "Invalid id" }, { status: 400 });
-    }
-    // we need to update the basePath in the swagger doc
-    // remove the protocol and the domain from the domainUrl
-    const host = new URL(domainUrl).host;
-    doc.host = host;
-    // Patch all paths/methods to ensure summary, description, operationId
-    if (doc.paths) {
-        for (const [path, methods] of Object.entries(doc.paths)) {
-            for (const [method, op] of Object.entries(methods)) {
-                if (typeof op !== "object" || op == null)
-                    continue;
-                // @ts-ignore
-                if (!op.summary)
-                    // @ts-ignore
-                    op.summary = `Endpoint for ${method.toUpperCase()} ${path}`;
-                // @ts-ignore
-                if (!op.description)
-                    op.description = op.summary;
-                // @ts-ignore
-                if (!op.operationId)
-                    // @ts-ignore
-                    op.operationId = `${method}${path.replace(/\W+/g, "_")}`;
-            }
-        }
-    }
-    return c.json(doc, { status: 200 });
 });
 app.get("/docs/openapi_3_1/:id{.+\\.json}", (c) => {
     const id = c.req.param("id");

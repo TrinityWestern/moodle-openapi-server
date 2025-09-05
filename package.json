@@ -1,6 +1,6 @@
 {
 	"name": "moodle-openapi-server",
-	"version": "1.0.13",
+	"version": "1.0.14",
 	"description": "Moddle OpenAPI server",
 	"private": true,
 	"type": "module",
@@ -16,6 +16,7 @@
 		"typecheck": "tsgo --noEmit",
 		"test": "bun test",
 		"dev": "bun --watch src/server.ts",
+		"start": "bun dist/server.bundle.js",
 		"prepare": "husky"
 	},
 	"dependencies": {

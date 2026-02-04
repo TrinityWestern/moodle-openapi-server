@@ -1,12 +1,8 @@
-# Moodle MCP Server and API server 
+# Moodle OpenAPI server
 
 ![moodle-openapi-server](https://app1.sharemyimage.com/2025/05/10/image.jpg)
 
-An MCP (Model Context Protocol) server that enables LLMs to interact with the Moodle platform to manage courses, students, assignments, and quizzes.
-
-This server also provide a REST API that coheres with the openapi spec. 
-
-The MCP server is available at `localhost:6277/sse`.
+A server that provides a REST API for the Moodle platform, aligned with the OpenAPI spec.
 
 [![](https://share.cleanshot.com/xmqhBX0D+)](https://share.cleanshot.com/dFLVz77G)
 
@@ -18,7 +14,6 @@ This project uses latest tech and steps on the shoulders of giants:
 - [bun](https://bun.sh/) for javascript runtime
 - [docker](https://www.docker.com/) for the container
 - [typescript](https://www.typescriptlang.org/) for the programming language
-- [fastmcp](https://github.com/punkpeye/fastmcp) for the mcp protocol
 - [zod](https://zod.dev/) for the schema validation
 - [tsx](https://tsx.dev/) for the script runner
 - [vitest](https://vitest.dev/) for the testing
@@ -51,11 +46,11 @@ you can also connect to a remote moodle server by setting the `MOODLE_BASE_URL` 
 ```bash 
 git pull
 pnpm install 
-# start the hono server and the mcp server 
-pnpm run dev:all
+# start the API server 
+pnpm run dev
 # build the code 
 pnpm run build 
-# start the hono server and the mcp server 
+# start the API server 
 pnpm run start
 # build the docker image 
 pnpm run build:docker
@@ -77,12 +72,6 @@ docker run \
   -p 3000:3000 \
   moodle-openapi-server
 ```
-
-## limitation 
-
-MCP is single tenant for now. we cannot connect to multiple moodle instances from the mcp server. 
-
-https://github.com/modelcontextprotocol/modelcontextprotocol/discussions/193 
 
 ## License 
 
